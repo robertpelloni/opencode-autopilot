@@ -7,7 +7,7 @@
 - [x] Implement Base Supervisor Class (`src/supervisors/BaseSupervisor.ts`)
 
 ## Phase 2: Supervisor Integration (Next)
-- [ ] Mock Supervisor (for testing)
+- [x] Mock Supervisor (for testing)
 - [ ] OpenAI Supervisor Implementation
 - [ ] Anthropic Supervisor Implementation
 - [ ] Google Supervisor Implementation
@@ -20,7 +20,7 @@
 - [ ] Auto-continue Hooks
 
 ## Phase 4: Interface & Visualization
-- [ ] CLI Interface (Entry point `index.ts`)
+- [x] CLI Interface (Entry point `src/index.ts`)
 - [ ] Dashboard for Supervisor Status & Debate History
 - [ ] Documentation & Submodule Tracking
 
