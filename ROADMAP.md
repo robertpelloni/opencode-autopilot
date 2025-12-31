@@ -3,10 +3,11 @@
 ## Phase 1: Foundation (Current)
 - [x] Initial Project Setup
 - [x] Define Core Types (`src/types.ts`)
-- [ ] Implement Council Manager
-- [ ] Implement Base Supervisor Class
+- [x] Implement Council Manager (`src/council.ts`)
+- [x] Implement Base Supervisor Class (`src/supervisors/BaseSupervisor.ts`)
 
-## Phase 2: Supervisor Integration
+## Phase 2: Supervisor Integration (Next)
+- [ ] Mock Supervisor (for testing)
 - [ ] OpenAI Supervisor Implementation
 - [ ] Anthropic Supervisor Implementation
 - [ ] Google Supervisor Implementation
@@ -14,12 +15,12 @@
 - [ ] Other Providers (Grok, Moonshot, Qwen)
 
 ## Phase 3: Workflow & Orchestration
-- [ ] Debate/Discussion Logic
-- [ ] Consensus Mechanism
+- [x] Basic Discussion Logic (Round-robin implemented in `Council`)
+- [ ] Advanced Consensus Mechanism (Voting/Weighted)
 - [ ] Auto-continue Hooks
 
 ## Phase 4: Interface & Visualization
-- [ ] CLI Interface
+- [ ] CLI Interface (Entry point `index.ts`)
 - [ ] Dashboard for Supervisor Status & Debate History
 - [ ] Documentation & Submodule Tracking
 
