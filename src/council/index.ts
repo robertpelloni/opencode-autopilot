@@ -7,7 +7,6 @@ import { SupervisorFactory } from '../models';
 export class SupervisorCouncil {
   private supervisors: Supervisor[] = [];
   private config: CouncilConfig;
-  private conversationHistory: Message[] = [];
 
   constructor(config: CouncilConfig) {
     this.config = config;
@@ -187,7 +186,7 @@ Be thorough but concise in your analysis.
   private parseVote(response: string): boolean {
     const normalized = response.toUpperCase();
     
-    // Look for explicit vote markers
+    // Look for explicit vote markers (highest priority)
     if (normalized.includes('VOTE: APPROVE') || normalized.includes('VOTE:APPROVE')) {
       return true;
     }
@@ -195,21 +194,21 @@ Be thorough but concise in your analysis.
       return false;
     }
     
-    // Fallback: count positive vs negative sentiment
-    const positiveWords = ['approve', 'accept', 'good', 'proceed', 'yes', 'lgtm'];
-    const negativeWords = ['reject', 'deny', 'bad', 'stop', 'no', 'issues'];
+    // Look for clear approval/rejection statements at word boundaries
+    // Use word boundary checks to avoid false matches in phrases
+    const approveMatch = /\b(APPROVE|APPROVED|ACCEPT|ACCEPTED|LGTM)\b/.test(normalized);
+    const rejectMatch = /\b(REJECT|REJECTED|DENY|DENIED)\b/.test(normalized);
     
-    let positiveCount = 0;
-    let negativeCount = 0;
-    
-    for (const word of positiveWords) {
-      if (normalized.includes(word.toUpperCase())) positiveCount++;
+    if (approveMatch && !rejectMatch) {
+      return true;
     }
-    for (const word of negativeWords) {
-      if (normalized.includes(word.toUpperCase())) negativeCount++;
+    if (rejectMatch && !approveMatch) {
+      return false;
     }
     
-    return positiveCount > negativeCount;
+    // If both or neither found, default to rejection for safety
+    // (conservative approach - unclear votes should not auto-approve)
+    return false;
   }
 
   /**

@@ -43,7 +43,7 @@ const demoTask = {
 
 async function runDemo() {
   console.log('🏛️  OpenCode Autopilot Council Demo\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
   
   // Check for API keys
   const hasOpenAI = !!process.env.OPENAI_API_KEY;
@@ -78,12 +78,12 @@ async function runDemo() {
   
   // Run debate
   console.log('\n🗳️  Starting Council Debate...\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
   
   try {
     const decision = await council.debate(demoTask);
     
-    console.log('\n' + '=' .repeat(60));
+    console.log('\n' + '='.repeat(60));
     console.log('\n📊 Final Decision:');
     console.log(`  Status: ${decision.approved ? '✅ APPROVED' : '❌ REJECTED'}`);
     console.log(`  Consensus: ${(decision.consensus * 100).toFixed(0)}%`);
@@ -100,7 +100,7 @@ async function runDemo() {
     console.error('\n❌ Error during debate:', error.message);
   }
   
-  console.log('\n' + '=' .repeat(60));
+  console.log('\n' + '='.repeat(60));
   console.log('\n✨ Demo completed!\n');
 }
 

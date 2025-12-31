@@ -141,8 +141,13 @@ export default async function AutopilotCouncilPlugin(context: PluginContext) {
           if (!decision.approved) {
             console.log('\n⚠️  Council rejected this change!');
             console.log(decision.reasoning);
-            // Note: In a full implementation, this would rollback the change
-            // For now, we just log the rejection
+            console.log('\n📋 Next steps:');
+            console.log('  - Review the supervisor feedback above');
+            console.log('  - Address the concerns raised by the council');
+            console.log('  - Make necessary revisions and try again');
+            console.log('  - Or use council_toggle to disable monitoring temporarily');
+            // Note: OpenCode's tool execution model doesn't support rollback
+            // Users must manually address feedback and revise their changes
           } else {
             console.log('\n✅ Council approved this change');
           }
