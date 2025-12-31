@@ -11,6 +11,7 @@ The project follows a standard TypeScript/Node.js structure.
     - `BaseSupervisor.ts`: Abstract base class.
     - `MockSupervisor.ts`: Mock implementation for testing.
     - `OpenAISupervisor.ts`: Implementation for OpenAI models.
+    - `AnthropicSupervisor.ts`: Implementation for Anthropic (Claude) models.
   - **`submodules/`**: Contains git submodules for reference and potential vendoring.
 
 ## Submodules
@@ -23,10 +24,10 @@ The project follows a standard TypeScript/Node.js structure.
 |----------|-----------------------|------------|
 | **Mock** | ✅ Active | `MockSupervisor` |
 | **OpenAI** | ✅ Active | `OpenAISupervisor` |
-| **Anthropic** | ⏳ Pending | - |
+| **Anthropic** | ✅ Active | `AnthropicSupervisor` |
 | **Google** | ⏳ Pending | - |
 | **DeepSeek** | ⏳ Pending | - |
 
 ## Latest Build
-- **Version**: 1.0.4
+- **Version**: 1.0.5
 - **Date**: 2025-12-31
