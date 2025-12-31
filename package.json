@@ -1,0 +1,38 @@
+{
+  "name": "opencode-autopilot-council",
+  "version": "1.0.0",
+  "description": "An OpenCode plugin that uses multiple AI models as supervisors to discuss and guide the development process",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "ai",
+    "autopilot",
+    "council",
+    "supervisor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "openai": "^4.0.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  },
+  "opencode": {
+    "plugin": {
+      "file": "dist/index.js"
+    }
+  }
+}
