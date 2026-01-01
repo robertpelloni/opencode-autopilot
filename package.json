@@ -15,7 +15,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/demo.js",
+    "start": "node dist/server.js",
+    "demo": "node dist/demo.js",
     "controller": "node dist/controller.js",
     "server": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"

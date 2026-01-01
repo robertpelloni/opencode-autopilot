@@ -20,6 +20,16 @@ export class Council {
 
   public async discuss(context: DevelopmentContext): Promise<Guidance> {
     // 1. Initial Review Round
+    // If smart pilot is disabled in config, skip discussion and return a dummy guidance
+    if (this.config.smartPilot === false) {
+       console.log("Smart Pilot disabled. Skipping detailed discussion.");
+       return {
+         approved: false, // Default to false so fallback logic can take over
+         feedback: "Smart Pilot is disabled.",
+         suggestedNextSteps: []
+       };
+    }
+
     console.log("Starting Council Discussion...");
     
     // In a real implementation, we might want supervisors to see each other's messages.

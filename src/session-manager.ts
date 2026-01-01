@@ -1,4 +1,5 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, exec } from 'child_process';
+import { promisify } from 'util';
 import { createOpencodeClient } from '@opencode-ai/sdk';
 import { Council } from './council.js';
 import { OpenAISupervisor } from './supervisors/OpenAISupervisor.js';
@@ -19,7 +20,12 @@ interface Session {
     council: Council | null;
     logs: string[];
     lastCheck: number;
+    branch?: string;
+    commit?: string;
+    remote?: string;
 }
+
+const execAsync = promisify(exec);
 
 export class SessionManager {
     private sessions: Map<string, Session> = new Map();
@@ -36,7 +42,10 @@ export class SessionManager {
             port: s.port,
             status: s.status,
             logs: s.logs.slice(-50), // Return last 50 logs
-            lastCheck: s.lastCheck
+            lastCheck: s.lastCheck,
+            branch: s.branch,
+            commit: s.commit,
+            remote: s.remote
         }));
     }
 
@@ -45,10 +54,29 @@ export class SessionManager {
         return session ? session.logs : [];
     }
 
+    private async getGitInfo(repoPath: string) {
+        try {
+            const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd: repoPath });
+            const { stdout: commit } = await execAsync('git rev-parse HEAD', { cwd: repoPath });
+            const { stdout: remote } = await execAsync('git config --get remote.origin.url', { cwd: repoPath }).catch(() => ({ stdout: '' }));
+            
+            return {
+                branch: branch.trim(),
+                commit: commit.trim(),
+                remote: remote.trim()
+            };
+        } catch (e) {
+            return { branch: 'unknown', commit: 'unknown', remote: '' };
+        }
+    }
+
     public async addSession(repoPath: string) {
         const id = Math.random().toString(36).substring(7);
         const port = this.nextPort++;
         
+        // Attempt to get git info, but don't fail if not a git repo
+        const gitInfo = await this.getGitInfo(repoPath);
+
         const session: Session = {
             id,
             path: repoPath,
@@ -58,12 +86,21 @@ export class SessionManager {
             client: null,
             council: null,
             logs: [],
-            lastCheck: 0
+            lastCheck: 0,
+            ...gitInfo
         };
 
         this.sessions.set(id, session);
         this.log(id, `Session created for ${repoPath} on port ${port}`);
-        return session;
+        return {
+            id: session.id,
+            path: session.path,
+            port: session.port,
+            status: session.status,
+            logs: session.logs,
+            lastCheck: session.lastCheck,
+            ...gitInfo
+        };
     }
 
     public async removeSession(id: string) {
@@ -167,6 +204,10 @@ export class SessionManager {
             this.log(session.id, "Connected to OpenCode SDK");
 
             // Initialize Council
+            // We need a way to pass user settings here. For now, we'll use a default config 
+            // but in a real app, this would come from a database or the frontend request.
+            // Let's assume settings are passed via a global store or similar for this prototype.
+            // TODO: Accept config in startSession or updateSession
             this.initializeCouncil(session);
 
         } catch (e: any) {
@@ -175,12 +216,33 @@ export class SessionManager {
         }
     }
 
-    private initializeCouncil(session: Session) {
+    public async updateSessionConfig(id: string, config: any) {
+        const session = this.sessions.get(id);
+        if (!session) throw new Error("Session not found");
+        
+        // Re-initialize council with new settings
+        this.initializeCouncil(session, config);
+        this.log(id, "Council configuration updated.");
+    }
+
+    private initializeCouncil(session: Session, userSettings?: any) {
         const supervisors: SupervisorConfig[] = [];
-        if (process.env.OPENAI_API_KEY) supervisors.push({ name: "GPT-Architect", provider: "openai", modelName: "gpt-4o" });
-        if (process.env.ANTHROPIC_API_KEY) supervisors.push({ name: "Claude-Reviewer", provider: "anthropic", modelName: "claude-3-5-sonnet-20241022" });
-        if (process.env.GOOGLE_API_KEY) supervisors.push({ name: "Gemini-Strategist", provider: "google", modelName: "gemini-pro" });
-        if (process.env.DEEPSEEK_API_KEY) supervisors.push({ name: "DeepSeek-Analyst", provider: "deepseek", modelName: "deepseek-chat" });
+        
+        // If userSettings provided, use those
+        if (userSettings && userSettings.smartPilot) {
+             supervisors.push({
+                 name: "Primary-Supervisor",
+                 provider: userSettings.provider,
+                 apiKey: userSettings.apiKey,
+                 modelName: userSettings.model
+             });
+        } else {
+            // Fallback to env vars (legacy)
+            if (process.env.OPENAI_API_KEY) supervisors.push({ name: "GPT-Architect", provider: "openai", modelName: "gpt-4o" });
+            if (process.env.ANTHROPIC_API_KEY) supervisors.push({ name: "Claude-Reviewer", provider: "anthropic", modelName: "claude-3-5-sonnet-20241022" });
+            if (process.env.GOOGLE_API_KEY) supervisors.push({ name: "Gemini-Strategist", provider: "google", modelName: "gemini-pro" });
+            if (process.env.DEEPSEEK_API_KEY) supervisors.push({ name: "DeepSeek-Analyst", provider: "deepseek", modelName: "deepseek-chat" });
+        }
         
         if (supervisors.length === 0) {
             supervisors.push({ name: "Mock-Critic", provider: "custom", modelName: "mock-v1" });
@@ -188,8 +250,11 @@ export class SessionManager {
 
         const config: CouncilConfig = {
             supervisors,
-            debateRounds: 2,
-            autoContinue: false
+            debateRounds: userSettings?.debate ? 2 : 0, // Enable debate if requested
+            autoContinue: false,
+            enabled: userSettings?.enabled ?? true,
+            smartPilot: userSettings?.smartPilot ?? false,
+            fallbackMessages: userSettings?.messages ? userSettings.messages.split('\n') : []
         };
 
         const council = new Council(config);
@@ -205,7 +270,7 @@ export class SessionManager {
         });
 
         council.init().then(() => {
-            this.log(session.id, "Council initialized");
+            this.log(session.id, `Council initialized (SmartPilot: ${config.smartPilot ? 'ON' : 'OFF'}, Debate: ${config.debateRounds > 0 ? 'ON' : 'OFF'})`);
             session.council = council;
         }).catch(err => {
             this.log(session.id, `Council init failed: ${err.message}`);
@@ -276,7 +341,28 @@ export class SessionManager {
 
             this.log(session.id, `Council Guidance: ${guidance.approved ? 'Approved' : 'Rejected'}`);
 
-            const guidanceText = `
+            // Fallback Logic
+            let guidanceText = '';
+
+            // If Autopilot is NOT enabled, skip everything
+            const councilConfig = (session.council as any).config; 
+            if (councilConfig.enabled === false) {
+                return;
+            }
+
+            // If Smart Pilot is OFF, use fallback messages
+            if (!councilConfig.smartPilot || !guidance.approved) {
+                 if (councilConfig.fallbackMessages && councilConfig.fallbackMessages.length > 0) {
+                     // Pick a random message
+                     const msg = councilConfig.fallbackMessages[Math.floor(Math.random() * councilConfig.fallbackMessages.length)];
+                     guidanceText = msg;
+                     this.log(session.id, "Using fallback message.");
+                 }
+            } 
+            
+            // If Smart Pilot is ON and we have guidance
+            if (councilConfig.smartPilot && guidanceText === '') {
+                 guidanceText = `
 ## 🏛️ Council Guidance
 **Approved:** ${guidance.approved ? '✅ Yes' : '❌ No'}
 
@@ -284,10 +370,19 @@ export class SessionManager {
 ${guidance.feedback}
 
 **Suggested Next Steps:**
-${guidance.suggestedNextSteps.map(s => `- ${s}`).join('\n')}
+${guidance.suggestedNextSteps.map((s: string) => `- ${s}`).join('\n')}
 
 *Please proceed with the next step.*
             `.trim();
+            }
+
+            // If we still have nothing (e.g. smart pilot off and no fallback messages), skip sending
+            if (!guidanceText) {
+                this.log(session.id, "No guidance generated (SmartPilot off + no fallbacks). Skipping.");
+                // Wait to avoid double-processing
+                await new Promise(r => setTimeout(r, 10000));
+                return; 
+            }
 
             await session.client.session.prompt({
                 path: { id: activeSession.id },

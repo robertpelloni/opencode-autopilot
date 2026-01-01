@@ -1,0 +1,114 @@
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; display: flex; flex-direction: column; max-height: 85vh;">
+            <!-- Header -->
+            <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0; font-size: 1.125rem;">Council Settings</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Configure how the Autopilot Council monitors and interacts with your sessions.
+                </p>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                
+                <!-- Main Controls -->
+                <div class="settings-section">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Enable Autopilot</div>
+                            <div class="settings-desc">Continuously monitor active sessions</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-enabled">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="border-top: 1px solid var(--card-border); margin: 0.75rem 0;"></div>
+
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Auto-Switch Session</div>
+                            <div class="settings-desc">Navigate to the session being acted upon</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-autoSwitch">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Smart Supervisor -->
+                <div class="settings-section" style="border-color: rgba(192, 132, 252, 0.2); background-color: rgba(192, 132, 252, 0.05);">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label" style="color: var(--accent-purple); display: flex; align-items: center; gap: 0.5rem;">
+                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                Smart Supervisor
+                            </div>
+                            <div class="settings-desc">Use AI to generate context-aware guidance</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-smartPilot" onchange="toggleSmartSettings()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div id="smart-settings-content" style="display: none; margin-top: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label class="input-label">Provider</label>
+                                <select id="setting-provider" class="select-input">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic</option>
+                                    <option value="google">Google Gemini</option>
+                                    <option value="deepseek">DeepSeek</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="input-label">API Key</label>
+                                <input type="password" id="setting-apiKey" class="text-input" placeholder="Enter API Key">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label class="input-label">Model</label>
+                            <input type="text" id="setting-model" class="text-input" placeholder="e.g. gpt-4o">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Agent Debate -->
+                <div class="settings-section" style="border-color: rgba(96, 165, 250, 0.2); background-color: rgba(96, 165, 250, 0.05);">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label" style="color: var(--accent-blue); display: flex; align-items: center; gap: 0.5rem;">
+                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Multi-Agent Debate
+                            </div>
+                            <div class="settings-desc">Convene a council of models to debate the plan</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-debate">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fallback Messages -->
+                <div class="settings-section">
+                    <div class="settings-label" style="margin-bottom: 0.5rem;">Fallback Messages</div>
+                    <div class="settings-desc" style="margin-bottom: 0.5rem;">Used when API calls fail or Smart Supervisor is disabled.</div>
+                    <textarea id="setting-messages" class="text-area" rows="5" placeholder="Great! Please keep going..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn btn-outline" onclick="hideSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+    </div>

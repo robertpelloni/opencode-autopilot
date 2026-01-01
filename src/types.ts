@@ -35,4 +35,7 @@ export interface CouncilConfig {
   supervisors: SupervisorConfig[];
   debateRounds: number; // How many rounds of discussion before final consensus
   autoContinue: boolean; // Whether to automatically proceed based on consensus
+  enabled?: boolean;
+  smartPilot?: boolean;
+  fallbackMessages?: string[];
 }

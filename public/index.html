@@ -6,234 +6,572 @@
     <title>OpenCode Council Orchestrator</title>
     <style>
         :root {
-            --bg-color: #1e1e1e;
-            --sidebar-bg: #252526;
-            --text-color: #cccccc;
-            --accent-color: #007acc;
-            --border-color: #3e3e42;
-            --success-color: #4ec9b0;
-            --error-color: #f48771;
+            /* Zinc Palette (approximate to Tailwind zinc-950/900/800 etc) */
+            --background: #09090b;
+            --card-bg: #09090b; /* zinc-950 */
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-purple: #c084fc; /* purple-400 */
+            --accent-blue: #60a5fa; /* blue-400 */
+            --accent-green: #4ade80; /* green-400 */
+            --accent-red: #f87171; /* red-400 */
+            --hover-bg: rgba(255, 255, 255, 0.05);
         }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: #000000; /* Page bg is slightly darker than cards usually */
+            color: var(--text-primary);
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 80rem; /* max-w-7xl */
+            margin: 0 auto;
+            padding: 1.5rem; /* p-6 */
+        }
+
+        /* Header Section */
+        .page-header {
+            margin-bottom: 2rem;
             display: flex;
-            height: 100vh;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .page-desc {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid transparent;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .btn-primary:hover { background-color: rgba(255, 255, 255, 0.9); }
+
+        .btn-outline {
+            background-color: transparent;
+            border-color: var(--card-border);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { background-color: var(--hover-bg); }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn-danger:hover { background-color: rgba(239, 68, 68, 0.3); }
+
+        .btn-success {
+            background-color: rgba(74, 222, 128, 0.2);
+            color: var(--accent-green);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+        .btn-success:hover { background-color: rgba(74, 222, 128, 0.3); }
+
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 1024px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Card Component */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
-        #sidebar {
-            width: 300px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
+
+        .card-header {
+            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
         }
-        #main {
+
+        .card-content {
+            padding: 0 1.5rem 1.5rem 1.5rem;
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
+            justify-content: flex-end;
+            gap: 0.75rem;
         }
-        .header {
-            padding: 15px;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: bold;
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .card-desc {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            word-break: break-all;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 0.25rem;
+            border: 1px solid var(--card-border);
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.125rem 0.5rem;
+            font-size: 0.625rem;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--text-primary);
+        }
+
+        .info-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.75rem;
         }
-        .session-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-        .session-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
+
+        .info-label {
+            color: var(--text-muted);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 0.375rem;
         }
-        .session-item:hover {
-            background-color: #2a2d2e;
+
+        .info-value {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
-        .session-item.active {
-            background-color: #37373d;
-            border-left: 3px solid var(--accent-color);
-        }
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .status-running { background-color: var(--success-color); }
-        .status-stopped { background-color: #666; }
-        .status-error { background-color: var(--error-color); }
-        
-        button {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        input[type="text"] {
-            background-color: #3c3c3c;
-            border: 1px solid var(--border-color);
-            color: white;
-            padding: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        .log-container {
-            background-color: #1e1e1e;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            font-family: 'Consolas', 'Courier New', monospace;
+
+        .logs-area {
+            background-color: #000;
+            border-top: 1px solid var(--card-border);
+            padding: 0.75rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.7rem;
+            color: #aaa;
+            height: 100px;
+            overflow-y: auto;
             white-space: pre-wrap;
-            overflow-y: auto;
-            flex: 1;
-            margin-top: 10px;
         }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.8);
+            z-index: 50;
             justify-content: center;
             align-items: center;
         }
+
         .modal-content {
-            background-color: var(--sidebar-bg);
-            padding: 20px;
-            border-radius: 5px;
-            width: 400px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 28rem;
         }
-        .actions {
+
+        input[type="text"] {
+            width: 100%;
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .text-area {
+            width: 100%;
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            resize: vertical;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-green); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .settings-section {
+            border: 1px solid var(--card-border);
+            background-color: rgba(255,255,255,0.02);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .settings-row {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            justify-content: space-between;
+            align-items: center;
         }
+
+        .settings-label { font-weight: 600; font-size: 0.875rem; color: var(--text-primary); }
+        .settings-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem; }
+        
+        .layout-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            background-color: #09090b;
+            border-right: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .iframe-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-muted);
+        }
+
+        /* Update card for sidebar usage */
+        .card {
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            background-color: var(--card-bg);
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+        .card:hover {
+            border-color: var(--accent-purple);
+        }
+        .card.active {
+            border-color: var(--accent-purple);
+            background-color: rgba(192, 132, 252, 0.05);
+        }
+
+        .card-header { padding: 1rem 1rem 0.5rem 1rem; }
+        .card-content { padding: 0 1rem 1rem 1rem; }
+
     </style>
 </head>
 <body>
-    <div id="sidebar">
-        <div class="header">
-            <span>Sessions</span>
-            <button onclick="showAddModal()">+</button>
-        </div>
-        <div class="session-list" id="sessionList">
-            <!-- Sessions will be populated here -->
-        </div>
-    </div>
-    <div id="main">
-        <div id="emptyState">Select a session to view details</div>
-        <div id="sessionDetails" style="display: none; height: 100%; flex-direction: column;">
-            <div class="header">
-                <span id="currentSessionTitle">Session Title</span>
-                <div class="actions">
-                    <button onclick="toggleSession()" id="toggleBtn">Start</button>
-                    <button onclick="deleteSession()" style="background-color: var(--error-color)">Remove</button>
+
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div>
+                    <h1 class="page-title" style="font-size: 1.25rem;">Council Orchestrator</h1>
+                    <p class="page-desc" style="font-size: 0.75rem;">Manage active OpenCode sessions</p>
+                </div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                     <button class="btn btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="showSettingsModal()">
+                        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        Settings
+                    </button>
+                    <button class="btn btn-primary" style="flex: 1; font-size: 0.75rem;" onclick="showAddModal()">
+                        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        New
+                    </button>
                 </div>
             </div>
-            <div style="padding: 10px 0;">
-                <strong>Path:</strong> <span id="currentSessionPath"></span><br>
-                <strong>Port:</strong> <span id="currentSessionPort"></span><br>
-                <strong>Status:</strong> <span id="currentSessionStatus"></span>
+            
+            <div id="sessionList" class="sidebar-content">
+                <!-- Sessions populated here -->
             </div>
-            <h3>Council Logs</h3>
-            <div class="log-container" id="logs"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="iframe-placeholder" class="iframe-container">
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 1rem; font-size: 2rem;">👾</div>
+                    <div>Select a session to view its OpenCode Dashboard</div>
+                </div>
+            </div>
+            <iframe id="main-iframe" class="iframe-container" style="display: none;" src=""></iframe>
         </div>
     </div>
 
+    <!-- Add Session Modal -->
     <div id="addModal" class="modal">
         <div class="modal-content">
-            <h3>Add New Session</h3>
-            <input type="text" id="repoPath" placeholder="Absolute path to repository">
-            <div class="actions">
-                <button onclick="addSession()">Add</button>
-                <button onclick="hideAddModal()" style="background-color: #666">Cancel</button>
+            <h3 style="margin-top:0; font-size: 1.125rem;">Add New Session</h3>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Enter the absolute path to the repository you want to manage.</p>
+            <input type="text" id="repoPath" placeholder="e.g., /Users/username/projects/my-app">
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn btn-outline" onclick="hideAddModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addSession()">Add Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; display: flex; flex-direction: column; max-height: 85vh;">
+            <!-- Header -->
+            <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0; font-size: 1.125rem;">Council Settings</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Configure how the Autopilot Council monitors and interacts with your sessions.
+                </p>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                
+                <!-- Main Controls -->
+                <div class="settings-section">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Enable Autopilot</div>
+                            <div class="settings-desc">Continuously monitor active sessions</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-enabled">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="border-top: 1px solid var(--card-border); margin: 0.75rem 0;"></div>
+
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Auto-Switch Session</div>
+                            <div class="settings-desc">Navigate to the session being acted upon</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-autoSwitch">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Smart Supervisor -->
+                <div class="settings-section" style="border-color: rgba(192, 132, 252, 0.2); background-color: rgba(192, 132, 252, 0.05);">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label" style="color: var(--accent-purple); display: flex; align-items: center; gap: 0.5rem;">
+                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                Smart Supervisor
+                            </div>
+                            <div class="settings-desc">Use AI to generate context-aware guidance</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-smartPilot" onchange="toggleSmartSettings()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div id="smart-settings-content" style="display: none; margin-top: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label class="input-label">Provider</label>
+                                <select id="setting-provider" class="select-input">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic</option>
+                                    <option value="google">Google Gemini</option>
+                                    <option value="deepseek">DeepSeek</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="input-label">API Key</label>
+                                <input type="password" id="setting-apiKey" class="text-input" placeholder="Enter API Key">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label class="input-label">Model</label>
+                            <input type="text" id="setting-model" class="text-input" placeholder="e.g. gpt-4o">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Agent Debate -->
+                <div class="settings-section" style="border-color: rgba(96, 165, 250, 0.2); background-color: rgba(96, 165, 250, 0.05);">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label" style="color: var(--accent-blue); display: flex; align-items: center; gap: 0.5rem;">
+                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Multi-Agent Debate
+                            </div>
+                            <div class="settings-desc">Convene a council of models to debate the plan</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-debate">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fallback Messages -->
+                <div class="settings-section">
+                    <div class="settings-label" style="margin-bottom: 0.5rem;">Fallback Messages</div>
+                    <div class="settings-desc" style="margin-bottom: 0.5rem;">Used when API calls fail or Smart Supervisor is disabled.</div>
+                    <textarea id="setting-messages" class="text-area" rows="5" placeholder="Great! Please keep going..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn btn-outline" onclick="hideSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- Icons (SVG strings) ---
+        const icons = {
+            folder: `<svg class="svg-icon-md" style="color: var(--accent-purple);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
+            hash: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`,
+            clock: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+            activity: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+            play: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+            stop: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>`,
+            trash: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+        };
+
         let sessions = [];
-        let activeSessionId = null;
+        let currentSessionId = localStorage.getItem('opencode_last_session');
+        let firstLoad = true;
+
+        // --- Core Logic ---
 
         async function fetchSessions() {
-            const res = await fetch('/api/sessions');
-            sessions = await res.json();
-            renderSidebar();
-            if (activeSessionId) {
-                updateDetails(activeSessionId);
+            try {
+                const res = await fetch('/api/sessions');
+                sessions = await res.json();
+                
+                if (firstLoad) {
+                    if (currentSessionId) {
+                        const s = sessions.find(x => x.id === currentSessionId);
+                        if (s) selectSession(s.id, s.port);
+                    }
+                    firstLoad = false;
+                }
+                
+                renderSidebar();
+            } catch (e) {
+                console.error("Failed to fetch sessions", e);
             }
-        }
-
-        function renderSidebar() {
-            const list = document.getElementById('sessionList');
-            list.innerHTML = '';
-            sessions.forEach(s => {
-                const div = document.createElement('div');
-                div.className = `session-item ${s.id === activeSessionId ? 'active' : ''}`;
-                div.onclick = () => selectSession(s.id);
-                div.innerHTML = `
-                    <span>${s.path.split(/[\\/]/).pop()}</span>
-                    <span class="status-indicator status-${s.status}"></span>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function selectSession(id) {
-            activeSessionId = id;
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('sessionDetails').style.display = 'flex';
-            renderSidebar();
-            updateDetails(id);
-        }
-
-        function updateDetails(id) {
-            const session = sessions.find(s => s.id === id);
-            if (!session) return;
-
-            document.getElementById('currentSessionTitle').innerText = session.path.split(/[\\/]/).pop();
-            document.getElementById('currentSessionPath').innerText = session.path;
-            document.getElementById('currentSessionPort').innerText = session.port || 'N/A';
-            document.getElementById('currentSessionStatus').innerText = session.status;
-            
-            const toggleBtn = document.getElementById('toggleBtn');
-            toggleBtn.innerText = session.status === 'running' ? 'Stop' : 'Start';
-            toggleBtn.style.backgroundColor = session.status === 'running' ? '#f48771' : '#4ec9b0';
-
-            // Fetch logs
-            fetchLogs(id);
-        }
-
-        async function fetchLogs(id) {
-            const res = await fetch(\`/api/sessions/\${id}/logs\`);
-            const logs = await res.json();
-            const logContainer = document.getElementById('logs');
-            logContainer.innerText = logs.join('\\n');
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        async function toggleSession() {
-            if (!activeSessionId) return;
-            const session = sessions.find(s => s.id === activeSessionId);
-            const action = session.status === 'running' ? 'stop' : 'start';
-            
-            await fetch(\`/api/sessions/\${activeSessionId}/\${action}\`, { method: 'POST' });
-            fetchSessions();
         }
 
         async function addSession() {
@@ -246,27 +584,196 @@
                 body: JSON.stringify({ path })
             });
             
+            document.getElementById('repoPath').value = '';
             hideAddModal();
             fetchSessions();
         }
 
-        async function deleteSession() {
-            if (!activeSessionId) return;
-            if(!confirm('Are you sure?')) return;
+        async function toggleSession(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+            const action = session.status === 'running' ? 'stop' : 'start';
             
-            await fetch(\`/api/sessions/\${activeSessionId}\`, { method: 'DELETE' });
-            activeSessionId = null;
-            document.getElementById('sessionDetails').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
+            // Optimistic update
+            const btn = document.getElementById(`toggle-btn-${id}`);
+            if (btn) btn.innerHTML = '<span class="spin">⌛</span>';
+
+            await fetch(`/api/sessions/${id}/${action}`, { method: 'POST' });
             fetchSessions();
         }
 
+        async function deleteSession(id) {
+            if(!confirm('Are you sure you want to remove this session?')) return;
+            await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+            fetchSessions();
+        }
+
+        // --- Utils ---
+        function timeAgo(dateParam) {
+            if (!dateParam) return null;
+            const date = typeof dateParam === 'object' ? dateParam : new Date(dateParam);
+            const today = new Date();
+            const seconds = Math.round((today - date) / 1000);
+            const minutes = Math.round(seconds / 60);
+            const isToday = today.toDateString() === date.toDateString();
+            
+            if (seconds < 5) return 'just now';
+            else if (seconds < 60) return `${seconds} seconds ago`;
+            else if (seconds < 90) return 'about a minute ago';
+            else if (minutes < 60) return `${minutes} minutes ago`;
+            else if (isToday) return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            else return date.toLocaleDateString();
+        }
+
+        async function selectSession(id, port) {
+            currentSessionId = id;
+            localStorage.setItem('opencode_last_session', id);
+
+            // Update iframe
+            const iframe = document.getElementById('main-iframe');
+            const placeholder = document.getElementById('iframe-placeholder');
+            
+            iframe.src = `http://localhost:${port}`;
+            iframe.style.display = 'flex';
+            placeholder.style.display = 'none';
+
+            // Re-render sidebar to update highlighting
+            renderSidebar();
+        }
+
+        // --- Rendering ---
+
+        function renderSidebar() {
+            const list = document.getElementById('sessionList');
+            if (!list) return; // safety check
+            
+            list.innerHTML = sessions.map(session => {
+                const name = session.path.split(/[\\/]/).pop() || 'Untitled';
+                const isRunning = session.status === 'running';
+                const isActive = session.id === currentSessionId;
+                
+                return `
+                <div class="card ${isActive ? 'active' : ''}" onclick="selectSession('${session.id}', ${session.port})">
+                    <div class="card-header">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <h3 class="card-title" style="font-size: 0.875rem;">
+                                    ${icons.folder}
+                                    ${name}
+                                </h3>
+                                <div class="card-desc" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${session.path}">${session.path}</div>
+                            </div>
+                            <span class="badge" style="color: ${isRunning ? 'var(--accent-green)' : 'var(--text-muted)'}; border-color: ${isRunning ? 'rgba(74,222,128,0.2)' : 'var(--card-border)'}">
+                                ${session.status.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-content" style="padding-top: 0.5rem;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <button id="toggle-btn-${session.id}" class="btn ${isRunning ? 'btn-danger' : 'btn-success'}" style="flex:1; font-size: 0.75rem; padding: 0.25rem;" onclick="event.stopPropagation(); toggleSession('${session.id}')">
+                                ${isRunning ? icons.stop : icons.play} ${isRunning ? 'Stop' : 'Start'}
+                            </button>
+                            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.25rem;" onclick="event.stopPropagation(); deleteSession('${session.id}')">
+                                ${icons.trash}
+                            </button>
+                        </div>
+                        
+                        <div class="info-row" style="margin-top: 0.25rem; font-size: 0.7rem;">
+                           <span class="info-label">Port: ${session.port || '---'}</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // --- Modal & Utils ---
         function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
         function hideAddModal() { document.getElementById('addModal').style.display = 'none'; }
+        function showSettingsModal() { 
+            loadSettings();
+            document.getElementById('settingsModal').style.display = 'flex'; 
+        }
+        function hideSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
 
-        // Poll for updates
-        setInterval(fetchSessions, 2000);
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const settingsModal = document.getElementById('settingsModal');
+            if (event.target == addModal) hideAddModal();
+            if (event.target == settingsModal) hideSettingsModal();
+        }
+
+        // --- Settings Logic ---
+        function toggleSmartSettings() {
+            const enabled = document.getElementById('setting-smartPilot').checked;
+            document.getElementById('smart-settings-content').style.display = enabled ? 'block' : 'none';
+        }
+
+        function loadSettings() {
+            // In a real app, fetch from backend or localStorage
+            const defaults = {
+                enabled: false,
+                autoSwitch: true,
+                smartPilot: false,
+                provider: 'openai',
+                apiKey: '',
+                model: '',
+                debate: false,
+                messages: "Great! Please keep going.\nLooks good to me."
+            };
+            
+            // Try to load from localStorage
+            const stored = localStorage.getItem('opencode-council-settings');
+            const settings = stored ? JSON.parse(stored) : defaults;
+
+            document.getElementById('setting-enabled').checked = settings.enabled;
+            document.getElementById('setting-autoSwitch').checked = settings.autoSwitch;
+            document.getElementById('setting-smartPilot').checked = settings.smartPilot;
+            document.getElementById('setting-provider').value = settings.provider;
+            document.getElementById('setting-apiKey').value = settings.apiKey;
+            document.getElementById('setting-model').value = settings.model;
+            document.getElementById('setting-debate').checked = settings.debate;
+            document.getElementById('setting-messages').value = settings.messages;
+            
+            toggleSmartSettings();
+        }
+
+        async function saveSettings() {
+            const settings = {
+                enabled: document.getElementById('setting-enabled').checked,
+                autoSwitch: document.getElementById('setting-autoSwitch').checked,
+                smartPilot: document.getElementById('setting-smartPilot').checked,
+                provider: document.getElementById('setting-provider').value,
+                apiKey: document.getElementById('setting-apiKey').value,
+                model: document.getElementById('setting-model').value,
+                debate: document.getElementById('setting-debate').checked,
+                messages: document.getElementById('setting-messages').value
+            };
+
+            // Save to localStorage
+            localStorage.setItem('opencode-council-settings', JSON.stringify(settings));
+            
+            // Push settings to all active sessions (Simulating global config for now)
+            for (const session of sessions) {
+                try {
+                    await fetch(`/api/sessions/${session.id}/config`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settings)
+                    });
+                } catch(e) { console.error("Failed to update session config", e); }
+            }
+            
+            hideSettingsModal();
+            // alert('Configuration saved!');
+        }
+
+        // Init
         fetchSessions();
+        setInterval(fetchSessions, 3000); // Polling every 3s
+
     </script>
 </body>
 </html>

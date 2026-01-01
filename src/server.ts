@@ -71,6 +71,16 @@ app.get('/api/sessions/:id/logs', (req, res) => {
     res.json(logs);
 });
 
+// Update session configuration
+app.post('/api/sessions/:id/config', async (req, res) => {
+    try {
+        await manager.updateSessionConfig(req.params.id, req.body);
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Orchestrator running at http://localhost:${PORT}`);
     manager.init(); // Start the orchestration loop
