@@ -209,12 +209,26 @@ export class SessionManager {
             // Wait for it to be ready
             // We'll try to connect in the main loop or here.
             // Let's give it a few seconds then mark as running.
-            setTimeout(() => {
-                if (session.status === 'starting') {
-                    session.status = 'running';
-                    this.initializeClient(session);
+            let attempts = 0;
+            const checkConnection = async () => {
+                try {
+                    await this.initializeClient(session);
+                    if (session.client) {
+                        session.status = 'running';
+                        this.log(id, "Session is fully ready.");
+                    }
+                } catch (e) {
+                    attempts++;
+                    if (attempts < 10) {
+                        setTimeout(checkConnection, 2000); // Retry every 2s
+                    } else {
+                        this.log(id, "Giving up on initial connection, but keeping process alive. Will retry in loop.");
+                        session.status = 'running'; // Assume running anyway
+                    }
                 }
-            }, 5000);
+            };
+            
+            setTimeout(checkConnection, 2000);
 
         } catch (e: any) {
             session.status = 'error';
