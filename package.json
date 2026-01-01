@@ -2,8 +2,21 @@
   "name": "opencode-autopilot-council",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/version.ts"
+  ],
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/demo.js",
+    "controller": "node dist/controller.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -17,7 +30,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@google/generative-ai": "^0.24.1",
+    "@opencode-ai/plugin": "^1.0.222",
+    "@opencode-ai/sdk": "^1.0.222",
     "dotenv": "^17.2.3",
-    "openai": "^6.15.0"
+    "openai": "^6.15.0",
+    "zod": "^4.1.8"
   }
 }
