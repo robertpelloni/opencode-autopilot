@@ -137,26 +137,46 @@ export class SessionManager {
         if (!session) throw new Error("Session not found");
         if (session.status === 'running') return;
 
+        // Ensure port rotation logic is executed every time
+        this.log(id, `Checking port ${session.port} availability...`);
+        
+        let newPort = this.nextPort;
+        if (session.port && !(await this.checkPortAvailable(session.port))) {
+            this.log(id, `Port ${session.port} is busy. Rotating...`);
+            while (!(await this.checkPortAvailable(newPort))) {
+                newPort++;
+            }
+            this.nextPort = newPort + 1;
+            session.port = newPort;
+        } else if (!session.port) {
+            // If for some reason port is missing
+             while (!(await this.checkPortAvailable(newPort))) {
+                newPort++;
+            }
+            this.nextPort = newPort + 1;
+            session.port = newPort;
+        } else {
+            // Even if the current port *looks* available, Windows might lie about TIME_WAIT
+            // So we force rotation if it was previously used
+            this.log(id, `Forcing port rotation from ${session.port} to be safe...`);
+            while (!(await this.checkPortAvailable(newPort))) {
+                newPort++;
+            }
+            this.nextPort = newPort + 1;
+            session.port = newPort;
+        }
+        
+        this.log(id, `Assigned new port: ${session.port}`);
+
         session.status = 'starting';
         this.log(id, "Starting OpenCode...");
 
-        // Spawn OpenCode
-        // Assuming 'opencode' is in PATH. 
-        // We pass the repo path and the port.
-        // Command: opencode start <path> --port <port> --headless?
-        // Let's try: opencode <path> --port <port>
-        // Or if it's a node script: node ...
-        // Since I don't know the exact CLI signature of 'opencode', I'll assume a standard one.
-        // If 'opencode' is not found, this will fail.
-        
         try {
             // We use 'cmd' on Windows to ensure we catch .cmd/.bat files
             const cmd = process.platform === 'win32' ? 'opencode.cmd' : 'opencode';
             
-            // Note: We are assuming 'opencode' command exists. 
-            // If the user is running this from a dev environment where opencode is not installed globally,
-            // we might need to adjust this.
-            
+            this.log(id, `Spawning: ${cmd} start "${session.path}" --port ${session.port}`);
+
             const child = spawn(cmd, ['start', session.path, '--port', session.port.toString()], {
                 env: { ...process.env, PORT: session.port.toString() },
                 shell: true
@@ -356,100 +376,116 @@ export class SessionManager {
     }
 
     private async processSessionLoop(session: Session) {
-        // 1. Get Active Session from OpenCode
-        const sessionsList = await session.client.session.list();
-        if (!sessionsList.data || sessionsList.data.length === 0) {
-            // No active session in OpenCode
-            return;
-        }
-        
-        // Pick the first one
-        const activeSession = sessionsList.data[0];
-        
-        // 2. Check Messages
-        const messages = await session.client.session.messages({ path: { id: activeSession.id } });
-        const history = messages.data || [];
+        const client = session.client;
+        if (!client) return;
 
-        if (history.length === 0) return;
-
-        const lastMsg = history[history.length - 1];
-
-        // 3. Check if AI finished
-        if (lastMsg?.info.role === 'assistant') {
-            this.log(session.id, "AI finished turn. Council deliberating...");
-
-            // Gather Context
-            const lastUserMsg = [...history].reverse().find(m => m.info.role === 'user');
-            const currentGoal = lastUserMsg 
-                ? (lastUserMsg.parts.find((p: any) => p.type === 'text') as any)?.text || "Unknown Goal"
-                : "Review project state";
-
-            const context: DevelopmentContext = {
-                currentGoal,
-                recentChanges: ["Session history analyzed"],
-                fileContext: {}, 
-                projectState: "Active Development"
-            };
-
-            const guidance = await session.council!.discuss(context);
-
-            this.log(session.id, `Council Guidance: ${guidance.approved ? 'Approved' : 'Rejected'}`);
-
-            // Fallback Logic
-            let guidanceText = '';
-
-            // If Autopilot is NOT enabled, skip everything
-            const councilConfig = (session.council as any).config; 
-            if (councilConfig.enabled === false) {
+        try {
+            // 1. Get Active Session from OpenCode
+            const sessionsList = await client.session.list();
+            if (!sessionsList.data || sessionsList.data.length === 0) {
+                // No active session in OpenCode
                 return;
             }
-
-            // If Smart Pilot is OFF, use fallback messages
-            if (!councilConfig.smartPilot || !guidance.approved) {
-                 if (councilConfig.fallbackMessages && councilConfig.fallbackMessages.length > 0) {
-                     // Pick a random message
-                     const msg = councilConfig.fallbackMessages[Math.floor(Math.random() * councilConfig.fallbackMessages.length)];
-                     guidanceText = msg;
-                     this.log(session.id, "Using fallback message.");
-                 }
-            } 
             
-            // If Smart Pilot is ON and we have guidance
-            if (councilConfig.smartPilot && guidanceText === '') {
-                 guidanceText = `
-## 🏛️ Council Guidance
-**Approved:** ${guidance.approved ? '✅ Yes' : '❌ No'}
+            // Pick the first one
+            const activeSession = sessionsList.data[0];
+            
+            // 2. Check Messages
+            const messages = await client.session.messages({ path: { id: activeSession.id } });
+            const history = messages.data || [];
 
-**Feedback:**
-${guidance.feedback}
+            if (history.length === 0) return;
 
-**Suggested Next Steps:**
-${guidance.suggestedNextSteps.map((s: string) => `- ${s}`).join('\n')}
+            const lastMsg = history[history.length - 1];
 
-*Please proceed with the next step.*
-            `.trim();
-            }
+            // 3. Check if AI finished
+            if (lastMsg?.info.role === 'assistant') {
+                this.log(session.id, "AI finished turn. Council deliberating...");
 
-            // If we still have nothing (e.g. smart pilot off and no fallback messages), skip sending
-            if (!guidanceText) {
-                this.log(session.id, "No guidance generated (SmartPilot off + no fallbacks). Skipping.");
-                // Wait to avoid double-processing
-                await new Promise(r => setTimeout(r, 10000));
-                return; 
-            }
+                // Gather Context
+                const lastUserMsg = [...history].reverse().find(m => m.info.role === 'user');
+                const currentGoal = lastUserMsg 
+                    ? (lastUserMsg.parts.find((p: any) => p.type === 'text') as any)?.text || "Unknown Goal"
+                    : "Review project state";
 
-            await session.client.session.prompt({
-                path: { id: activeSession.id },
-                body: {
-                    parts: [{ type: "text", text: guidanceText }]
+                const context: DevelopmentContext = {
+                    currentGoal,
+                    recentChanges: ["Session history analyzed"],
+                    fileContext: {}, 
+                    projectState: "Active Development"
+                };
+
+                const council = session.council;
+                if (!council) return;
+                
+                const guidance = await council.discuss(context);
+
+                this.log(session.id, `Council Guidance: ${guidance.approved ? 'Approved' : 'Rejected'}`);
+
+                // Fallback Logic
+                let guidanceText = '';
+
+                // If Autopilot is NOT enabled, skip everything
+                const councilConfig = (council as any).config; 
+                if (councilConfig.enabled === false) {
+                    return;
                 }
-            });
-            
-            this.log(session.id, "Guidance sent to OpenCode.");
-            
-            // Wait to avoid double-processing
-            // In a real app, we'd track the last processed message ID
-            await new Promise(r => setTimeout(r, 10000));
+
+                // If Smart Pilot is OFF, use fallback messages
+                if (!councilConfig.smartPilot || !guidance.approved) {
+                    if (councilConfig.fallbackMessages && councilConfig.fallbackMessages.length > 0) {
+                        // Pick a random message
+                        const msg = councilConfig.fallbackMessages[Math.floor(Math.random() * councilConfig.fallbackMessages.length)];
+                        guidanceText = msg;
+                        this.log(session.id, "Using fallback message.");
+                    }
+                } 
+                
+                // If Smart Pilot is ON and we have guidance
+                if (councilConfig.smartPilot && guidanceText === '') {
+                    guidanceText = `
+    ## 🏛️ Council Guidance
+    **Approved:** ${guidance.approved ? '✅ Yes' : '❌ No'}
+
+    **Feedback:**
+    ${guidance.feedback}
+
+    **Suggested Next Steps:**
+    ${guidance.suggestedNextSteps.map((s: string) => `- ${s}`).join('\n')}
+
+    *Please proceed with the next step.*
+                `.trim();
+                }
+
+                // If we still have nothing (e.g. smart pilot off and no fallback messages), skip sending
+                if (!guidanceText) {
+                    this.log(session.id, "No guidance generated (SmartPilot off + no fallbacks). Skipping.");
+                    // Wait to avoid double-processing
+                    await new Promise(r => setTimeout(r, 10000));
+                    return; 
+                }
+
+                await client.session.prompt({
+                    path: { id: activeSession.id },
+                    body: {
+                        parts: [{ type: "text", text: guidanceText }]
+                    }
+                });
+                
+                this.log(session.id, "Guidance sent to OpenCode.");
+                
+                // Wait to avoid double-processing
+                // In a real app, we'd track the last processed message ID
+                await new Promise(r => setTimeout(r, 10000));
+            }
+        } catch (e: any) {
+             // Handle fetch failures specifically gracefully (server might be down/restarting)
+             if (e.message && e.message.includes('fetch failed')) {
+                 this.log(session.id, "Connection to OpenCode lost. Will retry...");
+                 // Mark client as potentially stale or just wait for next loop
+             } else {
+                 throw e; // Re-throw other errors
+             }
         }
     }
 
