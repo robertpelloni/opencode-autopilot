@@ -1,5 +1,6 @@
 import { spawn, ChildProcess, exec } from 'child_process';
 import { promisify } from 'util';
+import { createServer } from 'net';
 import { createOpencodeClient } from '@opencode-ai/sdk';
 import { Council } from './council.js';
 import { OpenAISupervisor } from './supervisors/OpenAISupervisor.js';
@@ -72,7 +73,7 @@ export class SessionManager {
 
     private async checkPortAvailable(port: number): Promise<boolean> {
         return new Promise((resolve) => {
-            const server = require('net').createServer();
+            const server = createServer();
             server.once('error', (err: any) => {
                 if (err.code === 'EADDRINUSE') {
                     resolve(false);
@@ -175,9 +176,15 @@ export class SessionManager {
             // We use 'cmd' on Windows to ensure we catch .cmd/.bat files
             const cmd = process.platform === 'win32' ? 'opencode.cmd' : 'opencode';
             
-            this.log(id, `Spawning: ${cmd} start "${session.path}" --port ${session.port}`);
+            // Use 'serve' command for headless server mode, which is more reliable for automation
+            this.log(id, `Spawning: ${cmd} serve "${session.path}" --port ${session.port}`);
 
-            const child = spawn(cmd, ['start', session.path, '--port', session.port.toString()], {
+            // Important: 'serve' takes [project] as a positional arg, or might need to be passed differently.
+            // Based on help: opencode serve [options]. Project might need to be CWD or passed.
+            // Let's try setting CWD to the repo path and just running 'opencode serve --port X'
+            
+            const child = spawn(cmd, ['serve', '--port', session.port.toString()], {
+                cwd: session.path, // Set working directory to the repo path
                 env: { ...process.env, PORT: session.port.toString() },
                 shell: true
             });
@@ -283,8 +290,9 @@ export class SessionManager {
     private async initializeClient(session: Session) {
         try {
             this.log(session.id, `Connecting to OpenCode on port ${session.port}...`);
+            // Use 127.0.0.1 to avoid IPv6/IPv4 resolution ambiguity with 'localhost'
             session.client = createOpencodeClient({
-                baseUrl: `http://localhost:${session.port}`,
+                baseUrl: `http://127.0.0.1:${session.port}`,
             });
 
             // Verify connection
