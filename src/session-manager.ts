@@ -10,6 +10,7 @@ import { DeepSeekSupervisor } from './supervisors/DeepSeekSupervisor.js';
 import { MockSupervisor } from './supervisors/MockSupervisor.js';
 import type { CouncilConfig, SupervisorConfig, DevelopmentContext } from './types.js';
 import * as fs from 'fs';
+import * as path from 'path';
 
 interface Session {
     id: string;
@@ -24,16 +25,125 @@ interface Session {
     branch?: string;
     commit?: string;
     remote?: string;
+    autoStart: boolean;
 }
 
 const execAsync = promisify(exec);
 
+// Path to store session configuration
+const STORAGE_FILE = 'sessions.json';
+
 export class SessionManager {
     private sessions: Map<string, Session> = new Map();
     private nextPort = 4096;
+    private storagePath: string;
 
     constructor() {
-        // Load existing sessions from disk if needed? For now, in-memory.
+        this.storagePath = path.resolve(process.cwd(), STORAGE_FILE);
+        this.loadSessions();
+        
+        // Auto-start configured sessions
+        this.autoStartSessions();
+    }
+
+    private saveSessions() {
+        const data = Array.from(this.sessions.values()).map(s => ({
+            id: s.id,
+            path: s.path,
+            autoStart: s.autoStart
+        }));
+        try {
+            fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+        } catch (e) {
+            console.error("Failed to save sessions:", e);
+        }
+    }
+
+    private loadSessions() {
+        if (!fs.existsSync(this.storagePath)) {
+            // Seed with defaults if empty
+            this.seedDefaults();
+            return;
+        }
+
+        try {
+            const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+            for (const item of data) {
+                // Determine absolute path if stored path is relative? 
+                // For now, assume paths are compatible or relative to workspace root if they start with ./
+                // Ideally, we store absolute paths or resolve them against a known root.
+                // But let's just load what's there.
+                
+                // We don't restore the process, just the config
+                this.sessions.set(item.id, {
+                    id: item.id,
+                    path: item.path,
+                    port: 0, // Will be assigned on start
+                    status: 'stopped',
+                    process: null,
+                    client: null,
+                    council: null,
+                    logs: [],
+                    lastCheck: 0,
+                    autoStart: item.autoStart ?? false
+                });
+            }
+        } catch (e) {
+            console.error("Failed to load sessions:", e);
+        }
+    }
+
+    private seedDefaults() {
+         // Default list of repos to manage if nothing exists
+         const defaultRepos = [
+             'AIOS',
+             'fwber',
+             'FileOrganizer',
+             'BobsGameOnline', // Replaced okgame
+             'ArrowVortex',
+             'jules-autopilot',
+             'opencode-autopilot'
+         ];
+         
+         const workspaceRoot = path.resolve(process.cwd(), '..'); // Assuming we run from opencode-autopilot
+         
+         defaultRepos.forEach(repo => {
+             const repoPath = path.join(workspaceRoot, repo);
+             // Verify it exists before adding
+             if (fs.existsSync(repoPath)) {
+                 const id = Math.random().toString(36).substring(7);
+                 this.sessions.set(id, {
+                     id,
+                     path: repoPath,
+                     port: 0,
+                     status: 'stopped',
+                     process: null,
+                     client: null,
+                     council: null,
+                     logs: [],
+                     lastCheck: 0,
+                     autoStart: true
+                 });
+             }
+         });
+         this.saveSessions();
+    }
+    
+    private async autoStartSessions() {
+        console.log("Auto-starting sessions...");
+        for (const session of this.sessions.values()) {
+            if (session.autoStart && session.status === 'stopped') {
+                try {
+                    // Slight stagger to avoid CPU spike
+                    await new Promise(r => setTimeout(r, 1000));
+                    this.startSession(session.id).catch(e => {
+                        this.log(session.id, `Auto-start failed: ${e.message}`);
+                    });
+                } catch (e) {
+                    console.error(`Failed to auto-start ${session.id}`, e);
+                }
+            }
+        }
     }
 
     public getSessions() {
@@ -46,7 +156,8 @@ export class SessionManager {
             lastCheck: s.lastCheck,
             branch: s.branch,
             commit: s.commit,
-            remote: s.remote
+            remote: s.remote,
+            autoStart: s.autoStart
         }));
     }
 
@@ -105,18 +216,21 @@ export class SessionManager {
         const session: Session = {
             id,
             path: repoPath,
-            port,
+            port, // Will be re-checked on start
             status: 'stopped',
             process: null,
             client: null,
             council: null,
             logs: [],
             lastCheck: 0,
+            autoStart: true, // Default to true for new additions
             ...gitInfo
         };
 
         this.sessions.set(id, session);
-        this.log(id, `Session created for ${repoPath} on port ${port}`);
+        this.saveSessions();
+        this.log(id, `Session created for ${repoPath} (initially mapped to ${port})`);
+        
         return {
             id: session.id,
             path: session.path,
@@ -131,12 +245,13 @@ export class SessionManager {
     public async removeSession(id: string) {
         await this.stopSession(id);
         this.sessions.delete(id);
+        this.saveSessions();
     }
 
     public async startSession(id: string) {
         const session = this.sessions.get(id);
         if (!session) throw new Error("Session not found");
-        if (session.status === 'running') return;
+        if (session.status === 'running' || session.status === 'starting') return;
 
         // Ensure port rotation logic is executed every time
         this.log(id, `Checking port ${session.port} availability...`);
@@ -157,16 +272,22 @@ export class SessionManager {
             this.nextPort = newPort + 1;
             session.port = newPort;
         } else {
-            // Even if the current port *looks* available, Windows might lie about TIME_WAIT
-            // So we force rotation if it was previously used
-            this.log(id, `Forcing port rotation from ${session.port} to be safe...`);
-            while (!(await this.checkPortAvailable(newPort))) {
-                newPort++;
+            // Even if the current port *looks* available, force check next if 0
+            if (session.port === 0) {
+                 while (!(await this.checkPortAvailable(newPort))) {
+                    newPort++;
+                }
+                this.nextPort = newPort + 1;
+                session.port = newPort;
             }
-            this.nextPort = newPort + 1;
-            session.port = newPort;
         }
         
+        // Refresh git info on start
+        const gitInfo = await this.getGitInfo(session.path);
+        session.branch = gitInfo.branch;
+        session.commit = gitInfo.commit;
+        session.remote = gitInfo.remote;
+
         this.log(id, `Assigned new port: ${session.port}`);
 
         session.status = 'starting';
