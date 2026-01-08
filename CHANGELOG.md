@@ -2,59 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.7] - 2025-12-31
-
-### Added
-- `DeepSeekSupervisor` implementation using the OpenAI-compatible SDK (`src/supervisors/DeepSeekSupervisor.ts`).
-- Standardized LLM instructions in `LLM_INSTRUCTIONS.md`, `CLAUDE.md`, `GPT.md`, and `GEMINI.md`.
-- Updated `src/index.ts` to support configuration of all implemented supervisors (OpenAI, Anthropic, Google, DeepSeek).
-
-### Changed
-- Refactored `src/index.ts` to dynamically register supervisors based on configuration.
-
-## [1.0.6] - 2025-12-31
-
-### Added
-- `GoogleSupervisor` implementation using the official Google Generative AI SDK (`src/supervisors/GoogleSupervisor.ts`).
-- Added `@google/generative-ai` package dependency.
-
-## [1.0.5] - 2025-12-31
-
-### Added
-- `AnthropicSupervisor` implementation using the official Anthropic Node.js SDK (`src/supervisors/AnthropicSupervisor.ts`).
-- Added `@anthropic-ai/sdk` package dependency.
-
-## [1.0.4] - 2025-12-31
-
-### Added
-- `OpenAISupervisor` implementation using the official OpenAI Node.js SDK (`src/supervisors/OpenAISupervisor.ts`).
-- Added `openai` package dependency.
-- Added `openai-node` as a git submodule in `src/submodules/openai-node` for reference.
-
-## [1.0.3] - 2025-12-31
-
-### Added
-- `MockSupervisor` implementation for testing and demonstration (`src/supervisors/MockSupervisor.ts`).
-- Basic CLI entry point (`src/index.ts`) demonstrating a council session.
-
-### Fixed
-- Updated `MockSupervisor` to handle review requests by returning valid JSON, enabling successful council sessions.
-
-## [1.0.2] - 2025-12-31
-
-### Added
-- `BaseSupervisor` abstract class to standardize supervisor behavior (`src/supervisors/BaseSupervisor.ts`).
-
-## [1.0.1] - 2025-12-31
-
-### Fixed
-- Resolved TypeScript errors related to module resolution (switched to ES Modules).
-- Fixed import syntax in `src/council.ts` to support `verbatimModuleSyntax`.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0] - 2025-12-31
 
 ### Added
-- Initial project structure.
-- TypeScript configuration (`tsconfig.json`).
-- Core type definitions (`src/types.ts`).
-- Basic package dependencies (`typescript`, `@types/node`).
+- Initial release of OpenCode Autopilot Council plugin
+- Multi-model supervisor support (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Qwen, Kimi)
+- Council-based debate system with configurable rounds
+- Consensus voting mechanism with adjustable thresholds
+- Automatic monitoring of file edits and tool executions
+- OpenCode plugin hooks integration:
+  - `tool.execute.after` for monitoring code changes
+  - `event` handler for file edit events
+  - `tool.register` for custom commands
+- Custom commands:
+  - `council_debate` - Manually trigger debates
+  - `council_status` - Check council status
+  - `council_toggle` - Enable/disable monitoring
+- Configuration system via `.opencode/council.json`
+- Support for custom system prompts per supervisor
+- OpenAI-compatible API support for multiple providers
+- Comprehensive documentation:
+  - README.md with full feature list
+  - USAGE.md with practical examples
+  - CONTRIBUTING.md with development guidelines
+- Example configurations for various use cases
+- Demo script for testing and demonstration
+- TypeScript support with full type definitions
+
+### Architecture
+- Modular supervisor implementation with factory pattern
+- Abstract base class for easy provider extension
+- Separate council orchestration logic
+- Type-safe interfaces for all components
+
+### Supported Providers
+- OpenAI (ChatGPT) - Native SDK integration
+- Anthropic (Claude) - Native SDK integration
+- Google Gemini - OpenAI-compatible mode
+- xAI Grok - OpenAI-compatible mode
+- DeepSeek - OpenAI-compatible mode
+- Alibaba Qwen - OpenAI-compatible mode
+- Moonshot Kimi - OpenAI-compatible mode
+
+### Features
+- Multi-round debate system
+- Independent supervisor opinions
+- Iterative deliberation process
+- Final voting with consensus calculation
+- Detailed reasoning and vote tracking
+- Environment variable based API key management
+- Configurable debate parameters
+- Rich console output with emojis and formatting
+
+## [Unreleased]
+
+### Planned
+- Automated test suite
+- Webhook notifications
+- Debate history persistence
+- Web UI for council management
+- Support for more AI providers
+- Advanced voting algorithms
+- Performance optimizations
+- Rate limiting and retry logic
+- Metrics and analytics
+- Integration with CI/CD platforms
+
+---
+
+For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).
