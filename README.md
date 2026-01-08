@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenCode Council Orchestrator
 
-## Getting Started
+A web-based orchestration platform for managing local OpenCode sessions, integrated with the "Council of Supervisors" for automated AI guidance.
 
-First, run the development server:
+> **Note:** This project is designed to be a submodule within the **aios** (AI Operating System) monorepo. It serves as the local interface for OpenCode sessions, complementing `jules-app` (which handles remote Google Jules sessions).
+
+## 🎯 Purpose
+
+The **Council Orchestrator** provides a centralized dashboard to:
+1.  **Manage Sessions**: View, start, stop, and monitor multiple local OpenCode repositories.
+2.  **Automate Guidance**: Run a background "Council" loop that continuously monitors active sessions and injects high-level architectural advice from multiple AI models (GPT-4, Claude, Gemini, DeepSeek).
+3.  **Visualize State**: See logs and status of your AI coding agents in real-time.
+
+## 🏗️ Architecture
+
+This project consists of three main components:
+
+1.  **Web Dashboard (`public/index.html`)**: A frontend interface to list sessions and control the orchestrator.
+2.  **Backend Server (`src/server.ts`)**: An Express.js server that:
+    - Serves the dashboard.
+    - Manages `opencode` child processes.
+    - Exposes an API for session management.
+    - Runs the "Council Loop" for active sessions.
+3.  **Council Logic (`src/council.ts`)**: The core multi-agent debate engine that synthesizes advice.
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js & npm
+- OpenCode CLI installed and accessible in your PATH (or configured in `session-manager.ts`).
+- API Keys for the supervisors (OpenAI, Anthropic, Google, etc.) in a `.env` file.
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running the Orchestrator
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start the web server and the orchestration loop:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run server
+```
 
-## Learn More
+Then open your browser to `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+### Legacy Headless Mode
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If you only want to run the council loop for a single active session without the web UI:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run controller
+```
 
-## Deploy on Vercel
+## 📂 Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **`src/server.ts`**: Entry point for the Web Orchestrator.
+- **`src/session-manager.ts`**: Handles spawning OpenCode processes and managing SDK connections.
+- **`src/controller.ts`**: Standalone script for headless operation.
+- **`src/council.ts`**: The multi-agent consensus engine.
+- **`src/supervisors/`**: AI Model implementations (OpenAI, Anthropic, Google, DeepSeek).
+- **`public/`**: Static frontend assets.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔄 Migration to aios
+
+This repository is being migrated to `workspace/aios/opencode-autopilot-council`.
+If you are moving this folder, ensure you:
+1.  Copy all files including `.env` (if present).
+2.  Run `npm install` in the new location.
+3.  Update any relative paths if this project relies on other `aios` modules (currently it is standalone).
+
+## 🤝 Contributing
+
+This project is part of the aios ecosystem.

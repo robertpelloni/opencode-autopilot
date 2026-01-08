@@ -1,7 +1,7 @@
 # Project Handoff: OpenCode Council Orchestrator
 
 **Date:** December 31, 2025
-**Status:** Ready for Migration to AIOS
+**Status:** Ready for Migration to aios
 
 ## 📋 Current State
 
@@ -27,7 +27,7 @@ We have successfully transformed the "Council Plugin" into a full "Council Orche
     - The frontend is functional but basic.
     - **Action**: Add more real-time updates (currently polls or requires refresh).
 
-3.  **Migration to AIOS**:
+3.  **Migration to aios**:
     - You are moving this to `workspace/aios/opencode-autopilot-council`.
     - **Action**:
         1.  Move this entire directory to the new location.
@@ -50,7 +50,7 @@ npm run server
 
 Access the dashboard at: `http://localhost:3000`
 
-## 📝 Notes for AIOS Integration
+## 📝 Notes for aios Integration
 
 - This project is designed to be self-contained.
 - It uses `dotenv` for configuration. Ensure your `.env` file is moved or recreated in the new location.
