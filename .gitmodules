@@ -1,3 +1,0 @@
-[submodule "src/submodules/openai-node"]
-	path = src/submodules/openai-node
-	url = https://github.com/openai/openai-node.git
