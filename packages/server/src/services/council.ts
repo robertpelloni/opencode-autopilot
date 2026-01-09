@@ -23,13 +23,14 @@ export class SupervisorCouncil {
   }
 
   async getAvailableSupervisors(): Promise<Supervisor[]> {
-    const available: Supervisor[] = [];
-    for (const supervisor of this.supervisors) {
-      if (await supervisor.isAvailable()) {
-        available.push(supervisor);
-      }
-    }
-    return available;
+    // Parallelize availability checks
+    const results = await Promise.all(
+      this.supervisors.map(async (supervisor) => ({
+        supervisor,
+        available: await supervisor.isAvailable(),
+      }))
+    );
+    return results.filter((r) => r.available).map((r) => r.supervisor);
   }
 
   async debate(task: DevelopmentTask): Promise<CouncilDecision> {
@@ -54,73 +55,78 @@ export class SupervisorCouncil {
       content: this.formatTaskForDebate(task),
     };
 
-    const initialOpinions: string[] = [];
-    
-    for (const supervisor of available) {
-      try {
-        const response = await supervisor.chat([taskContext]);
-        initialOpinions.push(`**${supervisor.name}**: ${response}`);
-      } catch (error) {
-        initialOpinions.push(`**${supervisor.name}**: [Unable to provide opinion]`);
-      }
-    }
+    const initialOpinions = await Promise.all(
+      available.map(async (supervisor) => {
+        try {
+          const response = await supervisor.chat([taskContext]);
+          return `**${supervisor.name}**: ${response}`;
+        } catch (error) {
+          return `**${supervisor.name}**: [Unable to provide opinion]`;
+        }
+      })
+    );
 
     let debateContext = taskContext.content + '\n\n**Initial Opinions:**\n' + initialOpinions.join('\n\n');
     
     for (let round = 2; round <= rounds; round++) {
-      const roundOpinions: string[] = [];
+      const roundOpinions = await Promise.all(
+        available.map(async (supervisor) => {
+          try {
+            const message: Message = {
+              role: 'user',
+              content: debateContext + '\n\nConsidering the above opinions, provide your refined assessment.',
+            };
+            
+            const response = await supervisor.chat([message]);
+            return `**${supervisor.name}**: ${response}`;
+          } catch {
+            return null;
+          }
+        })
+      );
       
-      for (const supervisor of available) {
-        try {
-          const message: Message = {
-            role: 'user',
-            content: debateContext + '\n\nConsidering the above opinions, provide your refined assessment.',
-          };
-          
-          const response = await supervisor.chat([message]);
-          roundOpinions.push(`**${supervisor.name}**: ${response}`);
-        } catch {
-        }
-      }
-      
-      debateContext += '\n\n**Round ' + round + ' Opinions:**\n' + roundOpinions.join('\n\n');
+      const validOpinions = roundOpinions.filter((o): o is string => o !== null);
+      debateContext += '\n\n**Round ' + round + ' Opinions:**\n' + validOpinions.join('\n\n');
     }
 
-    // Final voting with confidence scores
-    for (const supervisor of available) {
-      try {
-        const votePrompt: Message = {
-          role: 'user',
-          content: debateContext + 
-            '\n\nBased on all discussions, provide your FINAL VOTE:\n' +
-            '1. Vote: APPROVE or REJECT\n' +
-            '2. Confidence: A number between 0.0 and 1.0 (how confident are you in this decision?)\n' +
-            '3. Brief reasoning (2-3 sentences)\n\n' +
-            'Format:\nVOTE: [APPROVE/REJECT]\nCONFIDENCE: [0.0-1.0]\nREASONING: [your reasoning]',
-        };
-        
-        const response = await supervisor.chat([votePrompt]);
-        const approved = this.parseVote(response);
-        const confidence = this.parseConfidence(response);
-        const weight = this.getSupervisorWeight(supervisor.name);
-        
-        votes.push({
-          supervisor: supervisor.name,
-          approved,
-          confidence,
-          weight,
-          comment: response,
-        });
-      } catch {
-        votes.push({
-          supervisor: supervisor.name,
-          approved: false,
-          confidence: 0.5,
-          weight: this.getSupervisorWeight(supervisor.name),
-          comment: 'Failed to vote',
-        });
-      }
-    }
+    const voteResults = await Promise.all(
+      available.map(async (supervisor) => {
+        try {
+          const votePrompt: Message = {
+            role: 'user',
+            content: debateContext + 
+              '\n\nBased on all discussions, provide your FINAL VOTE:\n' +
+              '1. Vote: APPROVE or REJECT\n' +
+              '2. Confidence: A number between 0.0 and 1.0 (how confident are you in this decision?)\n' +
+              '3. Brief reasoning (2-3 sentences)\n\n' +
+              'Format:\nVOTE: [APPROVE/REJECT]\nCONFIDENCE: [0.0-1.0]\nREASONING: [your reasoning]',
+          };
+          
+          const response = await supervisor.chat([votePrompt]);
+          const approved = this.parseVote(response);
+          const confidence = this.parseConfidence(response);
+          const weight = this.getSupervisorWeight(supervisor.name);
+          
+          return {
+            supervisor: supervisor.name,
+            approved,
+            confidence,
+            weight,
+            comment: response,
+          };
+        } catch {
+          return {
+            supervisor: supervisor.name,
+            approved: false,
+            confidence: 0.5,
+            weight: this.getSupervisorWeight(supervisor.name),
+            comment: 'Failed to vote',
+          };
+        }
+      })
+    );
+
+    votes.push(...voteResults);
 
     // Calculate simple consensus (backward compatible)
     const approvals = votes.filter(v => v.approved).length;
