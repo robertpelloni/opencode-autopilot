@@ -1,4 +1,5 @@
 import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, SupervisorConfig } from '@opencode-autopilot/shared';
+import { metrics } from './metrics.js';
 
 export class SupervisorCouncil {
   private supervisors: Supervisor[] = [];
@@ -34,9 +35,11 @@ export class SupervisorCouncil {
   }
 
   async debate(task: DevelopmentTask): Promise<CouncilDecision> {
+    const startTime = Date.now();
     const available = await this.getAvailableSupervisors();
     
     if (available.length === 0) {
+      metrics.recordDebate(Date.now() - startTime, 0, true);
       return {
         approved: true,
         consensus: 1.0,
@@ -143,6 +146,8 @@ export class SupervisorCouncil {
     // Use weighted consensus if enabled, otherwise simple consensus
     const effectiveConsensus = this.config.weightedVoting ? weightedConsensus : consensus;
     const approved = effectiveConsensus >= threshold;
+
+    metrics.recordDebate(Date.now() - startTime, rounds, approved);
 
     return {
       approved,
