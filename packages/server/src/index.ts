@@ -13,6 +13,8 @@ import { createSupervisors } from './supervisors/index.js';
 import { sessionManager } from './services/session-manager.js';
 import { smartPilot } from './services/smart-pilot.js';
 import { autoContinueHooks } from './services/hooks.js';
+import { metrics } from './services/metrics.js';
+import { metricsMiddleware } from './middleware/metrics.js';
 
 const startTime = Date.now();
 const config = loadConfig();
@@ -31,6 +33,7 @@ council.setConsensusThreshold(config.council.consensusThreshold || 0.7);
 const app = new Hono();
 
 app.use('*', logger());
+app.use('*', metricsMiddleware);
 
 app.use('*', cors({
   origin: config.server.corsOrigins || '*',
@@ -94,6 +97,7 @@ app.get('/health', async (c) => {
   
   const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
   const memoryUsage = process.memoryUsage();
+  const metricsSummary = metrics.getSummary();
   
   const status = availableSupervisors.length > 0 || supervisors.length === 0 ? 'healthy' : 'degraded';
   
@@ -131,7 +135,34 @@ app.get('/health', async (c) => {
       heapTotalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024),
       rssMB: Math.round(memoryUsage.rss / 1024 / 1024),
     },
+    metrics: {
+      http: {
+        totalRequests: metricsSummary.http.totalRequests,
+        totalErrors: metricsSummary.http.totalErrors,
+        avgLatencyMs: metricsSummary.http.avgLatencyMs,
+      },
+      supervisors: {
+        totalCalls: metricsSummary.supervisors.totalCalls,
+        totalErrors: metricsSummary.supervisors.totalErrors,
+        avgLatencyMs: metricsSummary.supervisors.avgLatencyMs,
+      },
+      debates: {
+        count: metricsSummary.debates.count,
+        consensusRate: metricsSummary.debates.consensusRate,
+      },
+    },
   });
+});
+
+app.get('/metrics', (c) => {
+  const format = c.req.query('format');
+  
+  if (format === 'prometheus' || c.req.header('Accept')?.includes('text/plain')) {
+    c.header('Content-Type', 'text/plain; version=0.0.4');
+    return c.text(metrics.getPrometheusFormat());
+  }
+  
+  return c.json(metrics.getSummary());
 });
 
 function formatUptime(seconds: number): string {

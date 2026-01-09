@@ -1,3 +1,5 @@
+import { metrics } from '../services/metrics.js';
+
 export interface RetryConfig {
   maxRetries: number;
   baseDelayMs: number;
@@ -25,19 +27,24 @@ export async function fetchWithRetry(
   retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG
 ): Promise<Response> {
   let lastError: Error | null = null;
+  let retryCount = 0;
+  const startTime = Date.now();
   
   for (let attempt = 0; attempt <= retryConfig.maxRetries; attempt++) {
     try {
       const response = await fetch(endpoint, options);
       
       if (response.ok) {
+        metrics.recordSupervisorCall(name, Date.now() - startTime, true, retryCount);
         return response;
       }
       
       if (!isRetryableError(response.status) || attempt === retryConfig.maxRetries) {
+        metrics.recordSupervisorCall(name, Date.now() - startTime, false, retryCount);
         return response;
       }
       
+      retryCount++;
       const retryAfter = response.headers.get('retry-after');
       const delayMs = retryAfter 
         ? parseInt(retryAfter, 10) * 1000 
@@ -53,9 +60,11 @@ export async function fetchWithRetry(
       lastError = error instanceof Error ? error : new Error(String(error));
       
       if (attempt === retryConfig.maxRetries) {
+        metrics.recordSupervisorCall(name, Date.now() - startTime, false, retryCount);
         throw lastError;
       }
       
+      retryCount++;
       const delayMs = Math.min(
         retryConfig.baseDelayMs * Math.pow(2, attempt),
         retryConfig.maxDelayMs
@@ -66,5 +75,6 @@ export async function fetchWithRetry(
     }
   }
   
+  metrics.recordSupervisorCall(name, Date.now() - startTime, false, retryCount);
   throw lastError || new Error('Max retries exceeded');
 }

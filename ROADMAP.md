@@ -62,6 +62,15 @@
 - [x] Supervisor retry logic with exponential backoff (`packages/server/src/supervisors/retry.ts`)
 - [x] Cleanup legacy src/ directory (monorepo consolidation)
 
+## Phase 9: Metrics & Telemetry ✅
+- [x] Metrics service (`packages/server/src/services/metrics.ts`)
+- [x] HTTP request metrics (count, latency, error rate per endpoint)
+- [x] Supervisor metrics (calls, latency, errors, retries per provider)
+- [x] Debate metrics (count, avg latency, consensus rate)
+- [x] Metrics middleware for automatic HTTP tracking
+- [x] `/metrics` endpoint with JSON and Prometheus formats
+- [x] Health endpoint enhanced with metrics summary
+
 ## Environment Variables
 
 ```bash
