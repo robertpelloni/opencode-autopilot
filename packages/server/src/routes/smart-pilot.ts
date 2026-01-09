@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { smartPilot } from '../services/smart-pilot.js';
 import { apiRateLimit } from '../middleware/rate-limit.js';
+import { apiKeyAuth } from '../middleware/auth.js';
 import { smartPilotConfigSchema } from '../schemas.js';
 
 export const smartPilotRoutes = new Hono();
@@ -13,23 +14,23 @@ smartPilotRoutes.get('/status', apiRateLimit(), (c) => {
   });
 });
 
-smartPilotRoutes.post('/enable', apiRateLimit(), (c) => {
+smartPilotRoutes.post('/enable', apiRateLimit(), apiKeyAuth, (c) => {
   smartPilot.setEnabled(true);
   return c.json({ success: true, enabled: true });
 });
 
-smartPilotRoutes.post('/disable', apiRateLimit(), (c) => {
+smartPilotRoutes.post('/disable', apiRateLimit(), apiKeyAuth, (c) => {
   smartPilot.setEnabled(false);
   return c.json({ success: true, enabled: false });
 });
 
-smartPilotRoutes.post('/toggle', apiRateLimit(), (c) => {
+smartPilotRoutes.post('/toggle', apiRateLimit(), apiKeyAuth, (c) => {
   const newState = !smartPilot.isEnabled();
   smartPilot.setEnabled(newState);
   return c.json({ success: true, enabled: newState });
 });
 
-smartPilotRoutes.post('/config', apiRateLimit(), zValidator('json', smartPilotConfigSchema), (c) => {
+smartPilotRoutes.post('/config', apiRateLimit(), apiKeyAuth, zValidator('json', smartPilotConfigSchema), (c) => {
   const body = c.req.valid('json');
   
   if (typeof body.autoApproveThreshold === 'number') {
@@ -45,7 +46,7 @@ smartPilotRoutes.post('/config', apiRateLimit(), zValidator('json', smartPilotCo
   return c.json({ success: true, config: smartPilot.getConfig() });
 });
 
-smartPilotRoutes.post('/reset-approvals', apiRateLimit(), async (c) => {
+smartPilotRoutes.post('/reset-approvals', apiRateLimit(), apiKeyAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   
   if (body.sessionId) {

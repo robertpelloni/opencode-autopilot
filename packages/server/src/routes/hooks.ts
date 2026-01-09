@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { autoContinueHooks, type HookPhase, type HookHandler } from '../services/hooks.js';
 import { apiRateLimit } from '../middleware/rate-limit.js';
+import { apiKeyAuth } from '../middleware/auth.js';
 import { hookRegisterSchema } from '../schemas.js';
 
 export const hooksRoutes = new Hono();
@@ -21,7 +22,7 @@ hooksRoutes.get('/', apiRateLimit(), (c) => {
   });
 });
 
-hooksRoutes.post('/register', apiRateLimit(), zValidator('json', registerBodySchema), async (c) => {
+hooksRoutes.post('/register', apiRateLimit(), apiKeyAuth, zValidator('json', registerBodySchema), async (c) => {
   const { phase, webhookUrl, priority } = c.req.valid('json');
 
   const handler: HookHandler = async (context) => {
@@ -48,7 +49,7 @@ hooksRoutes.post('/register', apiRateLimit(), zValidator('json', registerBodySch
   return c.json({ success: true, hookId: id });
 });
 
-hooksRoutes.delete('/:id', apiRateLimit(), (c) => {
+hooksRoutes.delete('/:id', apiRateLimit(), apiKeyAuth, (c) => {
   const id = c.req.param('id');
   const removed = autoContinueHooks.unregister(id);
   
@@ -59,7 +60,7 @@ hooksRoutes.delete('/:id', apiRateLimit(), (c) => {
   return c.json({ success: removed });
 });
 
-hooksRoutes.delete('/', apiRateLimit(), (c) => {
+hooksRoutes.delete('/', apiRateLimit(), apiKeyAuth, (c) => {
   autoContinueHooks.clear();
   dynamicHooks.clear();
   return c.json({ success: true });

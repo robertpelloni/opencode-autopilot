@@ -71,6 +71,13 @@
 - [x] `/metrics` endpoint with JSON and Prometheus formats
 - [x] Health endpoint enhanced with metrics summary
 
+## Phase 10: API Authentication ✅
+- [x] API key authentication middleware (`packages/server/src/middleware/auth.ts`)
+- [x] Supports `Authorization: Bearer <key>` and `X-API-Key` headers
+- [x] Protected mutation endpoints (council, smart-pilot, hooks)
+- [x] Public endpoints remain open (health, ready, metrics, status)
+- [x] Optional - disabled when `API_KEY` env var not set
+
 ## Environment Variables
 
 ```bash
