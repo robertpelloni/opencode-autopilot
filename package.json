@@ -15,7 +15,7 @@
     "build:shared": "bun run --filter '@opencode-autopilot/shared' build",
     "build:server": "bun run --filter '@opencode-autopilot/server' build",
     "build:cli": "bun run --filter '@opencode-autopilot/cli' build",
-    "build:legacy": "tsc",
+
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",
     "test:e2e": "bun run test:mock",
@@ -52,7 +52,7 @@
   },
   "opencode": {
     "plugin": {
-      "file": "dist/index.js"
+      "file": "packages/server/dist/index.js"
     }
   }
 }
