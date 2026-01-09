@@ -1,5 +1,5 @@
-import { SupervisorCouncil } from './council';
-import { CouncilConfig, DevelopmentTask } from './types';
+import { SupervisorCouncil } from './council/index.js';
+import { CouncilConfig, DevelopmentTask, SupervisorConfig } from './types.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -266,6 +266,6 @@ export default async function AutopilotCouncilPlugin(context: PluginContext) {
 }
 
 // Export types for external use
-export * from './types';
-export { SupervisorCouncil } from './council';
-export { SupervisorFactory } from './models';
+export * from './types.js';
+export { SupervisorCouncil } from './council/index.js';
+export { SupervisorFactory } from './models/index.js';

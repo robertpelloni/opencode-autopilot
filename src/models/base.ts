@@ -1,4 +1,4 @@
-import { Supervisor, Message, SupervisorConfig } from '../types';
+import { Supervisor, Message, SupervisorConfig } from '../types.js';
 
 /**
  * Abstract base class for supervisor implementations
@@ -14,7 +14,7 @@ export abstract class BaseSupervisor implements Supervisor {
   constructor(config: SupervisorConfig) {
     this.name = config.name;
     this.provider = config.provider;
-    this.model = config.model;
+    this.model = config.model || config.modelName || 'default';
     this.apiKey = config.apiKey || process.env[this.getApiKeyEnvVar()];
     this.baseURL = config.baseURL;
     this.systemPrompt = config.systemPrompt || this.getDefaultSystemPrompt();

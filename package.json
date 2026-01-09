@@ -1,30 +1,50 @@
 {
-  "name": "opencode-autopilot-council",
+  "name": "opencode-autopilot",
   "version": "1.0.0",
-  "description": "An OpenCode plugin that uses multiple AI models as supervisors to discuss and guide the development process",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "private": true,
+  "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "dev": "bun run --filter '@opencode-autopilot/server' dev",
+    "dev:cli": "bun run --filter '@opencode-autopilot/cli' dev",
+    "dev:all": "concurrently \"bun run dev\" \"sleep 2 && bun run dev:cli\"",
+    "build": "bun run --filter '*' build",
+    "build:shared": "bun run --filter '@opencode-autopilot/shared' build",
+    "build:server": "bun run --filter '@opencode-autopilot/server' build",
+    "build:cli": "bun run --filter '@opencode-autopilot/cli' build",
+    "build:legacy": "tsc",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "test:e2e": "bun run test:mock",
+    "test:mock": "curl -s http://localhost:3847/api/council/add-mock && curl -s -X POST -H 'Content-Type: application/json' -d '{\"id\":\"test\",\"description\":\"Test task\",\"context\":\"Testing\",\"files\":[]}' http://localhost:3847/api/council/debate"
   },
   "keywords": [
     "opencode",
+    "superai-cli",
     "plugin",
     "ai",
     "autopilot",
     "council",
-    "supervisor"
+    "supervisor",
+    "hono",
+    "ink",
+    "cli"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^20.0.0",
+    "concurrently": "^8.2.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
+    "@google/generative-ai": "^0.24.1",
     "openai": "^4.0.0"
   },
   "peerDependencies": {

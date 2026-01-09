@@ -1,6 +1,6 @@
-import { Supervisor, SupervisorConfig } from '../types';
-import { OpenAISupervisor, OpenAICompatibleSupervisor } from './openai';
-import { ClaudeSupervisor } from './claude';
+import { Supervisor, SupervisorConfig } from '../types.js';
+import { OpenAISupervisor, OpenAICompatibleSupervisor } from './openai.js';
+import { ClaudeSupervisor } from './claude.js';
 
 /**
  * Factory for creating supervisor instances
@@ -29,4 +29,4 @@ export class SupervisorFactory {
 }
 
 export { OpenAISupervisor, OpenAICompatibleSupervisor, ClaudeSupervisor };
-export { BaseSupervisor } from './base';
+export { BaseSupervisor } from './base.js';

@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { BaseSupervisor } from './base';
-import { Message } from '../types';
+import { BaseSupervisor } from './base.js';
+import { Message, SupervisorConfig } from '../types.js';
 
 /**
  * Anthropic Claude-based supervisor
@@ -8,7 +8,7 @@ import { Message } from '../types';
 export class ClaudeSupervisor extends BaseSupervisor {
   private client: Anthropic;
 
-  constructor(config: any) {
+  constructor(config: SupervisorConfig) {
     super(config);
     this.client = new Anthropic({
       apiKey: this.apiKey,

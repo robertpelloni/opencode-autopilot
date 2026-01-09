@@ -366,7 +366,7 @@ export class SessionManager {
         });
 
         council.init().then(() => {
-            this.log(session.id, `Council initialized (SmartPilot: ${config.smartPilot ? 'ON' : 'OFF'}, Debate: ${config.debateRounds > 0 ? 'ON' : 'OFF'})`);
+            this.log(session.id, `Council initialized (SmartPilot: ${config.smartPilot ? 'ON' : 'OFF'}, Debate: ${(config.debateRounds || 0) > 0 ? 'ON' : 'OFF'})`);
             session.council = council;
         }).catch(err => {
             this.log(session.id, `Council init failed: ${err.message}`);

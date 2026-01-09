@@ -1,32 +1,17 @@
-import { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message } from '../types.js';
-import { SupervisorFactory } from '../models/index.js';
+import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, SupervisorConfig } from '@opencode-autopilot/shared';
 
-/**
- * Council of supervisors that debate and make decisions
- */
 export class SupervisorCouncil {
   private supervisors: Supervisor[] = [];
   private config: CouncilConfig;
 
   constructor(config: CouncilConfig) {
     this.config = config;
-    this.initializeSupervisors();
   }
 
-  private initializeSupervisors() {
-    for (const supervisorConfig of this.config.supervisors) {
-      try {
-        const supervisor = SupervisorFactory.createSupervisor(supervisorConfig);
-        this.supervisors.push(supervisor);
-      } catch (error) {
-        console.error(`Failed to initialize supervisor ${supervisorConfig.name}:`, error);
-      }
-    }
+  addSupervisor(supervisor: Supervisor) {
+    this.supervisors.push(supervisor);
   }
 
-  /**
-   * Get available supervisors
-   */
   async getAvailableSupervisors(): Promise<Supervisor[]> {
     const available: Supervisor[] = [];
     for (const supervisor of this.supervisors) {
@@ -37,52 +22,43 @@ export class SupervisorCouncil {
     return available;
   }
 
-  /**
-   * Conduct a debate among supervisors about a development task
-   */
   async debate(task: DevelopmentTask): Promise<CouncilDecision> {
     const available = await this.getAvailableSupervisors();
     
     if (available.length === 0) {
-      throw new Error('No supervisors are available');
+      return {
+        approved: true,
+        consensus: 1.0,
+        votes: [],
+        reasoning: 'No supervisors available - auto-approving',
+      };
     }
 
     const rounds = this.config.debateRounds || 2;
     const votes: CouncilDecision['votes'] = [];
 
-    // Initial context for the debate
     const taskContext: Message = {
       role: 'user',
       content: this.formatTaskForDebate(task),
     };
 
-    // Round 1: Each supervisor provides their initial opinion
-    console.log(`\n🗳️  Council Debate - Round 1: Initial Opinions`);
     const initialOpinions: string[] = [];
     
     for (const supervisor of available) {
-      console.log(`\n📢 ${supervisor.name} (${supervisor.provider}) is evaluating...`);
-      
       try {
         const response = await supervisor.chat([taskContext]);
         initialOpinions.push(`**${supervisor.name}**: ${response}`);
-        console.log(`✓ ${supervisor.name}: ${response.substring(0, 100)}...`);
       } catch (error) {
-        console.error(`✗ ${supervisor.name} failed:`, error);
         initialOpinions.push(`**${supervisor.name}**: [Unable to provide opinion]`);
       }
     }
 
-    // Round 2+: Supervisors debate considering each other's opinions
     let debateContext = taskContext.content + '\n\n**Initial Opinions:**\n' + initialOpinions.join('\n\n');
     
     for (let round = 2; round <= rounds; round++) {
-      console.log(`\n🗳️  Council Debate - Round ${round}: Deliberation`);
       const roundOpinions: string[] = [];
       
       for (const supervisor of available) {
-        console.log(`\n📢 ${supervisor.name} is deliberating...`);
-        
         try {
           const message: Message = {
             role: 'user',
@@ -91,21 +67,14 @@ export class SupervisorCouncil {
           
           const response = await supervisor.chat([message]);
           roundOpinions.push(`**${supervisor.name}**: ${response}`);
-          console.log(`✓ ${supervisor.name}: ${response.substring(0, 100)}...`);
-        } catch (error) {
-          console.error(`✗ ${supervisor.name} failed:`, error);
+        } catch {
         }
       }
       
       debateContext += '\n\n**Round ' + round + ' Opinions:**\n' + roundOpinions.join('\n\n');
     }
 
-    // Final voting round
-    console.log(`\n🗳️  Council Debate - Final Voting`);
-    
     for (const supervisor of available) {
-      console.log(`\n🗳️  ${supervisor.name} is casting final vote...`);
-      
       try {
         const votePrompt: Message = {
           role: 'user',
@@ -124,10 +93,7 @@ export class SupervisorCouncil {
           approved,
           comment: response,
         });
-        
-        console.log(`✓ ${supervisor.name}: ${approved ? 'APPROVED' : 'REJECTED'}`);
-      } catch (error) {
-        console.error(`✗ ${supervisor.name} failed to vote:`, error);
+      } catch {
         votes.push({
           supervisor: supervisor.name,
           approved: false,
@@ -136,14 +102,10 @@ export class SupervisorCouncil {
       }
     }
 
-    // Calculate consensus
     const approvals = votes.filter(v => v.approved).length;
     const consensus = votes.length > 0 ? approvals / votes.length : 0;
     const threshold = this.config.consensusThreshold || 0.5;
     const approved = consensus >= threshold;
-
-    console.log(`\n📊 Voting Results: ${approvals}/${votes.length} approved (${(consensus * 100).toFixed(0)}%)`);
-    console.log(`Decision: ${approved ? '✅ APPROVED' : '❌ REJECTED'}`);
 
     return {
       approved,
@@ -153,9 +115,6 @@ export class SupervisorCouncil {
     };
   }
 
-  /**
-   * Format task for debate
-   */
   private formatTaskForDebate(task: DevelopmentTask): string {
     return `
 # Development Task Review
@@ -180,13 +139,9 @@ Be thorough but concise in your analysis.
 `.trim();
   }
 
-  /**
-   * Parse vote from supervisor response
-   */
   private parseVote(response: string): boolean {
     const normalized = response.toUpperCase();
     
-    // Look for explicit vote markers (highest priority)
     if (normalized.includes('VOTE: APPROVE') || normalized.includes('VOTE:APPROVE')) {
       return true;
     }
@@ -194,26 +149,15 @@ Be thorough but concise in your analysis.
       return false;
     }
     
-    // Look for clear approval/rejection statements at word boundaries
-    // Use word boundary checks to avoid false matches in phrases
     const approveMatch = /\b(APPROVE|APPROVED|ACCEPT|ACCEPTED|LGTM)\b/.test(normalized);
     const rejectMatch = /\b(REJECT|REJECTED|DENY|DENIED)\b/.test(normalized);
     
-    if (approveMatch && !rejectMatch) {
-      return true;
-    }
-    if (rejectMatch && !approveMatch) {
-      return false;
-    }
+    if (approveMatch && !rejectMatch) return true;
+    if (rejectMatch && !approveMatch) return false;
     
-    // If both or neither found, default to rejection for safety
-    // (conservative approach - unclear votes should not auto-approve)
     return false;
   }
 
-  /**
-   * Generate consensus reasoning
-   */
   private generateConsensusReasoning(votes: CouncilDecision['votes'], approved: boolean): string {
     const approvals = votes.filter(v => v.approved).length;
     const rejections = votes.length - approvals;
@@ -235,4 +179,31 @@ Be thorough but concise in your analysis.
     
     return reasoning;
   }
+
+  getSupervisors(): Supervisor[] {
+    return [...this.supervisors];
+  }
+
+  clearSupervisors(): void {
+    this.supervisors = [];
+  }
+
+  setDebateRounds(rounds: number): void {
+    this.config.debateRounds = rounds;
+  }
+
+  setConsensusThreshold(threshold: number): void {
+    this.config.consensusThreshold = threshold;
+  }
+
+  getConfig(): CouncilConfig {
+    return { ...this.config };
+  }
 }
+
+export const council = new SupervisorCouncil({
+  supervisors: [],
+  debateRounds: 2,
+  consensusThreshold: 0.7,
+  enabled: true,
+});

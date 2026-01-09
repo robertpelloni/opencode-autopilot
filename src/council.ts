@@ -37,7 +37,7 @@ export class Council {
     
     const discussionLog: Message[] = [];
 
-    for (let round = 0; round < this.config.debateRounds; round++) {
+    for (let round = 0; round < (this.config.debateRounds || 2); round++) {
       console.log(`--- Debate Round ${round + 1} ---`);
       
       // Parallel input from all supervisors

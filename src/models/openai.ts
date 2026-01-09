@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { BaseSupervisor } from './base';
-import { Message } from '../types';
+import { BaseSupervisor } from './base.js';
+import { Message, SupervisorConfig } from '../types.js';
 
 /**
  * OpenAI-based supervisor (ChatGPT)
@@ -8,7 +8,7 @@ import { Message } from '../types';
 export class OpenAISupervisor extends BaseSupervisor {
   private client: OpenAI;
 
-  constructor(config: any) {
+  constructor(config: SupervisorConfig) {
     super(config);
     this.client = new OpenAI({
       apiKey: this.apiKey,
@@ -40,7 +40,7 @@ export class OpenAISupervisor extends BaseSupervisor {
 export class OpenAICompatibleSupervisor extends BaseSupervisor {
   private client: OpenAI;
 
-  constructor(config: any) {
+  constructor(config: SupervisorConfig) {
     super(config);
     this.client = new OpenAI({
       apiKey: this.apiKey,

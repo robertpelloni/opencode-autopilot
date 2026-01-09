@@ -1,0 +1,58 @@
+import React, { useState, useEffect } from 'react';
+import { Box, Text, useInput, useApp } from 'ink';
+import { Dashboard } from './components/Dashboard.js';
+import { useApi } from './hooks/useApi.js';
+import { useWebSocket } from './hooks/useWebSocket.js';
+
+export function App() {
+  const { exit } = useApp();
+  const [view, setView] = useState<'dashboard' | 'logs' | 'council'>('dashboard');
+  const { sessions, council, refresh, toggleCouncil } = useApi();
+  const ws = useWebSocket({ autoReconnect: true });
+
+  useInput((input, key) => {
+    if (input === 'q' || (key.ctrl && input === 'c')) {
+      exit();
+    }
+    if (input === '1') setView('dashboard');
+    if (input === '2') setView('logs');
+    if (input === '3') setView('council');
+    if (input === 'r') refresh();
+    if (input === 't') toggleCouncil();
+  });
+
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 5000);
+    return () => clearInterval(interval);
+  }, [refresh]);
+
+  const wsStatusColor = ws.isConnected ? 'green' : ws.status === 'connecting' ? 'yellow' : 'red';
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Box marginBottom={1}>
+        <Text bold color="cyan">opencode-autopilot</Text>
+        <Text> │ </Text>
+        <Text color={view === 'dashboard' ? 'green' : 'gray'}>[1] Dashboard</Text>
+        <Text> </Text>
+        <Text color={view === 'logs' ? 'green' : 'gray'}>[2] Logs</Text>
+        <Text> </Text>
+        <Text color={view === 'council' ? 'green' : 'gray'}>[3] Council</Text>
+        <Text> │ </Text>
+        <Text color="gray">[r] Refresh [t] Toggle [q] Quit</Text>
+        <Text> │ </Text>
+        <Text color={wsStatusColor}>●</Text>
+        <Text color="gray"> WS</Text>
+      </Box>
+      
+      <Dashboard 
+        sessions={sessions} 
+        council={council} 
+        view={view}
+        wsLogs={ws.logs}
+        wsDecisions={ws.decisions}
+      />
+    </Box>
+  );
+}
