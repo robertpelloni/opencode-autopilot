@@ -9,8 +9,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
+    "@opencode-autopilot/shared": "workspace:*",
     "hono": "^4.0.0",
-    "@opencode-autopilot/shared": "workspace:*"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -1,27 +1,28 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { autoContinueHooks, type HookPhase, type HookHandler } from '../services/hooks.js';
+import { apiRateLimit } from '../middleware/rate-limit.js';
+import { hookRegisterSchema } from '../schemas.js';
 
 export const hooksRoutes = new Hono();
 
 const dynamicHooks: Map<string, HookHandler> = new Map();
 
-hooksRoutes.get('/', (c) => {
+const registerBodySchema = z.object({
+  phase: z.enum(['pre-debate', 'post-debate', 'pre-guidance', 'post-guidance', 'on-error']),
+  webhookUrl: z.string().url(),
+  priority: z.number().int().min(0).max(100).optional(),
+});
+
+hooksRoutes.get('/', apiRateLimit(), (c) => {
   return c.json({
     hooks: autoContinueHooks.getRegisteredHooks(),
   });
 });
 
-hooksRoutes.post('/register', async (c) => {
-  const body = await c.req.json();
-  const { phase, webhookUrl, priority } = body as { 
-    phase: HookPhase; 
-    webhookUrl: string; 
-    priority?: number;
-  };
-  
-  if (!phase || !webhookUrl) {
-    return c.json({ error: 'Missing phase or webhookUrl' }, 400);
-  }
+hooksRoutes.post('/register', apiRateLimit(), zValidator('json', registerBodySchema), async (c) => {
+  const { phase, webhookUrl, priority } = c.req.valid('json');
 
   const handler: HookHandler = async (context) => {
     try {
@@ -47,7 +48,7 @@ hooksRoutes.post('/register', async (c) => {
   return c.json({ success: true, hookId: id });
 });
 
-hooksRoutes.delete('/:id', (c) => {
+hooksRoutes.delete('/:id', apiRateLimit(), (c) => {
   const id = c.req.param('id');
   const removed = autoContinueHooks.unregister(id);
   
@@ -58,7 +59,7 @@ hooksRoutes.delete('/:id', (c) => {
   return c.json({ success: removed });
 });
 
-hooksRoutes.delete('/', (c) => {
+hooksRoutes.delete('/', apiRateLimit(), (c) => {
   autoContinueHooks.clear();
   dynamicHooks.clear();
   return c.json({ success: true });

@@ -1,8 +1,12 @@
 import { Hono } from 'hono';
-import type { CouncilConfig, CouncilDecision, DevelopmentTask, ApiResponse, SupervisorConfig } from '@opencode-autopilot/shared';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig } from '@opencode-autopilot/shared';
 import { SupervisorCouncil } from '../services/council.js';
 import { createSupervisor, createSupervisors, createMockSupervisor } from '../supervisors/index.js';
 import { wsManager } from '../services/ws-manager.js';
+import { debateRateLimit, apiRateLimit } from '../middleware/rate-limit.js';
+import { debateRequestSchema, supervisorConfigSchema } from '../schemas.js';
 
 const council = new Hono();
 
@@ -28,7 +32,20 @@ function getOrCreateCouncil(): SupervisorCouncil {
   return councilInstance;
 }
 
-council.get('/status', async (c) => {
+const configSchema = z.object({
+  supervisors: z.array(supervisorConfigSchema).optional(),
+  debateRounds: z.number().int().min(1).max(10).optional(),
+  consensusThreshold: z.number().min(0).max(1).optional(),
+  enabled: z.boolean().optional(),
+  smartPilot: z.boolean().optional(),
+  weightedVoting: z.boolean().optional(),
+});
+
+const supervisorsBodySchema = z.object({
+  supervisors: z.array(supervisorConfigSchema),
+});
+
+council.get('/status', apiRateLimit(), async (c) => {
   const instance = getOrCreateCouncil();
   const available = await instance.getAvailableSupervisors();
   
@@ -43,12 +60,12 @@ council.get('/status', async (c) => {
   });
 });
 
-council.post('/config', async (c) => {
-  const body = await c.req.json<Partial<CouncilConfig>>();
+council.post('/config', apiRateLimit(), zValidator('json', configSchema), async (c) => {
+  const body = c.req.valid('json');
   config = { ...config, ...body };
   
   councilInstance = new SupervisorCouncil(config);
-  if (config.supervisors.length > 0) {
+  if (config.supervisors && config.supervisors.length > 0) {
     const supervisors = createSupervisors(config.supervisors);
     supervisors.forEach((s) => councilInstance!.addSupervisor(s));
   }
@@ -62,12 +79,8 @@ council.post('/config', async (c) => {
   return c.json<ApiResponse<CouncilConfig>>({ success: true, data: config });
 });
 
-council.post('/supervisors', async (c) => {
-  const body = await c.req.json<{ supervisors: SupervisorConfig[] }>();
-  
-  if (!body.supervisors || !Array.isArray(body.supervisors)) {
-    return c.json<ApiResponse<never>>({ success: false, error: 'supervisors array required' }, 400);
-  }
+council.post('/supervisors', apiRateLimit(), zValidator('json', supervisorsBodySchema), async (c) => {
+  const body = c.req.valid('json');
 
   const instance = getOrCreateCouncil();
   const added: string[] = [];
@@ -75,11 +88,11 @@ council.post('/supervisors', async (c) => {
 
   for (const supervisorConfig of body.supervisors) {
     try {
-      const supervisor = createSupervisor(supervisorConfig);
+      const supervisor = createSupervisor(supervisorConfig as SupervisorConfig);
       instance.addSupervisor(supervisor);
       added.push(supervisorConfig.name);
       
-      config.supervisors.push(supervisorConfig);
+      config.supervisors.push(supervisorConfig as SupervisorConfig);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       failed.push(`${supervisorConfig.name}: ${msg}`);
@@ -98,7 +111,7 @@ council.post('/supervisors', async (c) => {
   });
 });
 
-council.delete('/supervisors', (c) => {
+council.delete('/supervisors', apiRateLimit(), (c) => {
   config.supervisors = [];
   councilInstance = new SupervisorCouncil(config);
   
@@ -111,7 +124,7 @@ council.delete('/supervisors', (c) => {
   return c.json<ApiResponse<{ message: string }>>({ success: true, data: { message: 'All supervisors removed' } });
 });
 
-council.post('/debate', async (c) => {
+council.post('/debate', debateRateLimit(), zValidator('json', debateRequestSchema.shape.task), async (c) => {
   if (!config.enabled) {
     const decision: CouncilDecision = {
       approved: true,
@@ -129,7 +142,7 @@ council.post('/debate', async (c) => {
     return c.json<ApiResponse<CouncilDecision>>({ success: true, data: decision });
   }
 
-  const task = await c.req.json<DevelopmentTask>();
+  const task = c.req.valid('json');
   const instance = getOrCreateCouncil();
   
   wsManager.broadcast({
@@ -171,7 +184,7 @@ council.post('/debate', async (c) => {
   }
 });
 
-council.post('/toggle', (c) => {
+council.post('/toggle', apiRateLimit(), (c) => {
   config.enabled = !config.enabled;
   
   wsManager.broadcast({
@@ -183,7 +196,7 @@ council.post('/toggle', (c) => {
   return c.json<ApiResponse<{ enabled: boolean }>>({ success: true, data: { enabled: config.enabled } });
 });
 
-council.post('/add-mock', (c) => {
+council.post('/add-mock', apiRateLimit(), (c) => {
   const instance = getOrCreateCouncil();
   const mockName = `MockSupervisor-${Date.now()}`;
   instance.addSupervisor(createMockSupervisor(mockName));
