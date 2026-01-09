@@ -11,6 +11,7 @@ export interface SupervisorConfig {
   temperature?: number;
   baseURL?: string;
   systemPrompt?: string;
+  weight?: number;
 }
 
 export interface CouncilConfig {
@@ -19,6 +20,7 @@ export interface CouncilConfig {
   consensusThreshold?: number;
   enabled?: boolean;
   smartPilot?: boolean;
+  weightedVoting?: boolean;
 }
 
 export interface Session {
@@ -48,13 +50,17 @@ export interface DevelopmentTask {
 export interface CouncilDecision {
   approved: boolean;
   consensus: number;
+  weightedConsensus?: number;
   votes: Vote[];
   reasoning: string;
+  dissent?: string[];
 }
 
 export interface Vote {
   supervisor: string;
   approved: boolean;
+  confidence: number;
+  weight: number;
   comment: string;
 }
 
