@@ -30,7 +30,7 @@
 - [x] Basic Discussion Logic (Round-robin debate)
 - [x] Configurable debate rounds
 - [x] Configurable consensus threshold
-- [ ] Advanced Consensus Mechanism (Weighted voting)
+- [x] Advanced Consensus Mechanism (Weighted voting with confidence scores)
 - [ ] Smart Pilot mode (auto-continue)
 - [ ] Auto-continue Hooks
 
@@ -43,7 +43,7 @@
 
 ## Phase 6: Testing & Refinement
 - [x] E2E Test Script (`scripts/test-e2e.ts`)
-- [ ] Unit Tests for Council logic
+- [x] Unit Tests for Council logic (18 tests)
 - [ ] Integration Tests
 - [ ] Performance Optimization
 
