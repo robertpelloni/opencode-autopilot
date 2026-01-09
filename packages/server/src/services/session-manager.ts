@@ -1,11 +1,10 @@
 import type { Session, LogEntry, DevelopmentTask, Guidance } from '@opencode-autopilot/shared';
-import { spawn, ChildProcess } from 'child_process';
 import { loadConfig } from './config.js';
 import { wsManager } from './ws-manager.js';
 
 interface ManagedSession {
   session: Session;
-  process: ChildProcess | null;
+  process: { pid: number; kill: () => void; exited: Promise<number> } | null;
   port: number;
 }
 
@@ -14,7 +13,7 @@ class SessionManager {
   private basePort: number;
   private maxSessions: number;
   private pollInterval: number;
-  private pollTimer: NodeJS.Timeout | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     const config = loadConfig();
@@ -65,30 +64,21 @@ class SessionManager {
     wsManager.notifySessionUpdate(session);
 
     try {
-      const proc = spawn('opencode', ['serve', '--port', String(port)], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true,
+      const proc = Bun.spawn(['opencode', 'serve', '--port', String(port)], {
+        stdout: 'pipe',
+        stderr: 'pipe',
       });
 
-      managed.process = proc;
+      managed.process = {
+        pid: proc.pid,
+        kill: () => proc.kill(),
+        exited: proc.exited,
+      };
 
-      proc.stdout?.on('data', (data: Buffer) => {
-        const msg = data.toString().trim();
-        if (msg) this.log(id, 'info', msg);
-      });
+      this.streamOutput(id, proc.stdout, 'info');
+      this.streamOutput(id, proc.stderr, 'warn');
 
-      proc.stderr?.on('data', (data: Buffer) => {
-        const msg = data.toString().trim();
-        if (msg) this.log(id, 'warn', msg);
-      });
-
-      proc.on('error', (err) => {
-        this.log(id, 'error', `Process error: ${err.message}`);
-        session.status = 'error';
-        wsManager.notifySessionUpdate(session);
-      });
-
-      proc.on('exit', (code) => {
+      proc.exited.then((code) => {
         this.log(id, 'info', `Process exited with code ${code}`);
         session.status = code === 0 ? 'completed' : 'error';
         wsManager.notifySessionUpdate(session);
@@ -107,6 +97,27 @@ class SessionManager {
     }
 
     return session;
+  }
+
+  private async streamOutput(
+    sessionId: string,
+    stream: ReadableStream<Uint8Array> | null,
+    level: 'info' | 'warn'
+  ): Promise<void> {
+    if (!stream) return;
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value).trim();
+        if (text) this.log(sessionId, level, text);
+      }
+    } catch {
+      // Stream ended
+    }
   }
 
   private async waitForReady(port: number, timeout: number): Promise<void> {
@@ -128,12 +139,12 @@ class SessionManager {
 
     this.log(id, 'info', 'Stopping session');
     
-    if (managed.process && !managed.process.killed) {
-      managed.process.kill('SIGTERM');
-      await new Promise(r => setTimeout(r, 1000));
-      if (!managed.process.killed) {
-        managed.process.kill('SIGKILL');
-      }
+    if (managed.process) {
+      managed.process.kill();
+      await Promise.race([
+        managed.process.exited,
+        new Promise(r => setTimeout(r, 5000)),
+      ]);
     }
 
     managed.session.status = 'stopped';
