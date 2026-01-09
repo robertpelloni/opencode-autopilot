@@ -26,25 +26,25 @@
 - [x] Session manager for spawning opencode processes
 - [x] WebSocket real-time updates
 
-## Phase 4: Workflow & Orchestration (In Progress)
+## Phase 4: Workflow & Orchestration ✅
 - [x] Basic Discussion Logic (Round-robin debate)
 - [x] Configurable debate rounds
 - [x] Configurable consensus threshold
 - [x] Advanced Consensus Mechanism (Weighted voting with confidence scores)
-- [ ] Smart Pilot mode (auto-continue)
-- [ ] Auto-continue Hooks
+- [x] Smart Pilot mode (auto-continue)
+- [x] Auto-continue Hooks
 
-## Phase 5: Interface & Visualization
+## Phase 5: Interface & Visualization ✅
 - [x] CLI Interface with commands (debate, status, add-mock, toggle)
-- [x] REST API endpoints (/api/council, /api/sessions)
+- [x] REST API endpoints (/api/council, /api/sessions, /api/smart-pilot, /api/hooks)
 - [x] WebSocket for real-time updates
-- [ ] TUI Dashboard for Supervisor Status & Debate History
+- [x] TUI Dashboard for Supervisor Status & Debate History
 - [ ] Documentation & Submodule Tracking
 
-## Phase 6: Testing & Refinement
+## Phase 6: Testing & Refinement (In Progress)
 - [x] E2E Test Script (`scripts/test-e2e.ts`)
 - [x] Unit Tests for Council logic (18 tests)
-- [ ] Integration Tests
+- [x] Integration Tests (13 API tests)
 - [ ] Performance Optimization
 
 ## Environment Variables
