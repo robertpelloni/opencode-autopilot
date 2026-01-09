@@ -10,6 +10,7 @@ export interface AutopilotConfig {
   server: {
     port: number;
     host: string;
+    corsOrigins?: string;
   };
   sessions: {
     basePort: number;

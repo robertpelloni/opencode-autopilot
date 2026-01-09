@@ -24,11 +24,14 @@ describe('API Integration Tests', () => {
   });
 
   describe('Health & Root', () => {
-    test('GET /health returns ok', async () => {
+    test('GET /health returns healthy status', async () => {
       const res = await fetch(`${API_BASE}/health`);
       expect(res.ok).toBe(true);
       const data = await res.json();
-      expect(data.status).toBe('ok');
+      expect(['healthy', 'degraded']).toContain(data.status);
+      expect(data.uptime).toBeDefined();
+      expect(data.supervisors).toBeDefined();
+      expect(data.sessions).toBeDefined();
     });
 
     test('GET / returns server info', async () => {

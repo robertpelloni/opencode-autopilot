@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { HTTPException } from 'hono/http-exception';
 import { sessionRoutes } from './routes/sessions.js';
 import { councilRoutes } from './routes/council.js';
 import { wsRoutes } from './routes/ws.js';
@@ -11,11 +12,11 @@ import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
 import { sessionManager } from './services/session-manager.js';
 import { smartPilot } from './services/smart-pilot.js';
+import { autoContinueHooks } from './services/hooks.js';
 
-// Load config and initialize supervisors
+const startTime = Date.now();
 const config = loadConfig();
 
-// Auto-add supervisors from config/env
 if (config.council.supervisors.length > 0) {
   const supervisors = createSupervisors(config.council.supervisors);
   for (const supervisor of supervisors) {
@@ -24,18 +25,49 @@ if (config.council.supervisors.length > 0) {
   console.log(`Loaded ${supervisors.length} supervisor(s) from config`);
 }
 
-// Configure council settings
 council.setDebateRounds(config.council.debateRounds || 2);
 council.setConsensusThreshold(config.council.consensusThreshold || 0.7);
 
 const app = new Hono();
 
 app.use('*', logger());
-app.use('*', cors());
+
+app.use('*', cors({
+  origin: config.server.corsOrigins || '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
+  maxAge: 86400,
+  credentials: true,
+}));
+
+app.onError((err, c) => {
+  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
+  
+  if (err instanceof HTTPException) {
+    return c.json({ 
+      success: false, 
+      error: err.message 
+    }, err.status);
+  }
+  
+  if (err.message?.includes('validation')) {
+    return c.json({ 
+      success: false, 
+      error: 'Validation error', 
+      details: err.message 
+    }, 400);
+  }
+  
+  return c.json({ 
+    success: false, 
+    error: 'Internal server error' 
+  }, 500);
+});
 
 app.get('/', (c) => c.json({ 
   name: 'opencode-autopilot', 
-  version: '0.1.0',
+  version: '0.2.0',
   config: {
     supervisors: council.getSupervisors().map(s => s.name),
     debateRounds: config.council.debateRounds,
@@ -49,10 +81,93 @@ app.get('/', (c) => c.json({
     smartPilot: '/api/smart-pilot',
     hooks: '/api/hooks',
     websocket: '/ws',
+    health: '/health',
   }
 }));
 
-app.get('/health', (c) => c.json({ status: 'ok', timestamp: Date.now() }));
+app.get('/health', async (c) => {
+  const supervisors = council.getSupervisors();
+  const availableSupervisors = await council.getAvailableSupervisors();
+  const sessions = sessionManager.getAllSessions();
+  const activeSessions = sessions.filter((s: { status: string }) => s.status === 'running');
+  const hooks = autoContinueHooks.getRegisteredHooks();
+  
+  const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+  const memoryUsage = process.memoryUsage();
+  
+  const status = availableSupervisors.length > 0 || supervisors.length === 0 ? 'healthy' : 'degraded';
+  
+  return c.json({
+    status,
+    timestamp: Date.now(),
+    uptime: {
+      seconds: uptimeSeconds,
+      formatted: formatUptime(uptimeSeconds),
+    },
+    supervisors: {
+      total: supervisors.length,
+      available: availableSupervisors.length,
+      names: supervisors.map(s => s.name),
+    },
+    sessions: {
+      total: sessions.length,
+      active: activeSessions.length,
+    },
+    council: {
+      enabled: config.council.enabled,
+      debateRounds: config.council.debateRounds,
+      consensusThreshold: config.council.consensusThreshold,
+      weightedVoting: config.council.weightedVoting,
+    },
+    smartPilot: {
+      enabled: smartPilot.isEnabled(),
+      config: smartPilot.getConfig(),
+    },
+    hooks: {
+      registered: hooks.length,
+    },
+    memory: {
+      heapUsedMB: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+      heapTotalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      rssMB: Math.round(memoryUsage.rss / 1024 / 1024),
+    },
+  });
+});
+
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${secs}s`);
+  
+  return parts.join(' ');
+}
+
+app.get('/ready', async (c) => {
+  const supervisors = council.getSupervisors();
+  
+  if (supervisors.length === 0) {
+    return c.json({ 
+      ready: true, 
+      message: 'No supervisors configured - accepting requests' 
+    });
+  }
+  
+  const available = await council.getAvailableSupervisors();
+  const ready = available.length > 0;
+  
+  return c.json({ 
+    ready, 
+    availableSupervisors: available.length,
+    totalSupervisors: supervisors.length,
+  }, ready ? 200 : 503);
+});
 
 app.route('/api/sessions', sessionRoutes);
 app.route('/api/council', councilRoutes);
@@ -60,28 +175,30 @@ app.route('/api/smart-pilot', smartPilotRoutes);
 app.route('/api/hooks', hooksRoutes);
 app.route('/ws', wsRoutes);
 
-app.notFound((c) => c.json({ error: 'Not found' }, 404));
+app.notFound((c) => c.json({ 
+  success: false, 
+  error: 'Not found',
+  path: c.req.path,
+}, 404));
 
 const port = config.server.port;
 const host = config.server.host;
 
-// Start session polling
 sessionManager.startPolling();
 
-// Start smart pilot if enabled in config
 if (config.council.smartPilot) {
   smartPilot.setEnabled(true);
 }
 
-// Cleanup on exit
 process.on('SIGINT', async () => {
-  console.log('\nShutting down...');
+  console.log('\nShutting down gracefully...');
   smartPilot.cleanup();
   await sessionManager.cleanup();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, shutting down...');
   smartPilot.cleanup();
   await sessionManager.cleanup();
   process.exit(0);
@@ -95,6 +212,7 @@ export default {
 
 console.log(`Server running on http://${host}:${port}`);
 console.log(`WebSocket available at ws://${host}:${port}/ws`);
+console.log(`Health check: http://${host}:${port}/health`);
 if (council.getSupervisors().length > 0) {
   console.log(`Council supervisors: ${council.getSupervisors().map(s => s.name).join(', ')}`);
 } else {
