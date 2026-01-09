@@ -1,4 +1,5 @@
 import type { Supervisor, SupervisorConfig, Message } from '@opencode-autopilot/shared';
+import { fetchWithRetry } from './retry.js';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -66,7 +67,7 @@ export class AnthropicSupervisor implements Supervisor {
       body.system = systemContent;
     }
 
-    const response = await fetch(`${this.baseURL}/v1/messages`, {
+    const response = await fetchWithRetry(this.name, `${this.baseURL}/v1/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

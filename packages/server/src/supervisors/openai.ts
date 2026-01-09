@@ -1,4 +1,5 @@
 import type { Supervisor, SupervisorConfig, Message } from '@opencode-autopilot/shared';
+import { fetchWithRetry } from './retry.js';
 
 interface OpenAIChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -54,7 +55,7 @@ export class OpenAISupervisor implements Supervisor {
       });
     }
 
-    const response = await fetch(`${this.baseURL}/chat/completions`, {
+    const response = await fetchWithRetry(this.name, `${this.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

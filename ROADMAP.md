@@ -54,6 +54,14 @@
 - [x] Rate limiting middleware (`packages/server/src/middleware/rate-limit.ts`)
 - [x] Graceful shutdown handling (SIGINT/SIGTERM)
 
+## Phase 8: Resilience & Observability ✅
+- [x] Detailed health check endpoint (`/health` with uptime, memory, supervisor status)
+- [x] Readiness probe endpoint (`/ready` for k8s-style checks)
+- [x] Error handling middleware with proper HTTP status codes
+- [x] CORS configuration with exposed rate limit headers
+- [x] Supervisor retry logic with exponential backoff (`packages/server/src/supervisors/retry.ts`)
+- [x] Cleanup legacy src/ directory (monorepo consolidation)
+
 ## Environment Variables
 
 ```bash
