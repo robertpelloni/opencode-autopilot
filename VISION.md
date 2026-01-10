@@ -23,6 +23,6 @@ Single-model code generation is fragile. LLMs hallucinate, miss context, and str
 ### Next Generation Features
 - ~~**Multi-Workspace Support**: Manage debates across multiple projects simultaneously~~ ✅ Implemented
 - ~~**Debate Templates**: Pre-configured debate structures for common scenarios (code review, security audit, architecture review)~~ ✅ Implemented
-- **Model Fine-Tuning Integration**: Support for custom fine-tuned models as supervisors
-- **Collaborative Debates**: Multiple human participants in the council
+- ~~**Model Fine-Tuning Integration**: Support for custom fine-tuned models as supervisors~~ ✅ Implemented
+- ~~**Collaborative Debates**: Multiple human participants in the council~~ ✅ Implemented
 - **Advanced Analytics Dashboard**: Visual insights into debate patterns and supervisor performance trends

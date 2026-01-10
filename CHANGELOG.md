@@ -227,6 +227,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - REST API: `/api/templates/*`
   - Service: `packages/server/src/services/debate-template-manager.ts`
 
+### Added (Model Fine-Tuning Integration)
+- **Fine-Tuned Model Manager Service**: Support for custom fine-tuned models as supervisors
+  - Training dataset management (create, update, delete, validate)
+  - Training data formatting for OpenAI, Anthropic, custom providers
+  - Fine-tune job lifecycle (create, start, cancel, monitor progress)
+  - Job status tracking: pending, preparing, training, completed, failed, cancelled
+  - Model registration from completed jobs or external sources
+  - Model deployment states: inactive, deploying, active, deprecated, retired
+  - Supervisor integration: create supervisors from deployed models
+  - Performance tracking (approval rate, confidence, consensus alignment, response time)
+  - Task-type specific performance metrics
+  - Model comparison and best model selection per task type
+  - Performance history with snapshots
+  - Provider configuration (API keys, base URLs)
+  - Export/import models with performance data
+  - REST API: `/api/fine-tuned-models/*`
+  - Service: `packages/server/src/services/fine-tuned-model-manager.ts`
+
+### Added (Collaborative Debates)
+- **Collaborative Debate Manager Service**: Multi-human participant debates with AI supervisor integration
+  - Multi-participant debates with roles: owner, admin, voter, observer
+  - Invite system with secure tokens (create invite, join with token, direct add)
+  - Debate lifecycle: draft → inviting → waiting_for_participants → in_progress → voting → completed
+  - Real-time messaging with replies and emoji reactions
+  - Human voting with confidence scores, reasoning, concerns, and suggestions
+  - AI supervisor vote integration (combine human + AI votes for final consensus)
+  - Anonymous voting mode for unbiased decisions
+  - Revoting support with vote history
+  - Consensus calculation: strong (≥80%), moderate (≥60%), weak (≥50%), none (<50%)
+  - Voting deadlines with automatic expiration
+  - Participant statistics and debate analytics
+  - Export/import collaborative debates
+  - REST API: `/api/collaborative-debates/*`
+  - Service: `packages/server/src/services/collaborative-debate-manager.ts`
+
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).

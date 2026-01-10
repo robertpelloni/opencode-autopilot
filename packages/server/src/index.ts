@@ -20,6 +20,8 @@ import supervisorAnalyticsRoutes from './routes/supervisor-analytics.js';
 import debateSimulatorRoutes from './routes/debate-simulator.js';
 import workspaceRoutes from './routes/workspace.js';
 import templateRoutes from './routes/templates.js';
+import fineTunedModelsRoutes from './routes/fine-tuned-models.js';
+import collaborativeDebatesRoutes from './routes/collaborative-debates.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -112,6 +114,8 @@ app.get('/', (c) => c.json({
     simulator: '/api/simulator',
     workspaces: '/api/workspaces',
     templates: '/api/templates',
+    fineTunedModels: '/api/fine-tuned-models',
+    collaborativeDebates: '/api/collaborative-debates',
     websocket: '/ws',
     health: '/health',
   }
@@ -245,6 +249,8 @@ app.route('/api/analytics', supervisorAnalyticsRoutes);
 app.route('/api/simulator', debateSimulatorRoutes);
 app.route('/api/workspaces', workspaceRoutes);
 app.route('/api/templates', templateRoutes);
+app.route('/api/fine-tuned-models', fineTunedModelsRoutes);
+app.route('/api/collaborative-debates', collaborativeDebatesRoutes);
 app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));
