@@ -16,6 +16,13 @@ Single-model code generation is fragile. LLMs hallucinate, miss context, and str
 - **Transparency**: The debate process is visible, providing "reasoning trace" for the final code.
 
 ## Future Roadmap
-- **Dynamic Supervisor Selection**: Automatically pick the best team for the task (e.g., "Security Audit" team vs. "UI Design" team).
-- **Human-in-the-Loop Veto**: Interactive mode where the developer acts as the Council Chair.
-- **Plugin Ecosystem**: Standardized interface for adding new models/supervisors.
+- ~~**Dynamic Supervisor Selection**: Automatically pick the best team for the task (e.g., "Security Audit" team vs. "UI Design" team).~~ ✅ Implemented
+- ~~**Human-in-the-Loop Veto**: Interactive mode where the developer acts as the Council Chair.~~ ✅ Implemented
+- ~~**Plugin Ecosystem**: Standardized interface for adding new models/supervisors.~~ ✅ Implemented
+
+### Next Generation Features
+- **Multi-Workspace Support**: Manage debates across multiple projects simultaneously
+- **Debate Templates**: Pre-configured debate structures for common scenarios (code review, security audit, architecture review)
+- **Model Fine-Tuning Integration**: Support for custom fine-tuned models as supervisors
+- **Collaborative Debates**: Multiple human participants in the council
+- **Advanced Analytics Dashboard**: Visual insights into debate patterns and supervisor performance trends

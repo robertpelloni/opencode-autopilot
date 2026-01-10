@@ -163,6 +163,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Coverage reporting support
     - Parallel job execution
 
+### Added (Rate Limiting & Quota Management)
+- **Quota Manager Service**: Complete API provider rate limiting and budget management
+  - Per-provider rate limits (requests/minute, requests/hour, tokens/minute, tokens/day)
+  - Default limits for 7 providers (OpenAI, Anthropic, Gemini, DeepSeek, Grok, Qwen, Kimi)
+  - Daily budget tracking with configurable limits
+  - Cost calculation per API call
+  - Auto-throttling on rate limit errors with exponential backoff
+  - Concurrent request limiting per provider
+  - Event emission for alerts (budget warnings, throttling events)
+  - REST API: `/api/quota/*`
+  - Service: `packages/server/src/services/quota-manager.ts`
+
+### Added (Supervisor Performance Analytics)
+- **Supervisor Analytics Service**: Comprehensive performance tracking and insights
+  - Vote recording with consensus agreement tracking
+  - Per-supervisor metrics (approval rate, avg confidence, response time, tokens)
+  - Supervisor comparison and ranking
+  - Automated insight generation (warnings for low consensus, slow response)
+  - Trend analysis over configurable time periods
+  - Voting pattern analysis (distribution, hourly activity)
+  - Agreement/disagreement streak tracking
+  - REST API: `/api/analytics/*`
+  - Service: `packages/server/src/services/supervisor-analytics.ts`
+
+### Added (Debate Replay & Simulation)
+- **Debate Simulator Service**: Replay past debates and run simulations
+  - Store past debates for replay
+  - Replay debates with different configurations (consensus mode, team composition)
+  - Simulate debates with mock responses or randomized votes
+  - What-if analysis (run multiple scenarios in parallel)
+  - Compare all consensus modes on a single debate
+  - Find optimal team composition for target outcome
+  - 5 consensus calculators: majority, unanimous, supermajority, weighted, veto
+  - REST API: `/api/simulator/*`
+  - Service: `packages/server/src/services/debate-simulator.ts`
+
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).

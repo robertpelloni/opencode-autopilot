@@ -15,6 +15,9 @@ import { dynamicSelectionRoutes } from './routes/dynamic-selection.js';
 import { vetoRoutes } from './routes/veto.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { debateHistoryRoutes } from './routes/debate-history.js';
+import quotaRoutes from './routes/quota.js';
+import supervisorAnalyticsRoutes from './routes/supervisor-analytics.js';
+import debateSimulatorRoutes from './routes/debate-simulator.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -26,6 +29,7 @@ import { metricsMiddleware } from './middleware/metrics.js';
 import { healthMonitor } from './services/health-monitor.js';
 import { logRotation } from './services/log-rotation.js';
 import { debateHistory } from './services/debate-history.js';
+import { quotaManager } from './services/quota-manager.js';
 
 const startTime = Date.now();
 const config = loadConfig();
@@ -101,6 +105,9 @@ app.get('/', (c) => c.json({
     veto: '/api/veto',
     plugins: '/api/plugins',
     debateHistory: '/api/debate-history',
+    quota: '/api/quota',
+    analytics: '/api/analytics',
+    simulator: '/api/simulator',
     websocket: '/ws',
     health: '/health',
   }
@@ -229,6 +236,9 @@ app.route('/api/dynamic-selection', dynamicSelectionRoutes);
 app.route('/api/veto', vetoRoutes);
 app.route('/api/plugins', pluginRoutes);
 app.route('/api/debate-history', debateHistoryRoutes);
+app.route('/api/quota', quotaRoutes);
+app.route('/api/analytics', supervisorAnalyticsRoutes);
+app.route('/api/simulator', debateSimulatorRoutes);
 app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));
