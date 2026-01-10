@@ -199,6 +199,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - REST API: `/api/simulator/*`
   - Service: `packages/server/src/services/debate-simulator.ts`
 
+### Added (Multi-Workspace Support)
+- **Workspace Manager Service**: Manage debates across multiple projects simultaneously
+  - Create/update/delete workspaces with isolated configurations
+  - Per-workspace config (consensus mode, debate rounds, supervisor team, budget limits)
+  - Active workspace tracking (set/get/clear)
+  - Debate tracking per workspace with concurrent limit enforcement
+  - Workspace statistics and analytics
+  - Cross-workspace comparison and ranking
+  - Bulk operations (pause/resume all workspaces)
+  - Config cloning between workspaces
+  - Export/import workspaces with debate history
+  - REST API: `/api/workspaces/*`
+  - Service: `packages/server/src/services/workspace-manager.ts`
+
+### Added (Debate Templates System)
+- **Debate Template Manager Service**: Pre-configured debate structures for common scenarios
+  - 6 built-in templates: Code Review, Security Audit, Architecture Review, Performance Review, API Design, Quick Review
+  - Custom template creation/update/delete (built-in templates protected)
+  - Template categories: code-review, security-audit, architecture-review, performance-review, api-design, testing-strategy, documentation, refactoring, custom
+  - Template application with variable substitution (`{task}` placeholder)
+  - Template matching/suggestion based on task description keywords
+  - Scoring config with weights (correctness, security, performance, maintainability, testability, documentation)
+  - Critical criteria enforcement
+  - Template cloning, export/import
+  - Usage tracking and statistics
+  - REST API: `/api/templates/*`
+  - Service: `packages/server/src/services/debate-template-manager.ts`
+
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).

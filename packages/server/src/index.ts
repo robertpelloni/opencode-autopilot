@@ -18,6 +18,8 @@ import { debateHistoryRoutes } from './routes/debate-history.js';
 import quotaRoutes from './routes/quota.js';
 import supervisorAnalyticsRoutes from './routes/supervisor-analytics.js';
 import debateSimulatorRoutes from './routes/debate-simulator.js';
+import workspaceRoutes from './routes/workspace.js';
+import templateRoutes from './routes/templates.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -108,6 +110,8 @@ app.get('/', (c) => c.json({
     quota: '/api/quota',
     analytics: '/api/analytics',
     simulator: '/api/simulator',
+    workspaces: '/api/workspaces',
+    templates: '/api/templates',
     websocket: '/ws',
     health: '/health',
   }
@@ -239,6 +243,8 @@ app.route('/api/debate-history', debateHistoryRoutes);
 app.route('/api/quota', quotaRoutes);
 app.route('/api/analytics', supervisorAnalyticsRoutes);
 app.route('/api/simulator', debateSimulatorRoutes);
+app.route('/api/workspaces', workspaceRoutes);
+app.route('/api/templates', templateRoutes);
 app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));
