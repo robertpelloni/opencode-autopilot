@@ -1,5 +1,7 @@
 # OpenCode Autopilot
 
+[![CI](https://github.com/your-org/opencode-autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/opencode-autopilot/actions/workflows/ci.yml)
+
 A multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
 
 ## Architecture

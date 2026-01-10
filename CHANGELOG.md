@@ -150,8 +150,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config service extended with health, logging, and environment sections
 - WebSocket now broadcasts `session_health` events
 
-### Planned
-- Integration with CI/CD platforms (GitHub Actions, GitLab CI workflows)
+### Added (CI/CD)
+- **CI/CD Integration**: Automated testing and building pipelines
+  - GitHub Actions workflow (`.github/workflows/ci.yml`)
+    - Build all packages (shared, server, CLI)
+    - Type checking across all packages
+    - Run test suite
+    - Triggered on push/PR to main/master
+  - GitLab CI pipeline (`.gitlab-ci.yml`)
+    - Multi-stage pipeline (build, test)
+    - Artifact caching for faster builds
+    - Coverage reporting support
+    - Parallel job execution
 
 ---
 

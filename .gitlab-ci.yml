@@ -1,0 +1,81 @@
+stages:
+  - build
+  - test
+
+variables:
+  BUN_INSTALL: $CI_PROJECT_DIR/.bun
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .bun/
+    - packages/*/node_modules/
+
+.setup-bun: &setup-bun
+  before_script:
+    - curl -fsSL https://bun.sh/install | bash
+    - export PATH="$BUN_INSTALL/bin:$PATH"
+    - bun --version
+
+build:shared:
+  stage: build
+  image: ubuntu:22.04
+  <<: *setup-bun
+  script:
+    - bun install
+    - bun run build:shared
+  artifacts:
+    paths:
+      - packages/shared/dist/
+    expire_in: 1 hour
+
+build:server:
+  stage: build
+  image: ubuntu:22.04
+  <<: *setup-bun
+  needs:
+    - build:shared
+  script:
+    - bun install
+    - bun run build:server
+  artifacts:
+    paths:
+      - packages/server/dist/
+    expire_in: 1 hour
+
+build:cli:
+  stage: build
+  image: ubuntu:22.04
+  <<: *setup-bun
+  needs:
+    - build:shared
+  script:
+    - bun install
+    - bun run build:cli
+  artifacts:
+    paths:
+      - packages/cli/dist/
+    expire_in: 1 hour
+
+typecheck:
+  stage: test
+  image: ubuntu:22.04
+  <<: *setup-bun
+  needs:
+    - build:shared
+  script:
+    - bun install
+    - bun run typecheck
+
+test:
+  stage: test
+  image: ubuntu:22.04
+  <<: *setup-bun
+  needs:
+    - build:shared
+    - build:server
+  script:
+    - bun install
+    - bun run test
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
