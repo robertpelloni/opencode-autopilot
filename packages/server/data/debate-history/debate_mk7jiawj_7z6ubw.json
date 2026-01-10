@@ -1,0 +1,42 @@
+{
+  "id": "debate_mk7jiawj_7z6ubw",
+  "timestamp": 1768003286707,
+  "task": {
+    "id": "task-1",
+    "description": "Test task",
+    "context": "Testing context",
+    "files": [
+      "test.ts"
+    ]
+  },
+  "decision": {
+    "approved": true,
+    "consensus": 1,
+    "weightedConsensus": 0.9,
+    "votes": [
+      {
+        "supervisor": "Approver",
+        "approved": true,
+        "confidence": 0.9,
+        "weight": 1,
+        "comment": "VOTE: APPROVE\nCONFIDENCE: 0.9\nREASONING: Looks good"
+      }
+    ],
+    "reasoning": "**Dynamic Selection:** No specialized supervisors available for testing, using all available (confidence: 10%)\n\nAfter 1 supervisor votes using **weighted** mode, the council has reached consensus to APPROVE this task.\n\n**Consensus Mode Decision:**\nWeighted consensus: 90.0% (threshold: 50.0%)\n\n**Voting Summary:**\n- Simple consensus: 1/1 approved (100%)\n- Weighted consensus: 90.0%\n- Average confidence: 90.0%\n\n**Individual Votes:**\n- ✅ Approver (weight: 1.0, confidence: 0.90): VOTE: APPROVE\nCONFIDENCE: 0.9\nREASONING: Looks good",
+    "dissent": []
+  },
+  "metadata": {
+    "debateRounds": 2,
+    "consensusMode": "weighted",
+    "dynamicSelection": {
+      "enabled": true,
+      "taskType": "testing",
+      "confidence": 0.1
+    },
+    "durationMs": 2,
+    "supervisorCount": 1,
+    "participatingSupervisors": [
+      "Approver"
+    ]
+  }
+}

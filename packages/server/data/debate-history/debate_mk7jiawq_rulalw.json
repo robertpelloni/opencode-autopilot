@@ -1,0 +1,50 @@
+{
+  "id": "debate_mk7jiawq_rulalw",
+  "timestamp": 1768003286714,
+  "task": {
+    "id": "task-1",
+    "description": "Test task",
+    "context": "Testing context",
+    "files": [
+      "test.ts"
+    ]
+  },
+  "decision": {
+    "approved": true,
+    "consensus": 0.5,
+    "weightedConsensus": 0.5,
+    "votes": [
+      {
+        "supervisor": "HighConf",
+        "approved": true,
+        "confidence": 1,
+        "weight": 1,
+        "comment": "VOTE: APPROVE\nCONFIDENCE: 1.0"
+      },
+      {
+        "supervisor": "LowConf",
+        "approved": false,
+        "confidence": 0.2,
+        "weight": 1,
+        "comment": "VOTE: REJECT\nCONFIDENCE: 0.2"
+      }
+    ],
+    "reasoning": "**Dynamic Selection:** No specialized supervisors available for testing, using all available (confidence: 10%)\n\nAfter 2 supervisor votes using **weighted** mode, the council has reached consensus to APPROVE this task.\n\n**Consensus Mode Decision:**\nWeighted consensus: 50.0% (threshold: 50.0%)\n\n**Voting Summary:**\n- Simple consensus: 1/2 approved (50%)\n- Weighted consensus: 50.0%\n- Average confidence: 60.0%\n\n**Individual Votes:**\n- ✅ HighConf (weight: 1.0, confidence: 1.00): VOTE: APPROVE\nCONFIDENCE: 1.0\n- ❌ LowConf (weight: 1.0, confidence: 0.20): VOTE: REJECT\nCONFIDENCE: 0.2",
+    "dissent": []
+  },
+  "metadata": {
+    "debateRounds": 2,
+    "consensusMode": "weighted",
+    "dynamicSelection": {
+      "enabled": true,
+      "taskType": "testing",
+      "confidence": 0.1
+    },
+    "durationMs": 1,
+    "supervisorCount": 2,
+    "participatingSupervisors": [
+      "HighConf",
+      "LowConf"
+    ]
+  }
+}

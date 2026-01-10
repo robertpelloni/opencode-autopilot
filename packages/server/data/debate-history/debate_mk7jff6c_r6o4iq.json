@@ -1,0 +1,58 @@
+{
+  "id": "debate_mk7jff6c_r6o4iq",
+  "timestamp": 1768003152276,
+  "task": {
+    "id": "task-1",
+    "description": "Test task",
+    "context": "Testing context",
+    "files": [
+      "test.ts"
+    ]
+  },
+  "decision": {
+    "approved": true,
+    "consensus": 0.6666666666666666,
+    "weightedConsensus": 0.5666666666666668,
+    "votes": [
+      {
+        "supervisor": "A1",
+        "approved": true,
+        "confidence": 0.9,
+        "weight": 1,
+        "comment": "VOTE: APPROVE\nCONFIDENCE: 0.9"
+      },
+      {
+        "supervisor": "A2",
+        "approved": true,
+        "confidence": 0.8,
+        "weight": 1,
+        "comment": "VOTE: APPROVE\nCONFIDENCE: 0.8"
+      },
+      {
+        "supervisor": "R1",
+        "approved": false,
+        "confidence": 0.5,
+        "weight": 1,
+        "comment": "VOTE: REJECT\nCONFIDENCE: 0.5"
+      }
+    ],
+    "reasoning": "**Dynamic Selection:** No specialized supervisors available for testing, using all available (confidence: 10%)\n\nAfter 3 supervisor votes using **weighted** mode, the council has reached consensus to APPROVE this task.\n\n**Consensus Mode Decision:**\nWeighted consensus: 56.7% (threshold: 50.0%)\n\n**Voting Summary:**\n- Simple consensus: 2/3 approved (67%)\n- Weighted consensus: 56.7%\n- Average confidence: 73.3%\n\n**Individual Votes:**\n- ✅ A1 (weight: 1.0, confidence: 0.90): VOTE: APPROVE\nCONFIDENCE: 0.9\n- ✅ A2 (weight: 1.0, confidence: 0.80): VOTE: APPROVE\nCONFIDENCE: 0.8\n- ❌ R1 (weight: 1.0, confidence: 0.50): VOTE: REJECT\nCONFIDENCE: 0.5",
+    "dissent": []
+  },
+  "metadata": {
+    "debateRounds": 2,
+    "consensusMode": "weighted",
+    "dynamicSelection": {
+      "enabled": true,
+      "taskType": "testing",
+      "confidence": 0.1
+    },
+    "durationMs": 0,
+    "supervisorCount": 3,
+    "participatingSupervisors": [
+      "A1",
+      "A2",
+      "R1"
+    ]
+  }
+}

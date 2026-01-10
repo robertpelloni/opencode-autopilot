@@ -1,0 +1,52 @@
+{
+  "id": "debate_mk7jff6h_vmyvub",
+  "timestamp": 1768003152281,
+  "task": {
+    "id": "task-1",
+    "description": "Test task",
+    "context": "Testing context",
+    "files": [
+      "test.ts"
+    ]
+  },
+  "decision": {
+    "approved": true,
+    "consensus": 0.5,
+    "weightedConsensus": 0.05,
+    "votes": [
+      {
+        "supervisor": "HighConf",
+        "approved": true,
+        "confidence": 0.1,
+        "weight": 1,
+        "comment": "VOTE: APPROVE\nCONFIDENCE: 0.1"
+      },
+      {
+        "supervisor": "LowConf",
+        "approved": false,
+        "confidence": 0.9,
+        "weight": 1,
+        "comment": "VOTE: REJECT\nCONFIDENCE: 0.9"
+      }
+    ],
+    "reasoning": "**Dynamic Selection:** No specialized supervisors available for testing, using all available (confidence: 10%)\n\nAfter 2 supervisor votes using **simple-majority** mode, the council has reached consensus to APPROVE this task.\n\n**Consensus Mode Decision:**\nSimple majority: 1/2 (50%) approved (threshold: 50%)\n\n**Voting Summary:**\n- Simple consensus: 1/2 approved (50%)\n- Weighted consensus: 5.0%\n- Average confidence: 50.0%\n\n**Strong Dissenting Opinions (1):**\n- LowConf (confidence: 0.90): VOTE: REJECT\nCONFIDENCE: 0.9\n\n**Individual Votes:**\n- ✅ HighConf (weight: 1.0, confidence: 0.10): VOTE: APPROVE\nCONFIDENCE: 0.1\n- ❌ LowConf (weight: 1.0, confidence: 0.90): VOTE: REJECT\nCONFIDENCE: 0.9",
+    "dissent": [
+      "LowConf (confidence: 0.90): VOTE: REJECT\nCONFIDENCE: 0.9"
+    ]
+  },
+  "metadata": {
+    "debateRounds": 2,
+    "consensusMode": "simple-majority",
+    "dynamicSelection": {
+      "enabled": true,
+      "taskType": "testing",
+      "confidence": 0.1
+    },
+    "durationMs": 0,
+    "supervisorCount": 2,
+    "participatingSupervisors": [
+      "HighConf",
+      "LowConf"
+    ]
+  }
+}

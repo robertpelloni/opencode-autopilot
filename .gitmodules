@@ -1,0 +1,39 @@
+[submodule "memory/projects/claude-mem"]
+	path = memory/projects/claude-mem
+	url = https://github.com/robertpelloni/claude-mem.git
+[submodule "superai-cli/cli-tools/claude-code"]
+	path = superai-cli/cli-tools/claude-code
+	url = https://github.com/anthropics/claude-code.git
+[submodule "superai-cli/cli-tools/lynkr"]
+	path = superai-cli/cli-tools/lynkr
+	url = https://github.com/vishalveerareddy123/Lynkr.git
+[submodule "superai-cli/routers/claude-code-router"]
+	path = superai-cli/routers/claude-code-router
+	url = https://github.com/musistudio/claude-code-router.git
+[submodule "superai-cli/cli-tools/cc-switch"]
+	path = superai-cli/cli-tools/cc-switch
+	url = https://github.com/farion1231/cc-switch.git
+[submodule "superai-cli/cli-tools/ccs"]
+	path = superai-cli/cli-tools/ccs
+	url = https://github.com/kaitranntt/ccs.git
+[submodule "superai-cli/cli-tools/emdash"]
+	path = superai-cli/cli-tools/emdash
+	url = https://github.com/robertpelloni/emdash.git
+[submodule "superai-cli/cli-tools/claude-squad"]
+	path = superai-cli/cli-tools/claude-squad
+	url = https://github.com/robertpelloni/claude-squad.git
+[submodule "superai-cli/cli-tools/code-assistant-manager"]
+	path = superai-cli/cli-tools/code-assistant-manager
+	url = https://github.com/Chat2AnyLLM/code-assistant-manager.git
+[submodule "superai-cli/cli-tools/code-nomad"]
+	path = superai-cli/cli-tools/code-nomad
+	url = https://github.com/NeuralNomadsAI/CodeNomad.git
+[submodule "superai-cli/proxies/openai-gemini"]
+	path = superai-cli/proxies/openai-gemini
+	url = https://github.com/PublicAffairs/openai-gemini.git
+[submodule "superai-cli/cli-tools/madappgang-claude-code"]
+	path = superai-cli/cli-tools/madappgang-claude-code
+	url = https://github.com/MadAppGang/claude-code.git
+[submodule "superai-cli/proxies/gemini-openai-proxy-zhu"]
+	path = superai-cli/proxies/gemini-openai-proxy-zhu
+	url = https://github.com/zhu327/gemini-openai-proxy.git
