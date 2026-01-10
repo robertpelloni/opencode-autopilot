@@ -1,9 +1,17 @@
-import type { CouncilConfig, SupervisorConfig } from '@opencode-autopilot/shared';
+import type { CouncilConfig, SupervisorConfig, SessionTemplate, LogRotationConfig, HealthCheckConfig, CrashRecoveryConfig, CLIType } from '@opencode-autopilot/shared';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
 const CONFIG_DIR = process.env.AUTOPILOT_CONFIG_DIR || join(process.cwd(), '.autopilot');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+
+export interface PersistenceConfig {
+  enabled: boolean;
+  filePath: string;
+  autoSaveIntervalMs: number;
+  autoResumeOnStart: boolean;
+  maxPersistedSessions: number;
+}
 
 export interface AutopilotConfig {
   council: CouncilConfig;
@@ -16,6 +24,16 @@ export interface AutopilotConfig {
     basePort: number;
     maxSessions: number;
     pollInterval: number;
+    defaultCLI: CLIType;
+  };
+  persistence: PersistenceConfig;
+  templates: SessionTemplate[];
+  logRotation: LogRotationConfig;
+  healthCheck: HealthCheckConfig;
+  crashRecovery: CrashRecoveryConfig;
+  environment: {
+    passthrough: string[];
+    globals: Record<string, string>;
   };
 }
 
@@ -35,6 +53,62 @@ const DEFAULT_CONFIG: AutopilotConfig = {
     basePort: 4096,
     maxSessions: 10,
     pollInterval: 10000,
+    defaultCLI: 'opencode',
+  },
+  persistence: {
+    enabled: true,
+    filePath: '.autopilot/sessions.json',
+    autoSaveIntervalMs: 5000,
+    autoResumeOnStart: true,
+    maxPersistedSessions: 100,
+  },
+  templates: [
+    {
+      name: 'default',
+      description: 'Standard session with no special configuration',
+      supervisors: [],
+      tags: ['default'],
+    },
+    {
+      name: 'review',
+      description: 'Code review focused session',
+      supervisors: [],
+      tags: ['review', 'quality'],
+    },
+    {
+      name: 'debug',
+      description: 'Debugging and troubleshooting session',
+      supervisors: [],
+      tags: ['debug', 'troubleshoot'],
+    },
+    {
+      name: 'feature',
+      description: 'Feature development session',
+      supervisors: [],
+      tags: ['feature', 'development'],
+    },
+  ],
+  logRotation: {
+    maxLogsPerSession: 1000,
+    maxLogAgeMs: 24 * 60 * 60 * 1000,
+    pruneIntervalMs: 60000,
+  },
+  healthCheck: {
+    enabled: true,
+    intervalMs: 10000,
+    timeoutMs: 5000,
+    maxFailures: 3,
+  },
+  crashRecovery: {
+    enabled: true,
+    maxRestartAttempts: 3,
+    restartDelayMs: 2000,
+    backoffMultiplier: 2,
+    maxBackoffMs: 30000,
+  },
+  environment: {
+    passthrough: [],
+    globals: {},
   },
 };
 
@@ -120,6 +194,12 @@ export function loadConfig(): AutopilotConfig {
         council: { ...config.council, ...fileConfig.council },
         server: { ...config.server, ...fileConfig.server },
         sessions: { ...config.sessions, ...fileConfig.sessions },
+        persistence: { ...config.persistence, ...fileConfig.persistence },
+        logRotation: { ...config.logRotation, ...fileConfig.logRotation },
+        healthCheck: { ...config.healthCheck, ...fileConfig.healthCheck },
+        crashRecovery: { ...config.crashRecovery, ...fileConfig.crashRecovery },
+        environment: { ...config.environment, ...fileConfig.environment },
+        templates: fileConfig.templates || config.templates,
       };
     } catch {
       console.warn(`Failed to load config from ${CONFIG_FILE}, using defaults`);

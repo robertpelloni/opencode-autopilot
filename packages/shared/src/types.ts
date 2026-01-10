@@ -14,6 +14,16 @@ export interface SupervisorConfig {
   weight?: number;
 }
 
+export type ConsensusMode = 
+  | 'simple-majority'      // >50% approval
+  | 'supermajority'        // >66% approval  
+  | 'unanimous'            // 100% approval
+  | 'weighted'             // Weighted by supervisor weight × confidence
+  | 'ceo-override'         // Lead supervisor can override (head honcho)
+  | 'ceo-veto'             // Lead supervisor can only veto, not force approve
+  | 'hybrid-ceo-majority'  // CEO decides ties, majority otherwise
+  | 'ranked-choice';       // Supervisors rank options, highest ranked wins
+
 export interface CouncilConfig {
   supervisors: SupervisorConfig[];
   debateRounds?: number;
@@ -21,6 +31,31 @@ export interface CouncilConfig {
   enabled?: boolean;
   smartPilot?: boolean;
   weightedVoting?: boolean;
+  consensusMode?: ConsensusMode;
+  leadSupervisor?: string;  // Name of the CEO/head honcho supervisor
+  fallbackSupervisors?: string[];  // Ordered fallback chain
+}
+
+export interface SessionTemplate {
+  name: string;
+  description?: string;
+  supervisors: SupervisorConfig[];
+  councilConfig?: Partial<CouncilConfig>;
+  autoStart?: boolean;
+  tags?: string[];
+}
+
+export interface PersistedSession {
+  id: string;
+  status: 'idle' | 'starting' | 'running' | 'paused' | 'stopped' | 'error' | 'completed';
+  startedAt: number;
+  lastActivity?: number;
+  currentTask?: string;
+  port: number;
+  workingDirectory?: string;
+  templateName?: string;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface Session {
@@ -30,6 +65,10 @@ export interface Session {
   lastActivity?: number;
   currentTask?: string;
   logs: LogEntry[];
+  port?: number;
+  workingDirectory?: string;
+  templateName?: string;
+  tags?: string[];
 }
 
 export interface LogEntry {
@@ -84,7 +123,114 @@ export interface ApiResponse<T> {
 }
 
 export interface WebSocketMessage {
-  type: 'session_update' | 'council_decision' | 'log' | 'error';
+  type: 'session_update' | 'council_decision' | 'log' | 'error' | 'bulk_update' | 'supervisor_fallback';
   payload: unknown;
   timestamp: number;
+}
+
+export interface BulkSessionRequest {
+  count: number;
+  template?: string;
+  tags?: string[];
+  staggerDelayMs?: number;
+}
+
+export interface BulkSessionResponse {
+  sessions: Session[];
+  failed: Array<{ index: number; error: string }>;
+}
+
+export interface SessionPersistenceConfig {
+  enabled: boolean;
+  filePath: string;
+  autoSaveIntervalMs: number;
+  autoResumeOnStart: boolean;
+  maxPersistedSessions: number;
+}
+
+export type CLIType = 'opencode' | 'claude' | 'aider' | 'cursor' | 'continue' | 'cody' | 'copilot' | 'custom';
+
+export interface CLITool {
+  type: CLIType;
+  name: string;
+  command: string;
+  args: string[];
+  healthEndpoint?: string;
+  detectCommand?: string;
+  available?: boolean;
+  version?: string;
+  capabilities?: string[];
+}
+
+export interface LogRotationConfig {
+  maxLogsPerSession: number;
+  maxLogAgeMs: number;
+  pruneIntervalMs: number;
+}
+
+export interface HealthCheckConfig {
+  enabled: boolean;
+  intervalMs: number;
+  timeoutMs: number;
+  maxFailures: number;
+}
+
+export interface CrashRecoveryConfig {
+  enabled: boolean;
+  maxRestartAttempts: number;
+  restartDelayMs: number;
+  backoffMultiplier: number;
+  maxBackoffMs: number;
+}
+
+export type SessionHealthStatus = 'healthy' | 'degraded' | 'unresponsive' | 'crashed';
+
+export interface SessionHealth {
+  status: SessionHealthStatus;
+  lastCheck: number;
+  consecutiveFailures: number;
+  restartCount: number;
+  lastRestartAt?: number;
+  errorMessage?: string;
+}
+
+export type TaskType = 
+  | 'security-audit'
+  | 'ui-design'
+  | 'api-design'
+  | 'performance'
+  | 'refactoring'
+  | 'bug-fix'
+  | 'testing'
+  | 'documentation'
+  | 'architecture'
+  | 'code-review'
+  | 'general';
+
+export interface SupervisorProfile {
+  name: string;
+  provider: string;
+  strengths: TaskType[];
+  weaknesses?: TaskType[];
+  specializations?: string[];
+  preferredForLeadOn?: TaskType[];
+}
+
+export interface TeamTemplate {
+  name: string;
+  description: string;
+  taskTypes: TaskType[];
+  supervisors: string[];
+  leadSupervisor?: string;
+  consensusMode?: ConsensusMode;
+  minSupervisors?: number;
+}
+
+export interface TeamSelectionResult {
+  team: string[];
+  leadSupervisor?: string;
+  consensusMode: ConsensusMode;
+  reasoning: string;
+  taskType: TaskType;
+  confidence: number;
 }

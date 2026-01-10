@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig } from '@opencode-autopilot/shared';
+import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig, ConsensusMode } from '@opencode-autopilot/shared';
 import { SupervisorCouncil } from '../services/council.js';
 import { createSupervisor, createSupervisors, createMockSupervisor } from '../supervisors/index.js';
 import { wsManager } from '../services/ws-manager.js';
@@ -11,12 +11,18 @@ import { debateRequestSchema, supervisorConfigSchema } from '../schemas.js';
 
 const council = new Hono();
 
+const consensusModes: ConsensusMode[] = [
+  'simple-majority', 'supermajority', 'unanimous', 'weighted',
+  'ceo-override', 'ceo-veto', 'hybrid-ceo-majority', 'ranked-choice'
+];
+
 let config: CouncilConfig = {
   supervisors: [],
   debateRounds: 2,
   consensusThreshold: 0.7,
   enabled: true,
   smartPilot: false,
+  consensusMode: 'weighted',
 };
 
 let councilInstance: SupervisorCouncil | null = null;
@@ -40,6 +46,9 @@ const configSchema = z.object({
   enabled: z.boolean().optional(),
   smartPilot: z.boolean().optional(),
   weightedVoting: z.boolean().optional(),
+  consensusMode: z.enum(['simple-majority', 'supermajority', 'unanimous', 'weighted', 'ceo-override', 'ceo-veto', 'hybrid-ceo-majority', 'ranked-choice']).optional(),
+  leadSupervisor: z.string().optional(),
+  fallbackSupervisors: z.array(z.string()).optional(),
 });
 
 const supervisorsBodySchema = z.object({
@@ -71,9 +80,19 @@ council.post('/config', apiRateLimit(), apiKeyAuth, zValidator('json', configSch
     supervisors.forEach((s) => councilInstance!.addSupervisor(s));
   }
   
+  if (body.consensusMode) {
+    councilInstance.setConsensusMode(body.consensusMode);
+  }
+  if (body.leadSupervisor) {
+    councilInstance.setLeadSupervisor(body.leadSupervisor);
+  }
+  if (body.fallbackSupervisors) {
+    councilInstance.setFallbackChain(body.fallbackSupervisors);
+  }
+  
   wsManager.broadcast({
     type: 'log',
-    payload: { level: 'info', message: `Council config updated: ${config.supervisors.length} supervisors`, timestamp: Date.now() },
+    payload: { level: 'info', message: `Council config updated: ${config.supervisors.length} supervisors, mode: ${config.consensusMode}`, timestamp: Date.now() },
     timestamp: Date.now(),
   });
   
@@ -212,6 +231,76 @@ council.post('/add-mock', apiRateLimit(), apiKeyAuth, (c) => {
     success: true, 
     data: { added: mockName } 
   });
+});
+
+council.get('/consensus-modes', apiRateLimit(), (c) => {
+  return c.json<ApiResponse<{ modes: ConsensusMode[]; current: ConsensusMode }>>({
+    success: true,
+    data: { modes: consensusModes, current: config.consensusMode ?? 'weighted' },
+  });
+});
+
+council.post('/consensus-mode', apiRateLimit(), apiKeyAuth, zValidator('json', z.object({ mode: z.enum(['simple-majority', 'supermajority', 'unanimous', 'weighted', 'ceo-override', 'ceo-veto', 'hybrid-ceo-majority', 'ranked-choice']) })), (c) => {
+  const { mode } = c.req.valid('json');
+  config.consensusMode = mode;
+  
+  const instance = getOrCreateCouncil();
+  instance.setConsensusMode(mode);
+  
+  wsManager.broadcast({
+    type: 'log',
+    payload: { level: 'info', message: `Consensus mode changed to: ${mode}`, timestamp: Date.now() },
+    timestamp: Date.now(),
+  });
+  
+  return c.json<ApiResponse<{ mode: ConsensusMode }>>({ success: true, data: { mode } });
+});
+
+council.post('/lead-supervisor', apiRateLimit(), apiKeyAuth, zValidator('json', z.object({ name: z.string() })), (c) => {
+  const { name } = c.req.valid('json');
+  config.leadSupervisor = name;
+  
+  const instance = getOrCreateCouncil();
+  instance.setLeadSupervisor(name);
+  
+  wsManager.broadcast({
+    type: 'log',
+    payload: { level: 'info', message: `Lead supervisor set to: ${name}`, timestamp: Date.now() },
+    timestamp: Date.now(),
+  });
+  
+  return c.json<ApiResponse<{ leadSupervisor: string }>>({ success: true, data: { leadSupervisor: name } });
+});
+
+council.post('/fallback-chain', apiRateLimit(), apiKeyAuth, zValidator('json', z.object({ supervisors: z.array(z.string()) })), (c) => {
+  const { supervisors } = c.req.valid('json');
+  config.fallbackSupervisors = supervisors;
+  
+  const instance = getOrCreateCouncil();
+  instance.setFallbackChain(supervisors);
+  
+  wsManager.broadcast({
+    type: 'log',
+    payload: { level: 'info', message: `Fallback chain set: ${supervisors.join(' → ')}`, timestamp: Date.now() },
+    timestamp: Date.now(),
+  });
+  
+  return c.json<ApiResponse<{ fallbackChain: string[] }>>({ success: true, data: { fallbackChain: supervisors } });
+});
+
+council.post('/supervisor-weight', apiRateLimit(), apiKeyAuth, zValidator('json', z.object({ name: z.string(), weight: z.number().min(0).max(2) })), (c) => {
+  const { name, weight } = c.req.valid('json');
+  
+  const instance = getOrCreateCouncil();
+  instance.setSupervisorWeight(name, weight);
+  
+  wsManager.broadcast({
+    type: 'log',
+    payload: { level: 'info', message: `Supervisor ${name} weight set to: ${weight}`, timestamp: Date.now() },
+    timestamp: Date.now(),
+  });
+  
+  return c.json<ApiResponse<{ name: string; weight: number }>>({ success: true, data: { name, weight } });
 });
 
 export { council as councilRoutes };

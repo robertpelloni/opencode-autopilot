@@ -15,10 +15,18 @@ packages/
 
 - **Multi-Model Council**: GPT-4, Claude, Gemini, DeepSeek, Grok, Qwen, Kimi
 - **Weighted Voting**: Supervisor weights + confidence scores
+- **8 Consensus Modes**: simple-majority, supermajority, unanimous, weighted, ceo-override, ceo-veto, hybrid-ceo-majority, ranked-choice
 - **Smart Pilot**: Auto-continue when council approves
 - **Hook System**: Intercept debate/guidance flow via webhooks
+- **Multi-CLI Support**: Auto-detect opencode, claude, aider, cursor, continue, cody, copilot
+- **Session Health Monitoring**: Automatic health checks with auto-recovery
+- **Session Templates**: Pre-configured templates (default, review, debug, feature)
+- **Tag Management**: Organize sessions with tags
+- **Environment Variables**: Per-session and global environment variable management
+- **Log Rotation**: Automatic log pruning by count and age
 - **TUI Dashboard**: Real-time supervisor status and debate history
-- **WebSocket Updates**: Live streaming of debates and decisions
+- **Web Dashboard**: Modern dark UI with real-time WebSocket updates
+- **Session Persistence**: Auto-save and restore sessions on restart
 
 ## Quick Start
 
@@ -65,19 +73,140 @@ AUTOPILOT_SMART_PILOT=false   # Enable auto-continue
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/council/status` | Get council status and config |
+| POST | `/api/council/config` | Update full council configuration |
 | POST | `/api/council/debate` | Trigger debate on a task |
 | POST | `/api/council/toggle` | Enable/disable council |
 | POST | `/api/council/add-mock` | Add mock supervisor (testing) |
 | POST | `/api/council/supervisors` | Add real supervisors |
+| DELETE | `/api/council/supervisors` | Remove all supervisors |
+| GET | `/api/council/consensus-modes` | List available consensus modes |
+| POST | `/api/council/consensus-mode` | Set consensus mode |
+| POST | `/api/council/lead-supervisor` | Set lead supervisor (CEO) |
+| POST | `/api/council/fallback-chain` | Set fallback supervisor chain |
+| POST | `/api/council/supervisor-weight` | Set individual supervisor weight |
 
 ### Sessions
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/sessions` | List all sessions |
 | GET | `/api/sessions/active` | List active sessions |
+| GET | `/api/sessions/stats` | Get session statistics |
+| GET | `/api/sessions/templates` | List session templates |
+| GET | `/api/sessions/persisted` | Get persisted sessions list |
+| GET | `/api/sessions/by-cli/:cliType` | List sessions by CLI type |
+| GET | `/api/sessions/by-tag/:tag` | Filter sessions by tag |
+| GET | `/api/sessions/by-template/:template` | Filter sessions by template |
+| GET | `/api/sessions/:id` | Get specific session |
 | POST | `/api/sessions/start` | Start new session |
+| POST | `/api/sessions/from-template/:name` | Start session from template |
 | POST | `/api/sessions/:id/stop` | Stop session |
+| POST | `/api/sessions/:id/resume` | Resume stopped session |
+| DELETE | `/api/sessions/:id` | Delete session |
 | POST | `/api/sessions/:id/guidance` | Send guidance to session |
+| GET | `/api/sessions/:id/logs` | Get session logs |
+| GET | `/api/sessions/:id/logs/export` | Export session logs (json/csv/text) |
+| GET | `/api/sessions/logs/export-all` | Export all logs |
+| PUT | `/api/sessions/:id/tags` | Set session tags (replace all) |
+| POST | `/api/sessions/:id/tags` | Add tag to session |
+| DELETE | `/api/sessions/:id/tags/:tag` | Remove tag from session |
+| POST | `/api/sessions/bulk/start` | Bulk start sessions |
+| POST | `/api/sessions/bulk/stop` | Bulk stop all sessions |
+| POST | `/api/sessions/bulk/resume` | Bulk resume sessions |
+
+### CLI Tools
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/cli/tools` | List all detected CLI tools |
+| GET | `/api/cli/tools/available` | List available (installed) CLI tools |
+| GET | `/api/cli/tools/:type` | Get specific CLI tool info |
+| POST | `/api/cli/tools/refresh` | Re-scan for CLI tools |
+| POST | `/api/cli/tools/custom` | Register custom CLI tool |
+
+### Health Monitoring
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health/sessions` | Get health status of all sessions |
+| GET | `/api/health/sessions/:id` | Get health status of specific session |
+| GET | `/api/health/stats` | Get session, log, and health statistics |
+| GET | `/api/health/server` | Get server health (uptime, memory) |
+| POST | `/api/health/sessions/:id/check` | Force health check on session |
+
+### Environment Variables
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/env/sessions/:id` | Get session environment variables |
+| POST | `/api/env/sessions/:id` | Set session environment variable |
+| DELETE | `/api/env/sessions/:id/:key` | Remove session environment variable |
+| GET | `/api/env/global` | Get global environment variables |
+| POST | `/api/env/global` | Set global environment variable |
+| DELETE | `/api/env/global/:key` | Remove global environment variable |
+
+### Dynamic Supervisor Selection
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dynamic-selection/status` | Get status and statistics |
+| POST | `/api/dynamic-selection/toggle` | Enable/disable dynamic selection |
+| GET | `/api/dynamic-selection/profiles` | List supervisor profiles |
+| GET | `/api/dynamic-selection/profiles/:name` | Get specific supervisor profile |
+| POST | `/api/dynamic-selection/profiles` | Add/update supervisor profile |
+| DELETE | `/api/dynamic-selection/profiles/:name` | Remove supervisor profile |
+| GET | `/api/dynamic-selection/templates` | List team templates |
+| GET | `/api/dynamic-selection/templates/:name` | Get specific team template |
+| POST | `/api/dynamic-selection/templates` | Add/update team template |
+| DELETE | `/api/dynamic-selection/templates/:name` | Remove team template |
+| POST | `/api/dynamic-selection/detect` | Detect task type from description |
+| POST | `/api/dynamic-selection/select` | Select optimal team for a task |
+| POST | `/api/dynamic-selection/sync-supervisors` | Sync available supervisors from council |
+
+### Human Veto (Council Chair)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/veto/status` | Get veto status and statistics |
+| POST | `/api/veto/toggle` | Enable/disable human veto |
+| GET | `/api/veto/config` | Get veto configuration |
+| POST | `/api/veto/config` | Update veto configuration |
+| GET | `/api/veto/pending` | List pending decisions awaiting veto |
+| GET | `/api/veto/pending/:id` | Get specific pending decision |
+| POST | `/api/veto/pending/:id/approve` | Approve a pending decision |
+| POST | `/api/veto/pending/:id/reject` | Reject a pending decision |
+| POST | `/api/veto/pending/:id/redebate` | Request re-debate for a decision |
+| GET | `/api/veto/history` | Get veto decision history |
+
+### Plugins
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/plugins/status` | Get plugin system status |
+| GET | `/api/plugins/config` | Get plugin configuration |
+| POST | `/api/plugins/config` | Update plugin configuration |
+| GET | `/api/plugins/list` | List all loaded plugins |
+| GET | `/api/plugins/:name` | Get specific plugin details |
+| POST | `/api/plugins/load` | Load plugin from path or manifest |
+| POST | `/api/plugins/load-all` | Load all plugins from directory |
+| DELETE | `/api/plugins/:name` | Unload a plugin |
+| POST | `/api/plugins/:name/reload` | Reload a plugin (hot-reload) |
+| POST | `/api/plugins/:name/enable` | Enable a plugin |
+| POST | `/api/plugins/:name/disable` | Disable a plugin |
+| GET | `/api/plugins/supervisors/all` | Get all supervisors from all plugins |
+| GET | `/api/plugins/:name/supervisors` | Get supervisors from specific plugin |
+| POST | `/api/plugins/validate` | Validate a plugin manifest |
+| GET | `/api/plugins/sample-manifest` | Get sample plugin manifest template |
+
+### Debate History
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/debate-history/status` | Get status and statistics |
+| GET | `/api/debate-history/config` | Get configuration |
+| POST | `/api/debate-history/config` | Update configuration |
+| POST | `/api/debate-history/toggle` | Enable/disable history persistence |
+| GET | `/api/debate-history/stats` | Get detailed debate statistics |
+| GET | `/api/debate-history/list` | Query debate records with filters |
+| GET | `/api/debate-history/debates/:id` | Get specific debate record |
+| DELETE | `/api/debate-history/debates/:id` | Delete a debate record |
+| GET | `/api/debate-history/supervisor/:name` | Get supervisor voting history |
+| GET | `/api/debate-history/export/json` | Export history as JSON |
+| GET | `/api/debate-history/export/csv` | Export history as CSV |
+| DELETE | `/api/debate-history/clear` | Clear all debate history |
+| POST | `/api/debate-history/initialize` | Initialize/reload from disk |
 
 ### Smart Pilot
 | Method | Endpoint | Description |
@@ -96,6 +225,7 @@ AUTOPILOT_SMART_PILOT=false   # Enable auto-continue
 ### WebSocket
 Connect to `ws://localhost:3847/ws` for real-time updates:
 - `session_update` - Session status changes
+- `session_health` - Session health status changes
 - `council_decision` - Debate results
 - `log` - Log entries
 - `error` - Error messages

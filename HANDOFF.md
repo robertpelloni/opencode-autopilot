@@ -1,60 +1,119 @@
-# Project Handoff: OpenCode Council Orchestrator
+# Project Handoff: OpenCode Autopilot
 
-**Date:** December 31, 2025
-**Status:** Ready for Migration to aios
+**Date:** January 2026
+**Status:** Production Ready
 
 ## 📋 Current State
 
-We have successfully transformed the "Council Plugin" into a full "Council Orchestrator" web application.
+OpenCode Autopilot is a fully-featured multi-model AI council system for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
+
+### Architecture
+```
+packages/
+├── server/     # Hono + Bun backend API (port 3847)
+├── cli/        # Ink (React) terminal UI dashboard
+└── shared/     # TypeScript types
+public/
+└── index.html  # Web dashboard
+```
 
 ### Completed Features
-1.  **Web Interface**: `public/index.html` provides a dashboard to manage sessions.
-2.  **Backend Server**: `src/server.ts` (Express) serves the UI and handles API requests.
-3.  **Session Manager**: `src/session-manager.ts` handles:
-    - Spawning `opencode` processes.
-    - Connecting the OpenCode SDK to these processes.
-    - Running the "Council Loop" for each active session.
-4.  **Council Logic**: The multi-agent debate system (`src/council.ts`) is fully integrated into the session manager.
-5.  **Google Gemini Fix**: The `GoogleSupervisor` has been patched to handle chat history role requirements.
 
-## 🚧 Pending / Next Steps
-
-1.  **Process Spawning**:
-    - The `startSession` method in `src/session-manager.ts` assumes `opencode` is in your global PATH.
-    - **Action**: Verify `opencode` command works in your terminal, or update the path in `session-manager.ts`.
-
-2.  **Frontend Polish**:
-    - The frontend is functional but basic.
-    - **Action**: Add more real-time updates (currently polls or requires refresh).
-
-3.  **Migration to aios**:
-    - You are moving this to `workspace/aios/opencode-autopilot-council`.
-    - **Action**:
-        1.  Move this entire directory to the new location.
-        2.  Run `npm install` in the new location.
-        3.  Run `npm run build`.
-        4.  Run `npm run server`.
+1. **Multi-Model Council**: 7 LLM providers (GPT-4, Claude, Gemini, DeepSeek, Grok, Qwen, Kimi)
+2. **8 Consensus Modes**: simple-majority, supermajority, unanimous, weighted, ceo-override, ceo-veto, hybrid-ceo-majority, ranked-choice
+3. **CLI Tool Detection**: Auto-detect opencode, claude, aider, cursor, continue, cody, copilot
+4. **Session Health Monitoring**: Automatic health checks with auto-recovery
+5. **Session Templates**: Pre-configured templates (default, review, debug, feature)
+6. **Tag Management**: Organize sessions with tags
+7. **Environment Variables**: Per-session and global env var management
+8. **Log Rotation**: Automatic log pruning by count and age
+9. **Hook System**: Webhook integration for debate/guidance flow
+10. **Smart Pilot**: Auto-continue when council approves
+11. **Web Dashboard**: Real-time WebSocket updates, dark theme UI
+12. **TUI Dashboard**: Ink-based terminal interface
+13. **Session Persistence**: Auto-save and restore on restart
 
 ## 🛠️ How to Run
 
 ```bash
 # 1. Install dependencies
-npm install
+bun install
 
-# 2. Build the project
-npm run build
+# 2. Set at least one API key
+export OPENAI_API_KEY="sk-..."
 
-# 3. Start the Orchestrator
-npm run server
+# 3. Build shared types
+cd packages/shared && bun run build
+
+# 4. Start the server
+cd packages/server && bun run dev
+
+# 5. (Optional) Start CLI dashboard in another terminal
+cd packages/cli && bun run dev
 ```
 
-Access the dashboard at: `http://localhost:3000`
+Access the web dashboard at: `http://localhost:3847`
 
-## 📝 Notes for aios Integration
+## 🔧 Configuration
 
-- This project is designed to be self-contained.
-- It uses `dotenv` for configuration. Ensure your `.env` file is moved or recreated in the new location.
-- The `SessionManager` currently stores session data in memory. If you restart the server, the session list is lost (though the actual OpenCode processes might still be running if not killed properly).
-    - **Future Improvement**: Persist session list to a JSON file.
+### Environment Variables
+```bash
+# Supervisor API Keys (auto-registers supervisors)
+OPENAI_API_KEY          # GPT-4o
+ANTHROPIC_API_KEY       # Claude
+DEEPSEEK_API_KEY        # DeepSeek
+GEMINI_API_KEY          # Gemini
+GROK_API_KEY            # Grok (or XAI_API_KEY)
+QWEN_API_KEY            # Qwen
+KIMI_API_KEY            # Kimi (or MOONSHOT_API_KEY)
 
-Good luck with the migration!
+# Server Config
+AUTOPILOT_PORT=3847
+AUTOPILOT_HOST=0.0.0.0
+AUTOPILOT_BASE_PORT=4096
+AUTOPILOT_DEBATE_ROUNDS=2
+AUTOPILOT_CONSENSUS=0.7
+AUTOPILOT_SMART_PILOT=false
+```
+
+### Config File
+Create `.autopilot/config.json` for persistent configuration.
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+cd packages/server && bun test src/services/__tests__/
+
+# Integration tests (requires running server)
+cd packages/server && bun test src/__tests__/
+
+# E2E test
+bun run scripts/test-e2e.ts
+```
+
+## 📝 Key Files
+
+| File | Purpose |
+|------|---------|
+| `packages/server/src/index.ts` | Server entry point |
+| `packages/server/src/services/session-manager.ts` | Session lifecycle management |
+| `packages/server/src/services/council.ts` | Debate orchestration |
+| `packages/server/src/routes/*.ts` | API route handlers |
+| `packages/cli/src/app.tsx` | TUI dashboard entry |
+| `public/index.html` | Web dashboard |
+
+## 🚀 Future Improvements
+
+See `VISION.md` for planned features:
+- Dynamic Supervisor Selection (task-based team selection)
+- Human-in-the-Loop Veto (developer as Council Chair)
+- Plugin Ecosystem (standardized supervisor interface)
+
+## 📚 Documentation
+
+- `README.md` - Quick start and API reference
+- `ARCHITECTURE.md` - Technical architecture details
+- `ROADMAP.md` - Development phases and features
+- `CHANGELOG.md` - Version history
+- `VISION.md` - Future direction

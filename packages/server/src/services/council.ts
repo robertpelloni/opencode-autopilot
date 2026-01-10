@@ -1,10 +1,28 @@
-import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, SupervisorConfig } from '@opencode-autopilot/shared';
+import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, ConsensusMode, Vote, TaskType } from '@opencode-autopilot/shared';
 import { metrics } from './metrics.js';
+import { dynamicSupervisorSelection } from './dynamic-supervisor-selection.js';
+import { debateHistory } from './debate-history.js';
+
+interface ConsensusModeHandler {
+  (votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string };
+}
 
 export class SupervisorCouncil {
   private supervisors: Supervisor[] = [];
   private supervisorWeights: Map<string, number> = new Map();
   private config: CouncilConfig;
+  private fallbackIndex = 0;
+
+  private consensusHandlers: Record<ConsensusMode, ConsensusModeHandler> = {
+    'simple-majority': this.handleSimpleMajority.bind(this),
+    'supermajority': this.handleSupermajority.bind(this),
+    'unanimous': this.handleUnanimous.bind(this),
+    'weighted': this.handleWeighted.bind(this),
+    'ceo-override': this.handleCeoOverride.bind(this),
+    'ceo-veto': this.handleCeoVeto.bind(this),
+    'hybrid-ceo-majority': this.handleHybridCeoMajority.bind(this),
+    'ranked-choice': this.handleRankedChoice.bind(this),
+  };
 
   constructor(config: CouncilConfig) {
     this.config = config;
@@ -23,8 +41,31 @@ export class SupervisorCouncil {
     return this.supervisorWeights.get(name) ?? 1.0;
   }
 
+  setLeadSupervisor(name: string): void {
+    this.config.leadSupervisor = name;
+  }
+
+  getLeadSupervisor(): string | undefined {
+    return this.config.leadSupervisor;
+  }
+
+  setFallbackChain(supervisors: string[]): void {
+    this.config.fallbackSupervisors = supervisors;
+  }
+
+  getFallbackChain(): string[] {
+    return this.config.fallbackSupervisors ?? [];
+  }
+
+  setConsensusMode(mode: ConsensusMode): void {
+    this.config.consensusMode = mode;
+  }
+
+  getConsensusMode(): ConsensusMode {
+    return this.config.consensusMode ?? 'weighted';
+  }
+
   async getAvailableSupervisors(): Promise<Supervisor[]> {
-    // Parallelize availability checks
     const results = await Promise.all(
       this.supervisors.map(async (supervisor) => ({
         supervisor,
@@ -34,9 +75,104 @@ export class SupervisorCouncil {
     return results.filter((r) => r.available).map((r) => r.supervisor);
   }
 
+  /**
+   * Get the next available supervisor from the fallback chain
+   */
+  async getNextFallbackSupervisor(): Promise<Supervisor | null> {
+    const fallbackChain = this.config.fallbackSupervisors ?? [];
+    
+    while (this.fallbackIndex < fallbackChain.length) {
+      const name = fallbackChain[this.fallbackIndex];
+      const supervisor = this.supervisors.find(s => s.name === name);
+      this.fallbackIndex++;
+      
+      if (supervisor && await supervisor.isAvailable()) {
+        return supervisor;
+      }
+    }
+    
+    // Reset fallback index when exhausted
+    this.fallbackIndex = 0;
+    return null;
+  }
+
+  /**
+   * Try to get a response with fallback chain support
+   */
+  async chatWithFallback(messages: Message[]): Promise<{ response: string; supervisor: string } | null> {
+    // Try lead supervisor first
+    if (this.config.leadSupervisor) {
+      const lead = this.supervisors.find(s => s.name === this.config.leadSupervisor);
+      if (lead && await lead.isAvailable()) {
+        try {
+          const response = await lead.chat(messages);
+          return { response, supervisor: lead.name };
+        } catch {
+          // Fall through to fallback chain
+        }
+      }
+    }
+
+    // Try fallback chain
+    let fallback = await this.getNextFallbackSupervisor();
+    while (fallback) {
+      try {
+        const response = await fallback.chat(messages);
+        return { response, supervisor: fallback.name };
+      } catch {
+        fallback = await this.getNextFallbackSupervisor();
+      }
+    }
+
+    // Try any available supervisor
+    const available = await this.getAvailableSupervisors();
+    for (const supervisor of available) {
+      try {
+        const response = await supervisor.chat(messages);
+        return { response, supervisor: supervisor.name };
+      } catch {
+        continue;
+      }
+    }
+
+    return null;
+  }
+
   async debate(task: DevelopmentTask): Promise<CouncilDecision> {
     const startTime = Date.now();
-    const available = await this.getAvailableSupervisors();
+    
+    dynamicSupervisorSelection.setAvailableSupervisors(this.supervisors.map(s => s.name));
+    
+    let supervisorsToUse = this.supervisors;
+    let consensusModeToUse = this.config.consensusMode ?? 'weighted';
+    let leadSupervisorToUse = this.config.leadSupervisor;
+    let dynamicSelectionInfo: string | undefined;
+    let dynamicSelectionData: { enabled: boolean; taskType?: TaskType; confidence?: number } | undefined;
+    
+    if (dynamicSupervisorSelection.isEnabled()) {
+      const selection = dynamicSupervisorSelection.selectTeam(task);
+      
+      const selectedSupervisors = this.supervisors.filter(s => selection.team.includes(s.name));
+      if (selectedSupervisors.length > 0) {
+        supervisorsToUse = selectedSupervisors;
+        if (!leadSupervisorToUse) {
+          leadSupervisorToUse = selection.leadSupervisor;
+        }
+        dynamicSelectionInfo = `**Dynamic Selection:** ${selection.reasoning} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`;
+        dynamicSelectionData = {
+          enabled: true,
+          taskType: selection.taskType as TaskType,
+          confidence: selection.confidence,
+        };
+      }
+    }
+    
+    const available: Supervisor[] = [];
+    for (const supervisor of supervisorsToUse) {
+      if (await supervisor.isAvailable()) {
+        available.push(supervisor);
+      }
+    }
     
     if (available.length === 0) {
       metrics.recordDebate(Date.now() - startTime, 0, true);
@@ -51,7 +187,7 @@ export class SupervisorCouncil {
     }
 
     const rounds = this.config.debateRounds || 2;
-    const votes: CouncilDecision['votes'] = [];
+    const votes: Vote[] = [];
 
     const taskContext: Message = {
       role: 'user',
@@ -141,25 +277,171 @@ export class SupervisorCouncil {
     // Track strong dissent (rejections with high confidence)
     const dissent = this.extractDissent(votes);
 
-    const threshold = this.config.consensusThreshold || 0.5;
-    
-    // Use weighted consensus if enabled, otherwise simple consensus
-    const effectiveConsensus = this.config.weightedVoting ? weightedConsensus : consensus;
-    const approved = effectiveConsensus >= threshold;
+    // Get lead supervisor's vote if applicable
+    const leadVote = leadSupervisorToUse 
+      ? votes.find(v => v.supervisor === leadSupervisorToUse)
+      : undefined;
+
+    const mode = consensusModeToUse;
+    const handler = this.consensusHandlers[mode];
+    const { approved, reasoning: modeReasoning } = handler(votes, this.config, leadVote);
 
     metrics.recordDebate(Date.now() - startTime, rounds, approved);
 
-    return {
+    const decision: CouncilDecision = {
       approved,
       consensus,
       weightedConsensus,
       votes,
-      reasoning: this.generateConsensusReasoning(votes, approved, weightedConsensus, dissent),
+      reasoning: this.generateConsensusReasoning(votes, approved, weightedConsensus, dissent, mode, modeReasoning, dynamicSelectionInfo),
       dissent,
+    };
+
+    if (debateHistory.isEnabled()) {
+      debateHistory.saveDebate(task, decision, {
+        debateRounds: rounds,
+        consensusMode: mode,
+        leadSupervisor: leadSupervisorToUse,
+        dynamicSelection: dynamicSelectionData,
+        durationMs: Date.now() - startTime,
+      });
+    }
+
+    return decision;
+  }
+
+  // ============ Consensus Mode Handlers ============
+
+  private handleSimpleMajority(votes: Vote[], config: CouncilConfig): { approved: boolean; reasoning: string } {
+    const approvals = votes.filter(v => v.approved).length;
+    const consensus = votes.length > 0 ? approvals / votes.length : 0;
+    const threshold = config.consensusThreshold ?? 0.5;
+    const approved = consensus >= threshold;
+    return {
+      approved,
+      reasoning: `Simple majority: ${approvals}/${votes.length} (${(consensus * 100).toFixed(0)}%) approved (threshold: ${(threshold * 100).toFixed(0)}%)`,
     };
   }
 
-  private calculateWeightedConsensus(votes: CouncilDecision['votes']): number {
+  private handleSupermajority(votes: Vote[]): { approved: boolean; reasoning: string } {
+    const approvals = votes.filter(v => v.approved).length;
+    const threshold = votes.length * 0.667;
+    const approved = approvals >= threshold;
+    return {
+      approved,
+      reasoning: `Supermajority: ${approvals}/${votes.length} approved (need >=${Math.ceil(threshold)}, 66.7%)`,
+    };
+  }
+
+  private handleUnanimous(votes: Vote[]): { approved: boolean; reasoning: string } {
+    const approvals = votes.filter(v => v.approved).length;
+    const approved = approvals === votes.length;
+    return {
+      approved,
+      reasoning: `Unanimous: ${approvals}/${votes.length} approved (need ${votes.length}/${votes.length})`,
+    };
+  }
+
+  private handleWeighted(votes: Vote[], config: CouncilConfig): { approved: boolean; reasoning: string } {
+    const weightedConsensus = this.calculateWeightedConsensus(votes);
+    const threshold = config.consensusThreshold ?? 0.5;
+    const approved = weightedConsensus >= threshold;
+    return {
+      approved,
+      reasoning: `Weighted consensus: ${(weightedConsensus * 100).toFixed(1)}% (threshold: ${(threshold * 100).toFixed(1)}%)`,
+    };
+  }
+
+  private handleCeoOverride(votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string } {
+    if (!leadVote) {
+      // Fall back to weighted if no lead supervisor vote
+      return this.handleWeighted(votes, config);
+    }
+    
+    return {
+      approved: leadVote.approved,
+      reasoning: `CEO Override: ${config.leadSupervisor} ${leadVote.approved ? 'APPROVED' : 'REJECTED'} (confidence: ${leadVote.confidence.toFixed(2)})`,
+    };
+  }
+
+  private handleCeoVeto(votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string } {
+    // First calculate majority
+    const approvals = votes.filter(v => v.approved).length;
+    const majorityApproved = approvals > votes.length / 2;
+    
+    // CEO can only veto (reject), not force approve
+    if (leadVote && !leadVote.approved && leadVote.confidence >= 0.7) {
+      return {
+        approved: false,
+        reasoning: `CEO Veto: ${config.leadSupervisor} VETOED with high confidence (${leadVote.confidence.toFixed(2)}). Majority was ${majorityApproved ? 'in favor' : 'against'}.`,
+      };
+    }
+    
+    return {
+      approved: majorityApproved,
+      reasoning: `CEO Veto (not used): Majority ${majorityApproved ? 'approved' : 'rejected'} (${approvals}/${votes.length}). ${config.leadSupervisor || 'Lead'} did not veto.`,
+    };
+  }
+
+  private handleHybridCeoMajority(votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string } {
+    const approvals = votes.filter(v => v.approved).length;
+    const rejections = votes.length - approvals;
+    
+    // Clear majority
+    if (approvals > rejections + 1) {
+      return {
+        approved: true,
+        reasoning: `Hybrid CEO-Majority: Clear majority approved (${approvals}/${votes.length})`,
+      };
+    }
+    
+    if (rejections > approvals + 1) {
+      return {
+        approved: false,
+        reasoning: `Hybrid CEO-Majority: Clear majority rejected (${rejections}/${votes.length} against)`,
+      };
+    }
+    
+    // Tie or close - CEO decides
+    if (leadVote) {
+      return {
+        approved: leadVote.approved,
+        reasoning: `Hybrid CEO-Majority: Tie/close vote (${approvals}-${rejections}), ${config.leadSupervisor} breaks tie: ${leadVote.approved ? 'APPROVED' : 'REJECTED'}`,
+      };
+    }
+    
+    // No CEO vote, default to slight majority or reject
+    return {
+      approved: approvals >= rejections,
+      reasoning: `Hybrid CEO-Majority: Tie/close vote (${approvals}-${rejections}), no CEO to break tie, defaulting to ${approvals >= rejections ? 'approve' : 'reject'}`,
+    };
+  }
+
+  private handleRankedChoice(votes: Vote[]): { approved: boolean; reasoning: string } {
+    // Ranked choice using confidence as "rank" - higher confidence = stronger preference
+    // Calculate weighted score for approve vs reject
+    let approveScore = 0;
+    let rejectScore = 0;
+    
+    for (const vote of votes) {
+      const score = vote.weight * vote.confidence;
+      if (vote.approved) {
+        approveScore += score;
+      } else {
+        rejectScore += score;
+      }
+    }
+    
+    const approved = approveScore >= rejectScore;
+    return {
+      approved,
+      reasoning: `Ranked Choice: Approve score ${approveScore.toFixed(2)} vs Reject score ${rejectScore.toFixed(2)}`,
+    };
+  }
+
+  // ============ Helper Methods ============
+
+  private calculateWeightedConsensus(votes: Vote[]): number {
     if (votes.length === 0) return 0;
 
     let weightedApprovals = 0;
@@ -167,7 +449,7 @@ export class SupervisorCouncil {
 
     for (const vote of votes) {
       const effectiveWeight = vote.weight * vote.confidence;
-      totalWeight += vote.weight; // Total weight is just sum of weights
+      totalWeight += vote.weight;
       if (vote.approved) {
         weightedApprovals += effectiveWeight;
       }
@@ -176,11 +458,10 @@ export class SupervisorCouncil {
     return totalWeight > 0 ? weightedApprovals / totalWeight : 0;
   }
 
-  private extractDissent(votes: CouncilDecision['votes']): string[] {
+  private extractDissent(votes: Vote[]): string[] {
     const dissent: string[] = [];
     
     for (const vote of votes) {
-      // Strong dissent: rejected with high confidence (> 0.7)
       if (!vote.approved && vote.confidence > 0.7) {
         const shortComment = vote.comment.length > 300 
           ? vote.comment.substring(0, 300) + '...' 
@@ -256,17 +537,26 @@ Be thorough but concise in your analysis.
   }
 
   private generateConsensusReasoning(
-    votes: CouncilDecision['votes'], 
+    votes: Vote[], 
     approved: boolean,
     weightedConsensus: number,
-    dissent: string[]
+    dissent: string[],
+    mode: ConsensusMode,
+    modeReasoning: string,
+    dynamicSelectionInfo?: string
   ): string {
     const approvals = votes.filter(v => v.approved).length;
     const avgConfidence = votes.length > 0 
       ? votes.reduce((sum, v) => sum + v.confidence, 0) / votes.length 
       : 0;
     
-    let reasoning = `After ${votes.length} supervisor votes, `;
+    let reasoning = '';
+    
+    if (dynamicSelectionInfo) {
+      reasoning += dynamicSelectionInfo + '\n\n';
+    }
+    
+    reasoning += `After ${votes.length} supervisor votes using **${mode}** mode, `;
     
     if (approved) {
       reasoning += `the council has reached consensus to APPROVE this task.`;
@@ -274,10 +564,19 @@ Be thorough but concise in your analysis.
       reasoning += `the council has decided to REJECT this task.`;
     }
 
+    reasoning += `\n\n**Consensus Mode Decision:**\n${modeReasoning}`;
+
     reasoning += `\n\n**Voting Summary:**`;
     reasoning += `\n- Simple consensus: ${approvals}/${votes.length} approved (${(approvals/votes.length*100).toFixed(0)}%)`;
     reasoning += `\n- Weighted consensus: ${(weightedConsensus * 100).toFixed(1)}%`;
     reasoning += `\n- Average confidence: ${(avgConfidence * 100).toFixed(1)}%`;
+    
+    if (this.config.leadSupervisor) {
+      const leadVote = votes.find(v => v.supervisor === this.config.leadSupervisor);
+      if (leadVote) {
+        reasoning += `\n- Lead supervisor (${this.config.leadSupervisor}): ${leadVote.approved ? 'APPROVED' : 'REJECTED'} (confidence: ${leadVote.confidence.toFixed(2)})`;
+      }
+    }
     
     if (dissent.length > 0) {
       reasoning += `\n\n**Strong Dissenting Opinions (${dissent.length}):**`;
@@ -290,8 +589,9 @@ Be thorough but concise in your analysis.
     
     for (const vote of votes) {
       const status = vote.approved ? '✅' : '❌';
+      const isLead = vote.supervisor === this.config.leadSupervisor ? ' [LEAD]' : '';
       const comment = vote.comment.length > 150 ? vote.comment.substring(0, 150) + '...' : vote.comment;
-      reasoning += `\n- ${status} ${vote.supervisor} (weight: ${vote.weight.toFixed(1)}, confidence: ${vote.confidence.toFixed(2)}): ${comment}`;
+      reasoning += `\n- ${status} ${vote.supervisor}${isLead} (weight: ${vote.weight.toFixed(1)}, confidence: ${vote.confidence.toFixed(2)}): ${comment}`;
     }
     
     return reasoning;
@@ -316,6 +616,12 @@ Be thorough but concise in your analysis.
 
   setWeightedVoting(enabled: boolean): void {
     this.config.weightedVoting = enabled;
+    const currentMode = this.config.consensusMode ?? 'weighted';
+    if (!enabled && (currentMode === 'weighted' || !this.config.consensusMode)) {
+      this.config.consensusMode = 'simple-majority';
+    } else if (enabled && currentMode === 'simple-majority') {
+      this.config.consensusMode = 'weighted';
+    }
   }
 
   getConfig(): CouncilConfig {
@@ -329,4 +635,5 @@ export const council = new SupervisorCouncil({
   consensusThreshold: 0.7,
   enabled: true,
   weightedVoting: true,
+  consensusMode: 'weighted',
 });

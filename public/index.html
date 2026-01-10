@@ -3,61 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenCode Council Orchestrator</title>
+    <title>OpenCode Autopilot - Council Dashboard</title>
     <style>
         :root {
-            /* Zinc Palette (approximate to Tailwind zinc-950/900/800 etc) */
-            --background: #09090b;
-            --card-bg: #09090b; /* zinc-950 */
-            --card-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.6);
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-active: rgba(168, 85, 247, 0.5);
+            --text-primary: #fafafa;
+            --text-secondary: rgba(255, 255, 255, 0.7);
             --text-muted: rgba(255, 255, 255, 0.4);
-            --accent-purple: #c084fc; /* purple-400 */
-            --accent-blue: #60a5fa; /* blue-400 */
-            --accent-green: #4ade80; /* green-400 */
-            --accent-red: #f87171; /* red-400 */
-            --hover-bg: rgba(255, 255, 255, 0.05);
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: #000000; /* Page bg is slightly darker than cards usually */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
             color: var(--text-primary);
-            margin: 0;
-            padding: 0;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 80rem; /* max-w-7xl */
-            margin: 0 auto;
-            padding: 1.5rem; /* p-6 */
-        }
-
-        /* Header Section */
-        .page-header {
-            margin-bottom: 2rem;
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
-            align-items: start;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .logo h1 {
+            font-size: 1.125rem;
+            font-weight: 600;
             letter-spacing: -0.025em;
-            margin: 0 0 0.5rem 0;
         }
 
-        .page-desc {
-            color: var(--text-secondary);
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            transition: background 0.3s;
+        }
+
+        .status-dot.connected { background: var(--accent-green); }
+        .status-dot.connecting { background: var(--accent-yellow); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Layout */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 0;
+        }
+
+        @media (max-width: 1024px) {
+            main { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+        }
+
+        /* Content Area */
+        .content {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
             font-size: 0.875rem;
-            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-body {
+            padding: 1rem 1.25rem;
         }
 
         /* Buttons */
@@ -65,722 +162,1320 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border: 1px solid transparent;
             gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
         }
 
         .btn-primary {
-            background-color: #ffffff;
-            color: #000000;
+            background: var(--accent-purple);
+            color: white;
         }
-        .btn-primary:hover { background-color: rgba(255, 255, 255, 0.9); }
+        .btn-primary:hover { background: #9333ea; }
 
-        .btn-outline {
-            background-color: transparent;
-            border-color: var(--card-border);
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
             color: var(--text-primary);
         }
-        .btn-outline:hover { background-color: var(--hover-bg); }
+        .btn-secondary:hover { background: #3f3f46; }
 
         .btn-danger {
-            background-color: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
             color: var(--accent-red);
-            border: 1px solid rgba(239, 68, 68, 0.2);
         }
-        .btn-danger:hover { background-color: rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
 
         .btn-success {
-            background-color: rgba(74, 222, 128, 0.2);
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
             color: var(--accent-green);
-            border: 1px solid rgba(74, 222, 128, 0.2);
         }
-        .btn-success:hover { background-color: rgba(74, 222, 128, 0.3); }
+        .btn-success:hover { background: rgba(34, 197, 94, 0.25); }
 
-
-        /* Grid Layout */
-        .grid {
-            display: grid;
-            gap: 1.5rem;
-            grid-template-columns: 1fr;
-        }
-
-        @media (min-width: 768px) {
-            .grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (min-width: 1024px) {
-            .grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        /* Card Component */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-        }
-
-        .card-content {
-            padding: 0 1.5rem 1.5rem 1.5rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-
-        .card-title {
-            font-size: 1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 0;
-        }
-
-        .card-desc {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.625rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-            word-break: break-all;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 0.25rem;
-            border: 1px solid var(--card-border);
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 0.125rem 0.5rem;
-            font-size: 0.625rem;
-            font-weight: 600;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            color: var(--text-primary);
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
             font-size: 0.75rem;
         }
 
-        .info-label {
+        .btn-xs {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.6875rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        /* Sessions Grid */
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .session-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .session-card:hover {
+            border-color: var(--border-active);
+            box-shadow: var(--shadow);
+        }
+
+        .session-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .session-id {
+            font-family: ui-monospace, monospace;
+            font-size: 0.75rem;
             color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .session-port {
+            font-size: 1.125rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cli-badge {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            background: var(--accent-purple);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .health-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        .health-healthy { background: var(--accent-green); }
+        .health-degraded { background: var(--accent-yellow); }
+        .health-unresponsive { background: var(--accent-orange); }
+        .health-crashed { background: var(--accent-red); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
             gap: 0.375rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
-        .info-value {
-            color: rgba(255, 255, 255, 0.8);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        .status-running {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
         }
 
-        .logs-area {
-            background-color: #000;
-            border-top: 1px solid var(--card-border);
-            padding: 0.75rem;
-            font-family: 'Consolas', monospace;
-            font-size: 0.7rem;
-            color: #aaa;
-            height: 100px;
-            overflow-y: auto;
-            white-space: pre-wrap;
+        .status-stopped {
+            background: rgba(113, 113, 122, 0.15);
+            color: #71717a;
         }
 
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            z-index: 50;
-            justify-content: center;
+        .status-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .status-starting {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .session-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            margin-bottom: 0.75rem;
             align-items: center;
         }
 
-        .modal-content {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            width: 100%;
-            max-width: 28rem;
+        .tag {
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
-        input[type="text"] {
-            width: 100%;
-            background-color: rgba(255,255,255,0.05);
-            border: 1px solid var(--card-border);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            margin: 1rem 0;
-            font-size: 0.875rem;
+        .tag-remove {
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 0.75rem;
         }
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent-blue);
+        .tag-remove:hover { opacity: 1; }
+
+        .add-tag-btn {
+            background: transparent;
+            border: 1px dashed var(--border-color);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .add-tag-btn:hover { border-color: var(--accent-purple); color: var(--text-primary); }
+
+        .session-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
-        .text-area {
-            width: 100%;
-            background-color: rgba(255,255,255,0.05);
-            border: 1px solid var(--card-border);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            resize: vertical;
-        }
+        .session-actions .btn { flex: 1; min-width: 60px; }
 
-        /* Toggle Switch */
-        .switch {
+        .export-dropdown {
             position: relative;
             display: inline-block;
-            width: 36px;
-            height: 20px;
         }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--accent-green); }
-        input:checked + .slider:before { transform: translateX(16px); }
 
-        .settings-section {
-            border: 1px solid var(--card-border);
-            background-color: rgba(255,255,255,0.02);
-            border-radius: 0.5rem;
-            padding: 1rem;
+        .export-menu {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.25rem;
+            margin-bottom: 0.25rem;
+            min-width: 80px;
+            z-index: 10;
+        }
+
+        .export-menu.show { display: block; }
+
+        .export-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.375rem 0.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .export-menu button:hover { background: var(--bg-secondary); color: var(--text-primary); }
+
+        /* Bulk Operations */
+        .bulk-ops {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .bulk-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .bulk-row input, .bulk-row select {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+        }
+
+        .bulk-row input:focus, .bulk-row select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        /* Council Config */
+        .config-group {
             margin-bottom: 1rem;
         }
 
-        .settings-row {
+        .config-group:last-child { margin-bottom: 0; }
+
+        .config-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.375rem;
+            display: block;
+        }
+
+        .config-select, .config-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+        }
+
+        .config-select:focus, .config-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        /* Activity Log */
+        .activity-log {
+            background: #000;
+            border-radius: 8px;
+            padding: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: ui-monospace, monospace;
+            font-size: 0.6875rem;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-entry:last-child { border-bottom: none; }
+
+        .log-time {
+            color: var(--text-muted);
+            margin-right: 0.5rem;
+        }
+
+        .log-info { color: var(--accent-blue); }
+        .log-warn { color: var(--accent-yellow); }
+        .log-error { color: var(--accent-red); }
+        .log-success { color: var(--accent-green); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toast.success { border-color: var(--accent-green); }
+        .toast.error { border-color: var(--accent-red); }
+        .toast.info { border-color: var(--accent-blue); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 100px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 1.25rem;
         }
 
-        .settings-label { font-weight: 600; font-size: 0.875rem; color: var(--text-primary); }
-        .settings-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem; }
-        
-        .layout-container {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 600;
         }
 
-        .sidebar {
-            width: 350px;
-            background-color: #09090b;
-            border-right: 1px solid var(--card-border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.25rem;
         }
+        .modal-close:hover { color: var(--text-primary); }
 
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .sidebar-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
+        .modal-body {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
 
-        .main-content {
-            flex: 1;
-            background-color: #000;
+        .modal-footer {
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+            justify-content: flex-end;
         }
-        
-        .iframe-container {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            border: none;
-            background-color: #000;
+
+        /* CLI Tools List */
+        .cli-tool-item {
             display: flex;
-            justify-content: center;
             align-items: center;
-            color: var(--text-muted);
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        .cli-tool-item:last-child { margin-bottom: 0; }
+
+        .cli-tool-name {
+            font-weight: 500;
+            font-size: 0.8125rem;
         }
 
-        /* Update card for sidebar usage */
-        .card {
-            border: 1px solid var(--card-border);
-            border-radius: 0.5rem;
-            background-color: var(--card-bg);
-            transition: border-color 0.2s;
-            cursor: pointer;
+        .cli-tool-status {
+            font-size: 0.6875rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
         }
-        .card:hover {
-            border-color: var(--accent-purple);
+        .cli-tool-status.available {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
         }
-        .card.active {
-            border-color: var(--accent-purple);
-            background-color: rgba(192, 132, 252, 0.05);
+        .cli-tool-status.unavailable {
+            background: rgba(113, 113, 122, 0.15);
+            color: #71717a;
         }
 
-        .card-header { padding: 1rem 1rem 0.5rem 1rem; }
-        .card-content { padding: 0 1rem 1rem 1rem; }
-
+        /* Tag Input */
+        .tag-input-container {
+            display: flex;
+            gap: 0.25rem;
+        }
+        .tag-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+        }
+        .tag-input:focus { outline: none; border-color: var(--accent-purple); }
     </style>
 </head>
 <body>
-
-    <div class="layout-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div>
-                    <h1 class="page-title" style="font-size: 1.25rem;">Council Orchestrator</h1>
-                    <p class="page-desc" style="font-size: 0.75rem;">Manage active OpenCode sessions</p>
-                </div>
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                     <button class="btn btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="showSettingsModal()">
-                        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        Settings
-                    </button>
-                    <button class="btn btn-primary" style="flex: 1; font-size: 0.75rem;" onclick="showAddModal()">
-                        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        New
-                    </button>
-                </div>
+    <div class="app">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">&#129302;</div>
+                <h1>OpenCode Autopilot</h1>
             </div>
-            
-            <div id="sessionList" class="sidebar-content">
-                <!-- Sessions populated here -->
+            <div class="connection-status">
+                <span class="status-dot" id="ws-status"></span>
+                <span id="ws-status-text">Connecting...</span>
             </div>
-        </div>
+        </header>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <div id="iframe-placeholder" class="iframe-container">
-                <div style="text-align: center;">
-                    <div style="margin-bottom: 1rem; font-size: 2rem;">👾</div>
-                    <div>Select a session to view its OpenCode Dashboard</div>
-                </div>
-            </div>
-            <iframe id="main-iframe" class="iframe-container" style="display: none;" src=""></iframe>
-        </div>
-    </div>
-
-    <!-- Add Session Modal -->
-    <div id="addModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0; font-size: 1.125rem;">Add New Session</h3>
-            <p style="color: var(--text-muted); font-size: 0.875rem;">Enter the absolute path to the repository you want to manage.</p>
-            <input type="text" id="repoPath" placeholder="e.g., /Users/username/projects/my-app">
-            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button class="btn btn-outline" onclick="hideAddModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="addSession()">Add Session</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content" style="max-width: 600px; display: flex; flex-direction: column; max-height: 85vh;">
-            <!-- Header -->
-            <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin: 0; font-size: 1.125rem;">Council Settings</h3>
-                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
-                    Configure how the Autopilot Council monitors and interacts with your sessions.
-                </p>
-            </div>
-
-            <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
-                
-                <!-- Main Controls -->
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-label">Enable Autopilot</div>
-                            <div class="settings-desc">Continuously monitor active sessions</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="setting-enabled">
-                            <span class="slider round"></span>
-                        </label>
+        <main>
+            <div class="content">
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">Total Sessions</div>
                     </div>
-                    
-                    <div style="border-top: 1px solid var(--card-border); margin: 0.75rem 0;"></div>
-
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-label">Auto-Switch Session</div>
-                            <div class="settings-desc">Navigate to the session being acted upon</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="setting-autoSwitch">
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-active" style="color: var(--accent-green)">0</div>
+                        <div class="stat-label">Running</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-healthy" style="color: var(--accent-blue)">0</div>
+                        <div class="stat-label">Healthy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-supervisors" style="color: var(--accent-purple)">0</div>
+                        <div class="stat-label">Supervisors</div>
                     </div>
                 </div>
 
-                <!-- Smart Supervisor -->
-                <div class="settings-section" style="border-color: rgba(192, 132, 252, 0.2); background-color: rgba(192, 132, 252, 0.05);">
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-label" style="color: var(--accent-purple); display: flex; align-items: center; gap: 0.5rem;">
-                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                                Smart Supervisor
+                <!-- Sessions -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#128230;</span> Sessions
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openNewSessionModal()">
+                            + New Session
+                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div class="sessions-grid" id="sessions-grid">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">&#128237;</div>
+                                <p>No sessions yet</p>
+                                <p style="font-size: 0.75rem; margin-top: 0.5rem;">Start a new session or wait for connections</p>
                             </div>
-                            <div class="settings-desc">Use AI to generate context-aware guidance</div>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="setting-smartPilot" onchange="toggleSmartSettings()">
-                            <span class="slider round"></span>
-                        </label>
                     </div>
+                </div>
 
-                    <div id="smart-settings-content" style="display: none; margin-top: 1rem;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div>
-                                <label class="input-label">Provider</label>
-                                <select id="setting-provider" class="select-input">
-                                    <option value="openai">OpenAI</option>
-                                    <option value="anthropic">Anthropic</option>
-                                    <option value="google">Google Gemini</option>
-                                    <option value="deepseek">DeepSeek</option>
+                <!-- Activity Log -->
+                <div class="section" style="margin-top: 1.5rem;">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#128203;</span> Activity
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="clearLogs()">Clear</button>
+                    </div>
+                    <div class="section-body" style="padding: 0.75rem;">
+                        <div class="activity-log" id="activity-log">
+                            <div class="log-entry">
+                                <span class="log-time">--:--:--</span>
+                                <span class="log-info">Dashboard initialized</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- Bulk Operations -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#9889;</span> Bulk Operations
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="bulk-ops">
+                            <div class="bulk-row">
+                                <input type="number" id="bulk-count" placeholder="Count" value="3" min="1" max="50">
+                                <select id="bulk-cli-type">
+                                    <option value="">Default CLI</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="input-label">API Key</label>
-                                <input type="password" id="setting-apiKey" class="text-input" placeholder="Enter API Key">
+                            <div class="bulk-row">
+                                <button class="btn btn-primary" style="flex: 1;" onclick="startBulkSessions()">Start N</button>
                             </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <label class="input-label">Model</label>
-                            <input type="text" id="setting-model" class="text-input" placeholder="e.g. gpt-4o">
+                            <div class="bulk-row">
+                                <button class="btn btn-danger" style="flex: 1;" onclick="stopAllSessions()">Stop All</button>
+                                <button class="btn btn-success" style="flex: 1;" onclick="resumeAllSessions()">Resume All</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Multi-Agent Debate -->
-                <div class="settings-section" style="border-color: rgba(96, 165, 250, 0.2); background-color: rgba(96, 165, 250, 0.05);">
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-label" style="color: var(--accent-blue); display: flex; align-items: center; gap: 0.5rem;">
-                                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                Multi-Agent Debate
-                            </div>
-                            <div class="settings-desc">Convene a council of models to debate the plan</div>
+                <!-- CLI Tools -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#128736;</span> CLI Tools
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="setting-debate">
-                            <span class="slider round"></span>
-                        </label>
+                        <button class="btn btn-secondary btn-xs" onclick="refreshCLITools()">Refresh</button>
+                    </div>
+                    <div class="section-body" id="cli-tools-list" style="font-size: 0.8125rem;">
+                        Loading...
                     </div>
                 </div>
 
-                <!-- Fallback Messages -->
-                <div class="settings-section">
-                    <div class="settings-label" style="margin-bottom: 0.5rem;">Fallback Messages</div>
-                    <div class="settings-desc" style="margin-bottom: 0.5rem;">Used when API calls fail or Smart Supervisor is disabled.</div>
-                    <textarea id="setting-messages" class="text-area" rows="5" placeholder="Great! Please keep going..."></textarea>
+                <!-- Council Config -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#127963;</span> Council Config
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="config-group">
+                            <label class="config-label">Consensus Mode</label>
+                            <select class="config-select" id="consensus-mode" onchange="updateConsensusMode()">
+                                <option value="simple-majority">Simple Majority (>50%)</option>
+                                <option value="supermajority">Supermajority (>66%)</option>
+                                <option value="unanimous">Unanimous (100%)</option>
+                                <option value="weighted" selected>Weighted Voting</option>
+                                <option value="ceo-override">CEO Override</option>
+                                <option value="ceo-veto">CEO Veto Only</option>
+                                <option value="hybrid-ceo-majority">Hybrid CEO-Majority</option>
+                                <option value="ranked-choice">Ranked Choice</option>
+                            </select>
+                        </div>
+                        <div class="config-group">
+                            <label class="config-label">Lead Supervisor (CEO)</label>
+                            <input type="text" class="config-input" id="lead-supervisor" placeholder="e.g., GPT-4o" onchange="updateLeadSupervisor()">
+                        </div>
+                        <div class="config-group">
+                            <label class="config-label">Consensus Threshold</label>
+                            <input type="range" id="threshold-slider" min="0" max="100" value="70" style="width: 100%;" onchange="updateThreshold()">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--text-muted);">
+                                <span>0%</span>
+                                <span id="threshold-value">70%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Supervisors -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>&#128101;</span> Supervisors
+                        </div>
+                    </div>
+                    <div class="section-body" id="supervisors-list" style="font-size: 0.8125rem; color: var(--text-secondary);">
+                        Loading...
+                    </div>
+                </div>
             </div>
+        </main>
+    </div>
 
-            <!-- Footer -->
-            <div style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button class="btn btn-outline" onclick="hideSettingsModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
+    <!-- New Session Modal -->
+    <div class="modal-overlay" id="new-session-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">New Session</div>
+                <button class="modal-close" onclick="closeNewSessionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="config-group">
+                    <label class="config-label">CLI Tool</label>
+                    <select class="config-select" id="new-session-cli">
+                        <option value="">Default (opencode)</option>
+                    </select>
+                </div>
+                <div class="config-group">
+                    <label class="config-label">Template</label>
+                    <select class="config-select" id="new-session-template">
+                        <option value="">None</option>
+                    </select>
+                </div>
+                <div class="config-group">
+                    <label class="config-label">Tags (comma-separated)</label>
+                    <input type="text" class="config-input" id="new-session-tags" placeholder="e.g., test, dev">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createNewSession()">Create Session</button>
             </div>
         </div>
     </div>
 
+    <!-- Add Tag Modal -->
+    <div class="modal-overlay" id="add-tag-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Add Tag</div>
+                <button class="modal-close" onclick="closeAddTagModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="config-group">
+                    <label class="config-label">Tag Name</label>
+                    <input type="text" class="config-input" id="add-tag-input" placeholder="Enter tag name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddTagModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmAddTag()">Add Tag</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
-        // --- Icons (SVG strings) ---
-        const icons = {
-            folder: `<svg class="svg-icon-md" style="color: var(--accent-purple);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
-            hash: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`,
-            clock: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-            activity: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-            play: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
-            stop: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>`,
-            trash: `<svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
-        };
-
+        let ws = null;
         let sessions = [];
-        let currentSessionId = localStorage.getItem('opencode_last_session');
-        let firstLoad = true;
+        let sessionHealth = {};
+        let councilStatus = {};
+        let cliTools = [];
+        let templates = [];
+        let reconnectAttempts = 0;
+        let currentTagSessionId = null;
+        const maxReconnectAttempts = 10;
 
-        // --- Core Logic ---
+        function connectWebSocket() {
+            const wsUrl = `ws://${window.location.host}/ws`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                reconnectAttempts = 0;
+                updateConnectionStatus('connected');
+                addLog('Connected to server', 'success');
+                fetchInitialData();
+            };
+
+            ws.onclose = () => {
+                updateConnectionStatus('disconnected');
+                addLog('Disconnected from server', 'warn');
+                scheduleReconnect();
+            };
+
+            ws.onerror = () => {
+                updateConnectionStatus('error');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    handleWebSocketMessage(msg);
+                } catch (e) {
+                    console.error('Failed to parse WS message:', e);
+                }
+            };
+        }
+
+        function scheduleReconnect() {
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                updateConnectionStatus('connecting');
+                setTimeout(connectWebSocket, delay);
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const dot = document.getElementById('ws-status');
+            const text = document.getElementById('ws-status-text');
+            
+            dot.className = 'status-dot ' + status;
+            text.textContent = status === 'connected' ? 'Connected' : 
+                               status === 'connecting' ? 'Reconnecting...' : 'Disconnected';
+        }
+
+        function handleWebSocketMessage(msg) {
+            switch (msg.type) {
+                case 'session_update':
+                    updateSession(msg.payload);
+                    break;
+                case 'bulk_update':
+                    addLog(`Bulk ${msg.payload.action}: ${msg.payload.count || msg.payload.stopped} sessions`, 'info');
+                    fetchSessions();
+                    break;
+                case 'log':
+                    addLog(msg.payload.message, msg.payload.level);
+                    break;
+                case 'council_decision':
+                    handleCouncilDecision(msg.payload);
+                    break;
+                case 'supervisor_fallback':
+                    addLog(`Supervisor fallback: ${msg.payload.from} -> ${msg.payload.to}`, 'warn');
+                    break;
+                case 'health_status_changed':
+                    handleHealthChange(msg.payload);
+                    break;
+            }
+        }
+
+        function updateSession(session) {
+            const idx = sessions.findIndex(s => s.id === session.id);
+            if (idx >= 0) {
+                sessions[idx] = { ...sessions[idx], ...session };
+            } else {
+                sessions.push(session);
+            }
+            renderSessions();
+        }
+
+        function handleHealthChange(payload) {
+            sessionHealth[payload.sessionId] = payload.status;
+            addLog(`Session ${payload.sessionId.slice(0, 8)} health: ${payload.previous} -> ${payload.status}`, 
+                   payload.status === 'healthy' ? 'success' : payload.status === 'crashed' ? 'error' : 'warn');
+            renderSessions();
+            updateStats();
+        }
+
+        function handleCouncilDecision(decision) {
+            const status = decision.approved ? 'APPROVED' : 'REJECTED';
+            const level = decision.approved ? 'success' : 'warn';
+            addLog(`Council Decision: ${status} (${(decision.consensus * 100).toFixed(0)}% consensus)`, level);
+            showToast(`Task ${status}`, decision.approved ? 'success' : 'error');
+        }
+
+        async function fetchInitialData() {
+            await Promise.all([
+                fetchSessions(),
+                fetchCouncilStatus(),
+                fetchCLITools(),
+                fetchTemplates(),
+                fetchSessionHealth()
+            ]);
+        }
 
         async function fetchSessions() {
             try {
                 const res = await fetch('/api/sessions');
-                sessions = await res.json();
-                
-                if (firstLoad) {
-                    if (currentSessionId) {
-                        const s = sessions.find(x => x.id === currentSessionId);
-                        if (s) selectSession(s.id, s.port);
-                    }
-                    firstLoad = false;
-                }
-                
-                renderSidebar();
+                const data = await res.json();
+                sessions = data.data || [];
+                renderSessions();
+                updateStats();
             } catch (e) {
-                console.error("Failed to fetch sessions", e);
+                console.error('Failed to fetch sessions:', e);
             }
         }
 
-        async function addSession() {
-            const path = document.getElementById('repoPath').value;
-            if (!path) return;
-            
-            await fetch('/api/sessions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path })
-            });
-            
-            document.getElementById('repoPath').value = '';
-            hideAddModal();
-            fetchSessions();
+        async function fetchSessionHealth() {
+            try {
+                const res = await fetch('/api/health/sessions');
+                const data = await res.json();
+                if (data.success && data.data) {
+                    // data.data is Record<string, SessionHealth>, extract status for each session
+                    sessionHealth = {};
+                    for (const [sessionId, health] of Object.entries(data.data)) {
+                        sessionHealth[sessionId] = health.status;
+                    }
+                    renderSessions();
+                    updateStats();
+                }
+            } catch (e) {
+                console.error('Failed to fetch session health:', e);
+            }
         }
 
-        async function toggleSession(id) {
-            const session = sessions.find(s => s.id === id);
-            if (!session) return;
-            const action = session.status === 'running' ? 'stop' : 'start';
-            
-            // Optimistic update
-            const btn = document.getElementById(`toggle-btn-${id}`);
-            if (btn) btn.innerHTML = '<span class="spin">⌛</span>';
-
-            await fetch(`/api/sessions/${id}/${action}`, { method: 'POST' });
-            fetchSessions();
+        async function fetchCLITools() {
+            try {
+                const res = await fetch('/api/cli/tools/available');
+                const data = await res.json();
+                cliTools = data.data || [];
+                renderCLITools();
+                updateCLISelects();
+            } catch (e) {
+                console.error('Failed to fetch CLI tools:', e);
+            }
         }
 
-        async function deleteSession(id) {
-            if(!confirm('Are you sure you want to remove this session?')) return;
-            await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-            fetchSessions();
+        async function refreshCLITools() {
+            try {
+                await fetch('/api/cli/tools/refresh', { method: 'POST' });
+                await fetchCLITools();
+                showToast('CLI tools refreshed', 'success');
+            } catch (e) {
+                showToast('Failed to refresh CLI tools', 'error');
+            }
         }
 
-        // --- Utils ---
-        function timeAgo(dateParam) {
-            if (!dateParam) return null;
-            const date = typeof dateParam === 'object' ? dateParam : new Date(dateParam);
-            const today = new Date();
-            const seconds = Math.round((today - date) / 1000);
-            const minutes = Math.round(seconds / 60);
-            const isToday = today.toDateString() === date.toDateString();
-            
-            if (seconds < 5) return 'just now';
-            else if (seconds < 60) return `${seconds} seconds ago`;
-            else if (seconds < 90) return 'about a minute ago';
-            else if (minutes < 60) return `${minutes} minutes ago`;
-            else if (isToday) return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-            else return date.toLocaleDateString();
+        async function fetchTemplates() {
+            try {
+                const res = await fetch('/api/sessions/templates');
+                const data = await res.json();
+                templates = data.data || [];
+                updateTemplateSelect();
+            } catch (e) {
+                console.error('Failed to fetch templates:', e);
+            }
         }
 
-        async function selectSession(id, port) {
-            currentSessionId = id;
-            localStorage.setItem('opencode_last_session', id);
-
-            // Update iframe
-            const iframe = document.getElementById('main-iframe');
-            const placeholder = document.getElementById('iframe-placeholder');
-            
-            iframe.src = `http://localhost:${port}`;
-            iframe.style.display = 'flex';
-            placeholder.style.display = 'none';
-
-            // Re-render sidebar to update highlighting
-            renderSidebar();
+        async function fetchCouncilStatus() {
+            try {
+                const res = await fetch('/api/council/status');
+                const data = await res.json();
+                councilStatus = data.data || {};
+                renderCouncilStatus();
+                updateStats();
+            } catch (e) {
+                console.error('Failed to fetch council status:', e);
+            }
         }
 
-        // --- Rendering ---
+        function renderCLITools() {
+            const list = document.getElementById('cli-tools-list');
+            if (cliTools.length === 0) {
+                list.innerHTML = '<span style="color: var(--text-muted);">No CLI tools detected</span>';
+                return;
+            }
+            list.innerHTML = cliTools.map(tool => `
+                <div class="cli-tool-item">
+                    <span class="cli-tool-name">${tool.name || tool.type}</span>
+                    <span class="cli-tool-status ${tool.available ? 'available' : 'unavailable'}">
+                        ${tool.available ? 'Available' : 'Not Found'}
+                    </span>
+                </div>
+            `).join('');
+        }
 
-        function renderSidebar() {
-            const list = document.getElementById('sessionList');
-            if (!list) return; // safety check
+        function updateCLISelects() {
+            const options = '<option value="">Default CLI</option>' + 
+                cliTools.filter(t => t.available).map(t => 
+                    `<option value="${t.type}">${t.name || t.type}</option>`
+                ).join('');
+            document.getElementById('bulk-cli-type').innerHTML = options;
+            document.getElementById('new-session-cli').innerHTML = options;
+        }
+
+        function updateTemplateSelect() {
+            const select = document.getElementById('new-session-template');
+            select.innerHTML = '<option value="">None</option>' +
+                templates.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+        }
+
+        function renderSessions() {
+            const grid = document.getElementById('sessions-grid');
             
-            list.innerHTML = sessions.map(session => {
-                const name = session.path.split(/[\\/]/).pop() || 'Untitled';
+            if (sessions.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">&#128237;</div>
+                        <p>No sessions yet</p>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Start a new session to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = sessions.map(session => {
+                const statusClass = session.status === 'running' ? 'status-running' :
+                                   session.status === 'error' ? 'status-error' :
+                                   session.status === 'starting' ? 'status-starting' : 'status-stopped';
+                
                 const isRunning = session.status === 'running';
-                const isActive = session.id === currentSessionId;
+                const tags = session.tags || [];
+                const health = sessionHealth[session.id] || 'healthy';
+                const cliType = session.cliType || 'opencode';
                 
                 return `
-                <div class="card ${isActive ? 'active' : ''}" onclick="selectSession('${session.id}', ${session.port})">
-                    <div class="card-header">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div class="session-card">
+                        <div class="session-card-header">
                             <div>
-                                <h3 class="card-title" style="font-size: 0.875rem;">
-                                    ${icons.folder}
-                                    ${name}
-                                </h3>
-                                <div class="card-desc" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${session.path}">${session.path}</div>
+                                <div class="session-id">${session.id}</div>
+                                <div class="session-port">
+                                    Port ${session.port || '---'}
+                                    <span class="cli-badge">${cliType}</span>
+                                    ${isRunning ? `<span class="health-indicator health-${health}" title="Health: ${health}"></span>` : ''}
+                                </div>
                             </div>
-                            <span class="badge" style="color: ${isRunning ? 'var(--accent-green)' : 'var(--text-muted)'}; border-color: ${isRunning ? 'rgba(74,222,128,0.2)' : 'var(--card-border)'}">
-                                ${session.status.toUpperCase()}
+                            <span class="status-badge ${statusClass}">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                                ${session.status}
                             </span>
                         </div>
-                    </div>
-                    
-                    <div class="card-content" style="padding-top: 0.5rem;">
-                        <div style="display:flex; gap:0.5rem;">
-                            <button id="toggle-btn-${session.id}" class="btn ${isRunning ? 'btn-danger' : 'btn-success'}" style="flex:1; font-size: 0.75rem; padding: 0.25rem;" onclick="event.stopPropagation(); toggleSession('${session.id}')">
-                                ${isRunning ? icons.stop : icons.play} ${isRunning ? 'Stop' : 'Start'}
-                            </button>
-                            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.25rem;" onclick="event.stopPropagation(); deleteSession('${session.id}')">
-                                ${icons.trash}
-                            </button>
+                        <div class="session-meta">
+                            ${tags.map(t => `<span class="tag">${t}<span class="tag-remove" onclick="removeTag('${session.id}', '${t}')">&times;</span></span>`).join('')}
+                            <button class="add-tag-btn" onclick="openAddTagModal('${session.id}')">+ tag</button>
                         </div>
-                        
-                        <div class="info-row" style="margin-top: 0.25rem; font-size: 0.7rem;">
-                           <span class="info-label">Port: ${session.port || '---'}</span>
+                        <div class="session-actions">
+                            ${isRunning ? 
+                                `<button class="btn btn-danger btn-sm" onclick="stopSession('${session.id}')">Stop</button>` :
+                                `<button class="btn btn-success btn-sm" onclick="resumeSession('${session.id}')">Resume</button>`
+                            }
+                            <div class="export-dropdown">
+                                <button class="btn btn-secondary btn-sm" onclick="toggleExportMenu('${session.id}')">Export</button>
+                                <div class="export-menu" id="export-menu-${session.id}">
+                                    <button onclick="exportLogs('${session.id}', 'json')">JSON</button>
+                                    <button onclick="exportLogs('${session.id}', 'csv')">CSV</button>
+                                    <button onclick="exportLogs('${session.id}', 'text')">Text</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm btn-icon" onclick="deleteSession('${session.id}')">&#128465;</button>
                         </div>
                     </div>
-                    
-                    <!-- Logs (Visible when Active) -->
-                     ${isActive ? `
-                     <div class="logs-area" style="border-top: 1px solid var(--card-border); padding: 0.5rem; background: #000; color: #666; font-size: 0.65rem; height: 100px; overflow-y: auto;">
-                        ${session.logs && session.logs.length ? session.logs.slice(-10).join('<br>') : 'Waiting for logs...'}
-                     </div>
-                     ` : ''}
-                </div>
                 `;
             }).join('');
         }
 
-        // --- Modal & Utils ---
-        function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function hideAddModal() { document.getElementById('addModal').style.display = 'none'; }
-        function showSettingsModal() { 
-            loadSettings();
-            document.getElementById('settingsModal').style.display = 'flex'; 
-        }
-        function hideSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
-
-        // Close modal on outside click
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const settingsModal = document.getElementById('settingsModal');
-            if (event.target == addModal) hideAddModal();
-            if (event.target == settingsModal) hideSettingsModal();
-        }
-
-        // --- Settings Logic ---
-        function toggleSmartSettings() {
-            const enabled = document.getElementById('setting-smartPilot').checked;
-            document.getElementById('smart-settings-content').style.display = enabled ? 'block' : 'none';
-        }
-
-        function loadSettings() {
-            // In a real app, fetch from backend or localStorage
-            const defaults = {
-                enabled: false,
-                autoSwitch: true,
-                smartPilot: false,
-                provider: 'openai',
-                apiKey: '',
-                model: '',
-                debate: false,
-                messages: "Great! Please keep going.\nLooks good to me."
-            };
+        function renderCouncilStatus() {
+            const list = document.getElementById('supervisors-list');
+            const supervisors = councilStatus.config?.supervisors || [];
             
-            // Try to load from localStorage
-            const stored = localStorage.getItem('opencode-council-settings');
-            const settings = stored ? JSON.parse(stored) : defaults;
-
-            document.getElementById('setting-enabled').checked = settings.enabled;
-            document.getElementById('setting-autoSwitch').checked = settings.autoSwitch;
-            document.getElementById('setting-smartPilot').checked = settings.smartPilot;
-            document.getElementById('setting-provider').value = settings.provider;
-            document.getElementById('setting-apiKey').value = settings.apiKey;
-            document.getElementById('setting-model').value = settings.model;
-            document.getElementById('setting-debate').checked = settings.debate;
-            document.getElementById('setting-messages').value = settings.messages;
-            
-            toggleSmartSettings();
-        }
-
-        async function saveSettings() {
-            const settings = {
-                enabled: document.getElementById('setting-enabled').checked,
-                autoSwitch: document.getElementById('setting-autoSwitch').checked,
-                smartPilot: document.getElementById('setting-smartPilot').checked,
-                provider: document.getElementById('setting-provider').value,
-                apiKey: document.getElementById('setting-apiKey').value,
-                model: document.getElementById('setting-model').value,
-                debate: document.getElementById('setting-debate').checked,
-                messages: document.getElementById('setting-messages').value
-            };
-
-            // Save to localStorage
-            localStorage.setItem('opencode-council-settings', JSON.stringify(settings));
-            
-            // Push settings to all active sessions (Simulating global config for now)
-            for (const session of sessions) {
-                try {
-                    await fetch(`/api/sessions/${session.id}/config`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(settings)
-                    });
-                } catch(e) { console.error("Failed to update session config", e); }
+            if (supervisors.length === 0) {
+                list.innerHTML = '<span style="color: var(--text-muted);">No supervisors configured</span>';
+                return;
             }
-            
-            hideSettingsModal();
-            // alert('Configuration saved!');
+
+            list.innerHTML = supervisors.map(s => `
+                <div style="padding: 0.5rem; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 0.5rem;">
+                    <div style="font-weight: 500;">${s.name}</div>
+                    <div style="font-size: 0.6875rem; color: var(--text-muted);">${s.provider} - ${s.model || 'default'}</div>
+                </div>
+            `).join('');
+
+            if (councilStatus.config?.consensusMode) {
+                document.getElementById('consensus-mode').value = councilStatus.config.consensusMode;
+            }
+            if (councilStatus.config?.leadSupervisor) {
+                document.getElementById('lead-supervisor').value = councilStatus.config.leadSupervisor;
+            }
+            if (councilStatus.config?.consensusThreshold) {
+                const slider = document.getElementById('threshold-slider');
+                slider.value = councilStatus.config.consensusThreshold * 100;
+                document.getElementById('threshold-value').textContent = `${Math.round(councilStatus.config.consensusThreshold * 100)}%`;
+            }
         }
 
-        // Init
-        fetchSessions();
-        setInterval(fetchSessions, 3000); // Polling every 3s
+        function updateStats() {
+            const total = sessions.length;
+            const active = sessions.filter(s => s.status === 'running').length;
+            const healthy = Object.values(sessionHealth).filter(h => h === 'healthy').length;
+            
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-healthy').textContent = healthy;
+            document.getElementById('stat-supervisors').textContent = councilStatus.supervisorCount || 0;
+        }
 
+        function openNewSessionModal() {
+            document.getElementById('new-session-modal').classList.add('show');
+        }
+
+        function closeNewSessionModal() {
+            document.getElementById('new-session-modal').classList.remove('show');
+            document.getElementById('new-session-cli').value = '';
+            document.getElementById('new-session-template').value = '';
+            document.getElementById('new-session-tags').value = '';
+        }
+
+        async function createNewSession() {
+            const cliType = document.getElementById('new-session-cli').value;
+            const template = document.getElementById('new-session-template').value;
+            const tagsStr = document.getElementById('new-session-tags').value;
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            try {
+                const body = {};
+                if (cliType) body.cliType = cliType;
+                if (template) body.templateName = template;
+                if (tags.length) body.tags = tags;
+
+                const res = await fetch('/api/sessions/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Session started', 'success');
+                    closeNewSessionModal();
+                    fetchSessions();
+                } else {
+                    showToast(data.error || 'Failed to start session', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to start session', 'error');
+            }
+        }
+
+        async function startBulkSessions() {
+            const count = parseInt(document.getElementById('bulk-count').value) || 3;
+            const cliType = document.getElementById('bulk-cli-type').value;
+            try {
+                const body = { count };
+                if (cliType) body.cliType = cliType;
+                
+                const res = await fetch('/api/sessions/bulk/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Started ${data.data.sessions.length} sessions`, 'success');
+                    fetchSessions();
+                } else {
+                    showToast(data.error || 'Failed to start sessions', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to start sessions', 'error');
+            }
+        }
+
+        async function stopAllSessions() {
+            if (!confirm('Stop all sessions?')) return;
+            try {
+                const res = await fetch('/api/sessions/bulk/stop', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Stopped ${data.data.stopped} sessions`, 'success');
+                    fetchSessions();
+                }
+            } catch (e) {
+                showToast('Failed to stop sessions', 'error');
+            }
+        }
+
+        async function resumeAllSessions() {
+            try {
+                const res = await fetch('/api/sessions/bulk/resume', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Resumed ${data.data.sessions.length} sessions`, 'success');
+                    fetchSessions();
+                }
+            } catch (e) {
+                showToast('Failed to resume sessions', 'error');
+            }
+        }
+
+        async function stopSession(id) {
+            try {
+                await fetch(`/api/sessions/${id}/stop`, { method: 'POST' });
+                showToast('Session stopped', 'success');
+                fetchSessions();
+            } catch (e) {
+                showToast('Failed to stop session', 'error');
+            }
+        }
+
+        async function resumeSession(id) {
+            try {
+                await fetch(`/api/sessions/${id}/resume`, { method: 'POST' });
+                showToast('Session resumed', 'success');
+                fetchSessions();
+            } catch (e) {
+                showToast('Failed to resume session', 'error');
+            }
+        }
+
+        async function deleteSession(id) {
+            if (!confirm('Delete this session?')) return;
+            try {
+                await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+                sessions = sessions.filter(s => s.id !== id);
+                delete sessionHealth[id];
+                renderSessions();
+                updateStats();
+                showToast('Session deleted', 'success');
+            } catch (e) {
+                showToast('Failed to delete session', 'error');
+            }
+        }
+
+        function openAddTagModal(sessionId) {
+            currentTagSessionId = sessionId;
+            document.getElementById('add-tag-modal').classList.add('show');
+            document.getElementById('add-tag-input').value = '';
+            document.getElementById('add-tag-input').focus();
+        }
+
+        function closeAddTagModal() {
+            document.getElementById('add-tag-modal').classList.remove('show');
+            currentTagSessionId = null;
+        }
+
+        async function confirmAddTag() {
+            const tag = document.getElementById('add-tag-input').value.trim();
+            if (!tag || !currentTagSessionId) return;
+            
+            try {
+                await fetch(`/api/sessions/${currentTagSessionId}/tags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tag })
+                });
+                closeAddTagModal();
+                fetchSessions();
+                showToast('Tag added', 'success');
+            } catch (e) {
+                showToast('Failed to add tag', 'error');
+            }
+        }
+
+        async function removeTag(sessionId, tag) {
+            try {
+                await fetch(`/api/sessions/${sessionId}/tags/${encodeURIComponent(tag)}`, { method: 'DELETE' });
+                fetchSessions();
+                showToast('Tag removed', 'success');
+            } catch (e) {
+                showToast('Failed to remove tag', 'error');
+            }
+        }
+
+        function toggleExportMenu(sessionId) {
+            const menu = document.getElementById(`export-menu-${sessionId}`);
+            document.querySelectorAll('.export-menu').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+
+        function exportLogs(sessionId, format) {
+            const url = `/api/sessions/${sessionId}/logs/export?format=${format}`;
+            window.open(url, '_blank');
+            document.querySelectorAll('.export-menu').forEach(m => m.classList.remove('show'));
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.export-dropdown')) {
+                document.querySelectorAll('.export-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
+
+        async function updateConsensusMode() {
+            const mode = document.getElementById('consensus-mode').value;
+            try {
+                await fetch('/api/council/consensus-mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode })
+                });
+                showToast(`Consensus mode: ${mode}`, 'info');
+            } catch (e) {
+                showToast('Failed to update consensus mode', 'error');
+            }
+        }
+
+        async function updateLeadSupervisor() {
+            const name = document.getElementById('lead-supervisor').value;
+            if (!name) return;
+            try {
+                await fetch('/api/council/lead-supervisor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                showToast(`Lead supervisor: ${name}`, 'info');
+            } catch (e) {
+                showToast('Failed to update lead supervisor', 'error');
+            }
+        }
+
+        async function updateThreshold() {
+            const slider = document.getElementById('threshold-slider');
+            const value = slider.value / 100;
+            document.getElementById('threshold-value').textContent = `${slider.value}%`;
+            try {
+                await fetch('/api/council/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ consensusThreshold: value })
+                });
+            } catch (e) {
+                console.error('Failed to update threshold:', e);
+            }
+        }
+
+        function addLog(message, level = 'info') {
+            const log = document.getElementById('activity-log');
+            const time = new Date().toLocaleTimeString();
+            const levelClass = level === 'error' ? 'log-error' : 
+                              level === 'warn' ? 'log-warn' : 
+                              level === 'success' ? 'log-success' : 'log-info';
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${time}</span><span class="${levelClass}">${message}</span>`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+
+            while (log.children.length > 100) {
+                log.removeChild(log.firstChild);
+            }
+        }
+
+        function clearLogs() {
+            const log = document.getElementById('activity-log');
+            log.innerHTML = '';
+            addLog('Logs cleared', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '&#10003;' : type === 'error' ? '&#10005;' : '&#8505;'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle Enter key in add tag modal
+        document.getElementById('add-tag-input')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmAddTag();
+        });
+
+        connectWebSocket();
     </script>
 </body>
 </html>

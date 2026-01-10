@@ -1,12 +1,20 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { serveStatic } from 'hono/bun';
 import { HTTPException } from 'hono/http-exception';
 import { sessionRoutes } from './routes/sessions.js';
 import { councilRoutes } from './routes/council.js';
 import { wsRoutes } from './routes/ws.js';
 import { smartPilotRoutes } from './routes/smart-pilot.js';
 import { hooksRoutes } from './routes/hooks.js';
+import { cliRoutes } from './routes/cli.js';
+import { healthRoutes } from './routes/health.js';
+import { envRoutes } from './routes/env.js';
+import { dynamicSelectionRoutes } from './routes/dynamic-selection.js';
+import { vetoRoutes } from './routes/veto.js';
+import { pluginRoutes } from './routes/plugins.js';
+import { debateHistoryRoutes } from './routes/debate-history.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -15,6 +23,9 @@ import { smartPilot } from './services/smart-pilot.js';
 import { autoContinueHooks } from './services/hooks.js';
 import { metrics } from './services/metrics.js';
 import { metricsMiddleware } from './middleware/metrics.js';
+import { healthMonitor } from './services/health-monitor.js';
+import { logRotation } from './services/log-rotation.js';
+import { debateHistory } from './services/debate-history.js';
 
 const startTime = Date.now();
 const config = loadConfig();
@@ -83,6 +94,13 @@ app.get('/', (c) => c.json({
     council: '/api/council',
     smartPilot: '/api/smart-pilot',
     hooks: '/api/hooks',
+    cli: '/api/cli',
+    sessionHealth: '/api/health',
+    env: '/api/env',
+    dynamicSelection: '/api/dynamic-selection',
+    veto: '/api/veto',
+    plugins: '/api/plugins',
+    debateHistory: '/api/debate-history',
     websocket: '/ws',
     health: '/health',
   }
@@ -204,7 +222,17 @@ app.route('/api/sessions', sessionRoutes);
 app.route('/api/council', councilRoutes);
 app.route('/api/smart-pilot', smartPilotRoutes);
 app.route('/api/hooks', hooksRoutes);
+app.route('/api/cli', cliRoutes);
+app.route('/api/health', healthRoutes);
+app.route('/api/env', envRoutes);
+app.route('/api/dynamic-selection', dynamicSelectionRoutes);
+app.route('/api/veto', vetoRoutes);
+app.route('/api/plugins', pluginRoutes);
+app.route('/api/debate-history', debateHistoryRoutes);
 app.route('/ws', wsRoutes);
+
+app.use('/dashboard/*', serveStatic({ root: '../../public' }));
+app.get('/dashboard', serveStatic({ path: '../../public/index.html' }));
 
 app.notFound((c) => c.json({ 
   success: false, 
@@ -216,6 +244,9 @@ const port = config.server.port;
 const host = config.server.host;
 
 sessionManager.startPolling();
+healthMonitor.start();
+logRotation.start();
+debateHistory.initialize();
 
 if (config.council.smartPilot) {
   smartPilot.setEnabled(true);
@@ -224,6 +255,8 @@ if (config.council.smartPilot) {
 process.on('SIGINT', async () => {
   console.log('\nShutting down gracefully...');
   smartPilot.cleanup();
+  healthMonitor.stop();
+  logRotation.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });
@@ -231,6 +264,8 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   console.log('Received SIGTERM, shutting down...');
   smartPilot.cleanup();
+  healthMonitor.stop();
+  logRotation.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });

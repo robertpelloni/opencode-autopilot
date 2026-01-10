@@ -99,3 +99,43 @@ AUTOPILOT_DEBATE_ROUNDS=2
 AUTOPILOT_CONSENSUS=0.7
 AUTOPILOT_SMART_PILOT=false
 ```
+
+## Phase 11: Multi-CLI Support & Health Monitoring ✅
+- [x] CLI Tool Detection & Registry (`packages/server/src/services/cli-registry.ts`)
+  - Automatic detection of opencode, claude, aider, cursor, continue, cody, copilot
+  - Version detection and capability scanning
+  - Custom CLI tool registration
+- [x] Session Health Monitoring (`packages/server/src/services/health-monitor.ts`)
+  - Periodic health checks with configurable intervals
+  - Status transitions: healthy → degraded → unresponsive → crashed
+  - Auto-recovery with exponential backoff
+  - WebSocket notifications for health changes
+- [x] Log Rotation & Pruning (`packages/server/src/services/log-rotation.ts`)
+  - Max logs per session (configurable, default 1000)
+  - Age-based pruning (configurable, default 24h)
+  - Automatic cleanup on intervals
+- [x] Environment Variable Management (`packages/server/src/services/environment-manager.ts`)
+  - Per-session environment variables
+  - Global environment variables
+  - CLI-specific passthrough (API keys, configs)
+  - Secrets management
+- [x] New API Routes
+  - `/api/cli/*` - CLI tool discovery and management
+  - `/api/health/*` - Session health monitoring and stats
+  - `/api/env/*` - Environment variable management
+  - `/api/sessions/:id/tags` - Session tag management
+  - `/api/sessions/by-cli/:cliType` - Filter sessions by CLI type
+- [x] Enhanced Web Dashboard (`public/index.html`)
+  - CLI type selector in new session modal
+  - Session template dropdown
+  - Tag management with visual pills
+  - Health status indicators (colored dots)
+  - CLI tools panel in sidebar
+  - Export dropdown (JSON/CSV/Text)
+  - Bulk operations with CLI type selection
+- [x] 8 Consensus Modes for voting
+  - simple-majority, supermajority, unanimous, weighted
+  - ceo-override, ceo-veto, hybrid-ceo-majority, ranked-choice
+- [x] Session Templates (default, review, debug, feature)
+- [x] Session Persistence & Auto-Resume
+- [x] Supervisor Fallback Chain with retry logic
