@@ -118,6 +118,8 @@ app.get('/', (c) => c.json({
     collaborativeDebates: '/api/collaborative-debates',
     websocket: '/ws',
     health: '/health',
+    dashboard: '/dashboard',
+    analyticsDashboard: '/analytics',
   }
 }));
 
@@ -255,6 +257,7 @@ app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));
 app.get('/dashboard', serveStatic({ path: '../../public/index.html' }));
+app.get('/analytics', serveStatic({ path: '../../public/analytics.html' }));
 
 app.notFound((c) => c.json({ 
   success: false, 

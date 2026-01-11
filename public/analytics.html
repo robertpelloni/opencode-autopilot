@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCode Autopilot - Advanced Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-active: rgba(168, 85, 247, 0.5);
+            --text-primary: #fafafa;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .logo h1 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .logo h1 span {
+            color: var(--accent-purple);
+        }
+
+        nav {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        nav a:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        nav a.active { color: var(--accent-purple); background: rgba(168, 85, 247, 0.15); }
+
+        /* Main */
+        main {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .time-filter {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .time-filter label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .time-filter select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .time-filter select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-active);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-icon.purple { background: rgba(168, 85, 247, 0.15); }
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.15); }
+        .stat-icon.green { background: rgba(34, 197, 94, 0.15); }
+        .stat-icon.yellow { background: rgba(234, 179, 8, 0.15); }
+        .stat-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+        .stat-icon.red { background: rgba(239, 68, 68, 0.15); }
+
+        .stat-trend {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-trend.up { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .stat-trend.down { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .stat-trend.neutral { background: rgba(113, 113, 122, 0.15); color: #71717a; }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.375rem 0.625rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-btn:hover { color: var(--text-primary); border-color: var(--border-active); }
+        .chart-btn.active { color: var(--accent-purple); border-color: var(--accent-purple); }
+
+        .chart-body {
+            padding: 1.25rem;
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-body.tall { height: 400px; }
+
+        /* Insights Section */
+        .insights-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .insights-section { grid-template-columns: 1fr; }
+        }
+
+        .insights-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .insights-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .insights-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insights-body {
+            padding: 0.75rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .insight-item {
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .insight-item:last-child { margin-bottom: 0; }
+
+        .insight-item.warning { background: rgba(234, 179, 8, 0.1); border-left: 3px solid var(--accent-yellow); }
+        .insight-item.info { background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--accent-blue); }
+        .insight-item.recommendation { background: rgba(34, 197, 94, 0.1); border-left: 3px solid var(--accent-green); }
+
+        .insight-icon {
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+
+        .insight-content {
+            flex: 1;
+        }
+
+        .insight-message {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .insight-category {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.375rem;
+        }
+
+        /* Supervisor Leaderboard */
+        .leaderboard {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .leaderboard-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .leaderboard-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .leaderboard-body {
+            padding: 0;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 0.875rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .leaderboard-table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .leaderboard-table tr:last-child td { border-bottom: none; }
+
+        .leaderboard-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+        }
+
+        .rank-badge.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1a1a1a; }
+        .rank-badge.silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: #1a1a1a; }
+        .rank-badge.bronze { background: linear-gradient(135deg, #fb923c, #ea580c); color: #1a1a1a; }
+        .rank-badge.default { background: var(--bg-tertiary); color: var(--text-secondary); }
+
+        .supervisor-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .supervisor-badge {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            background: var(--accent-purple);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .metric-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .metric-fill.green { background: var(--accent-green); }
+        .metric-fill.blue { background: var(--accent-blue); }
+        .metric-fill.purple { background: var(--accent-purple); }
+        .metric-fill.yellow { background: var(--accent-yellow); }
+
+        .metric-value {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Debate Patterns */
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .patterns-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .patterns-grid { grid-template-columns: 1fr; }
+        }
+
+        .pattern-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .pattern-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .pattern-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .pattern-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .pattern-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .pattern-breakdown {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .breakdown-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.75rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            nav {
+                gap: 0.5rem;
+            }
+            
+            nav a {
+                font-size: 0.75rem;
+                padding: 0.375rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">&#128202;</div>
+                <h1>OpenCode <span>Analytics</span></h1>
+            </div>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/analytics.html" class="active">Analytics</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title">Performance Analytics</h2>
+                <div class="time-filter">
+                    <label>Time Range:</label>
+                    <select id="time-range" onchange="loadAllData()">
+                        <option value="1">Last 24 Hours</option>
+                        <option value="7" selected>Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon purple">&#128101;</div>
+                        <span class="stat-trend neutral" id="trend-supervisors">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-supervisors">0</div>
+                    <div class="stat-label">Active Supervisors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon blue">&#128172;</div>
+                        <span class="stat-trend neutral" id="trend-debates">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-debates">0</div>
+                    <div class="stat-label">Total Debates</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon green">&#9989;</div>
+                        <span class="stat-trend neutral" id="trend-votes">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-votes">0</div>
+                    <div class="stat-label">Total Votes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon cyan">&#127919;</div>
+                        <span class="stat-trend neutral" id="trend-consensus">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-consensus">0%</div>
+                    <div class="stat-label">Avg Consensus Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon yellow">&#9889;</div>
+                        <span class="stat-trend neutral" id="trend-response">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-response">0s</div>
+                    <div class="stat-label">Avg Response Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon red">&#128161;</div>
+                        <span class="stat-trend neutral" id="trend-insights">-</span>
+                    </div>
+                    <div class="stat-value" id="stat-insights">0</div>
+                    <div class="stat-label">Active Insights</div>
+                </div>
+            </div>
+
+            <!-- Debate Patterns -->
+            <div class="patterns-grid" id="patterns-grid">
+                <div class="pattern-card">
+                    <div class="pattern-header">
+                        <div class="pattern-icon" style="background: rgba(34, 197, 94, 0.15);">&#9989;</div>
+                        <div class="pattern-title">Debate Outcomes</div>
+                    </div>
+                    <div class="pattern-value" id="pattern-approved">0</div>
+                    <div class="pattern-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-dot" style="background: var(--accent-green);"></span>
+                            <span id="breakdown-approved">0 Approved</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-dot" style="background: var(--accent-red);"></span>
+                            <span id="breakdown-rejected">0 Rejected</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-dot" style="background: var(--accent-yellow);"></span>
+                            <span id="breakdown-deadlock">0 Deadlock</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pattern-card">
+                    <div class="pattern-header">
+                        <div class="pattern-icon" style="background: rgba(168, 85, 247, 0.15);">&#128260;</div>
+                        <div class="pattern-title">Avg Rounds per Debate</div>
+                    </div>
+                    <div class="pattern-value" id="pattern-rounds">0.0</div>
+                    <div class="pattern-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-dot" style="background: var(--accent-purple);"></span>
+                            <span id="breakdown-duration">Avg 0s duration</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pattern-card">
+                    <div class="pattern-header">
+                        <div class="pattern-icon" style="background: rgba(6, 182, 212, 0.15);">&#127963;</div>
+                        <div class="pattern-title">Top Consensus Mode</div>
+                    </div>
+                    <div class="pattern-value" id="pattern-consensus-mode">-</div>
+                    <div class="pattern-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-dot" style="background: var(--accent-cyan);"></span>
+                            <span id="breakdown-mode-count">0 debates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <span>&#128200;</span> Debate Activity Trends
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="trends-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <span>&#128203;</span> Consensus Rate Over Time
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="consensus-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <span>&#127915;</span> Vote Distribution
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="votes-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <span>&#9201;</span> Response Time Distribution
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="response-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supervisor Leaderboard -->
+            <div class="leaderboard">
+                <div class="leaderboard-header">
+                    <div class="leaderboard-title">
+                        <span>&#127942;</span> Supervisor Performance Leaderboard
+                    </div>
+                </div>
+                <div class="leaderboard-body">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Supervisor</th>
+                                <th>Consensus Agreement</th>
+                                <th>Confidence</th>
+                                <th>Response Time</th>
+                                <th>Votes</th>
+                                <th>Streak</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading supervisors...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Insights -->
+            <div class="insights-section">
+                <div class="insights-card">
+                    <div class="insights-header">
+                        <div class="insights-title">
+                            <span>&#128161;</span> AI-Generated Insights
+                        </div>
+                    </div>
+                    <div class="insights-body" id="insights-body">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Analyzing patterns...
+                        </div>
+                    </div>
+                </div>
+                <div class="insights-card">
+                    <div class="insights-header">
+                        <div class="insights-title">
+                            <span>&#128293;</span> Top Performers This Period
+                        </div>
+                    </div>
+                    <div class="insights-body" id="performers-body">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading top performers...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Chart instances
+        let trendsChart = null;
+        let consensusChart = null;
+        let votesChart = null;
+        let responseChart = null;
+
+        // Chart.js defaults
+        Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+        // Get time range
+        function getTimeRange() {
+            const days = parseInt(document.getElementById('time-range').value);
+            const end = Date.now();
+            const start = end - (days * 24 * 60 * 60 * 1000);
+            return { start, end, days };
+        }
+
+        // Load all data
+        async function loadAllData() {
+            const { start, end, days } = getTimeRange();
+            
+            await Promise.all([
+                loadSummary(),
+                loadDebateStats(start, end),
+                loadTrends(days),
+                loadComparisons(start, end),
+                loadInsights(start, end)
+            ]);
+        }
+
+        // Load summary
+        async function loadSummary() {
+            try {
+                const res = await fetch('/api/supervisor-analytics/summary');
+                const data = await res.json();
+                
+                document.getElementById('stat-supervisors').textContent = data.totalSupervisors || 0;
+                document.getElementById('stat-debates').textContent = data.totalDebates || 0;
+                document.getElementById('stat-votes').textContent = data.totalVotes || 0;
+                document.getElementById('stat-insights').textContent = data.insightCount || 0;
+                
+                // Top performers
+                if (data.topPerformers && data.topPerformers.length > 0) {
+                    document.getElementById('performers-body').innerHTML = data.topPerformers.map((name, i) => `
+                        <div class="insight-item recommendation">
+                            <span class="insight-icon">${i === 0 ? '&#129351;' : i === 1 ? '&#129352;' : '&#129353;'}</span>
+                            <div class="insight-content">
+                                <div class="insight-message"><strong>${name}</strong> is a top performer</div>
+                                <div class="insight-category">Rank #${i + 1}</div>
+                            </div>
+                        </div>
+                    `).join('') || '<div class="empty-state"><p>No top performers yet</p></div>';
+                } else {
+                    document.getElementById('performers-body').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">&#128202;</div>
+                            <p>No performance data yet</p>
+                            <p style="font-size: 0.75rem; margin-top: 0.5rem;">Start debates to see top performers</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Failed to load summary:', e);
+            }
+        }
+
+        // Load debate statistics
+        async function loadDebateStats(start, end) {
+            try {
+                const res = await fetch(`/api/supervisor-analytics/debates?from=${start}&to=${end}`);
+                const data = await res.json();
+                
+                const approved = data.byOutcome?.approved || 0;
+                const rejected = data.byOutcome?.rejected || 0;
+                const deadlock = data.byOutcome?.deadlock || 0;
+                const total = approved + rejected + deadlock;
+                
+                document.getElementById('pattern-approved').textContent = total;
+                document.getElementById('breakdown-approved').textContent = `${approved} Approved`;
+                document.getElementById('breakdown-rejected').textContent = `${rejected} Rejected`;
+                document.getElementById('breakdown-deadlock').textContent = `${deadlock} Deadlock`;
+                
+                document.getElementById('pattern-rounds').textContent = (data.avgRounds || 0).toFixed(1);
+                document.getElementById('breakdown-duration').textContent = `Avg ${(data.avgDurationMs / 1000 || 0).toFixed(1)}s duration`;
+                
+                // Top consensus mode
+                const modes = data.byConsensusMode || {};
+                const topMode = Object.entries(modes).sort((a, b) => b[1] - a[1])[0];
+                if (topMode) {
+                    document.getElementById('pattern-consensus-mode').textContent = topMode[0];
+                    document.getElementById('breakdown-mode-count').textContent = `${topMode[1]} debates`;
+                }
+                
+                // Votes chart
+                updateVotesChart(approved, rejected, deadlock);
+            } catch (e) {
+                console.error('Failed to load debate stats:', e);
+            }
+        }
+
+        // Load trends
+        async function loadTrends(days) {
+            try {
+                const res = await fetch(`/api/supervisor-analytics/trends?periodDays=${days}&bucketCount=${Math.min(days, 14)}`);
+                const data = await res.json();
+                
+                updateTrendsChart(data);
+                updateConsensusChart(data);
+                
+                // Calculate average consensus and response time
+                if (data.length > 0) {
+                    const avgConsensus = data.reduce((sum, d) => sum + (d.avgConsensusRate || 0), 0) / data.length;
+                    const avgResponse = data.reduce((sum, d) => sum + (d.avgResponseTime || 0), 0) / data.length;
+                    
+                    document.getElementById('stat-consensus').textContent = `${(avgConsensus * 100).toFixed(0)}%`;
+                    document.getElementById('stat-response').textContent = `${(avgResponse / 1000).toFixed(1)}s`;
+                }
+            } catch (e) {
+                console.error('Failed to load trends:', e);
+            }
+        }
+
+        // Load comparisons (leaderboard)
+        async function loadComparisons(start, end) {
+            try {
+                const res = await fetch(`/api/supervisor-analytics/compare?from=${start}&to=${end}`);
+                const data = await res.json();
+                
+                const tbody = document.getElementById('leaderboard-body');
+                
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem;">
+                                <div class="empty-icon" style="font-size: 2rem;">&#128202;</div>
+                                <p style="color: var(--text-muted);">No supervisor data yet</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = data.map((s, i) => {
+                    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'default';
+                    const metrics = s.metrics;
+                    const agreementPct = ((metrics.consensusAgreementRate || 0) * 100).toFixed(0);
+                    const confidencePct = ((metrics.avgConfidence || 0) * 100).toFixed(0);
+                    const responseTime = (metrics.avgResponseTimeMs / 1000 || 0).toFixed(1);
+                    const streak = metrics.streakData?.currentStreak || 0;
+                    const streakType = metrics.streakData?.streakType;
+                    
+                    return `
+                        <tr>
+                            <td><span class="rank-badge ${rankClass}">${s.rank.overall}</span></td>
+                            <td>
+                                <div class="supervisor-name">
+                                    ${s.supervisor}
+                                    ${i === 0 ? '<span class="supervisor-badge">Top</span>' : ''}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="metric-bar"><span class="metric-fill green" style="width: ${agreementPct}%"></span></span>
+                                <span class="metric-value">${agreementPct}%</span>
+                            </td>
+                            <td>
+                                <span class="metric-bar"><span class="metric-fill purple" style="width: ${confidencePct}%"></span></span>
+                                <span class="metric-value">${confidencePct}%</span>
+                            </td>
+                            <td>
+                                <span class="metric-value">${responseTime}s</span>
+                            </td>
+                            <td>
+                                <span class="metric-value">${metrics.totalVotes || 0}</span>
+                            </td>
+                            <td>
+                                <span style="color: ${streakType === 'agree' ? 'var(--accent-green)' : streakType === 'disagree' ? 'var(--accent-red)' : 'var(--text-muted)'}">
+                                    ${streak > 0 ? `${streak}x ${streakType || ''}` : '-'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // Update response time chart with supervisor data
+                updateResponseChart(data);
+            } catch (e) {
+                console.error('Failed to load comparisons:', e);
+            }
+        }
+
+        // Load insights
+        async function loadInsights(start, end) {
+            try {
+                const res = await fetch(`/api/supervisor-analytics/insights?from=${start}&to=${end}`);
+                const data = await res.json();
+                
+                const container = document.getElementById('insights-body');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">&#128161;</div>
+                            <p>No insights available</p>
+                            <p style="font-size: 0.75rem; margin-top: 0.5rem;">More data needed to generate insights</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.map(insight => {
+                    const icon = insight.type === 'warning' ? '&#9888;' : 
+                                insight.type === 'recommendation' ? '&#128640;' : '&#128712;';
+                    return `
+                        <div class="insight-item ${insight.type}">
+                            <span class="insight-icon">${icon}</span>
+                            <div class="insight-content">
+                                <div class="insight-message">${insight.message}</div>
+                                <div class="insight-category">${insight.category}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error('Failed to load insights:', e);
+            }
+        }
+
+        // Chart update functions
+        function updateTrendsChart(data) {
+            const ctx = document.getElementById('trends-chart').getContext('2d');
+            
+            if (trendsChart) trendsChart.destroy();
+            
+            trendsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [{
+                        label: 'Debates',
+                        data: data.map(d => d.debateCount),
+                        backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                        borderColor: 'rgba(168, 85, 247, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateConsensusChart(data) {
+            const ctx = document.getElementById('consensus-chart').getContext('2d');
+            
+            if (consensusChart) consensusChart.destroy();
+            
+            consensusChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [{
+                        label: 'Consensus Rate',
+                        data: data.map(d => (d.avgConsensusRate * 100).toFixed(1)),
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { callback: v => v + '%' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVotesChart(approved, rejected, deadlock) {
+            const ctx = document.getElementById('votes-chart').getContext('2d');
+            
+            if (votesChart) votesChart.destroy();
+            
+            votesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Approved', 'Rejected', 'Deadlock'],
+                    datasets: [{
+                        data: [approved, rejected, deadlock],
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(234, 179, 8, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(234, 179, 8, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 20, usePointStyle: true }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateResponseChart(comparisons) {
+            const ctx = document.getElementById('response-chart').getContext('2d');
+            
+            if (responseChart) responseChart.destroy();
+            
+            const supervisors = comparisons.slice(0, 8);
+            
+            responseChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: supervisors.map(s => s.supervisor),
+                    datasets: [{
+                        label: 'Response Time (s)',
+                        data: supervisors.map(s => (s.metrics.avgResponseTimeMs / 1000).toFixed(2)),
+                        backgroundColor: 'rgba(6, 182, 212, 0.7)',
+                        borderColor: 'rgba(6, 182, 212, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { callback: v => v + 's' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadAllData, 30000);
+        });
+    </script>
+</body>
+</html>

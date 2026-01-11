@@ -262,6 +262,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - REST API: `/api/collaborative-debates/*`
   - Service: `packages/server/src/services/collaborative-debate-manager.ts`
 
+### Added (Advanced Analytics Dashboard)
+- **Analytics Dashboard**: Visual HTML dashboard for debate patterns and supervisor performance
+  - Real-time performance statistics (supervisors, debates, votes, consensus rate, response time)
+  - Debate outcome visualization (approved/rejected/deadlock breakdown)
+  - Debate patterns: average rounds, duration, top consensus mode
+  - Interactive charts using Chart.js:
+    - Debate activity trends (bar chart)
+    - Consensus rate over time (line chart)
+    - Vote distribution (doughnut chart)
+    - Response time by supervisor (horizontal bar chart)
+  - Supervisor performance leaderboard with rankings (gold/silver/bronze badges)
+  - Metrics: consensus agreement, confidence, response time, vote count, streaks
+  - AI-generated insights section (warnings, recommendations, info)
+  - Top performers highlight
+  - Configurable time range filter (24h, 7d, 30d, 90d)
+  - Auto-refresh every 30 seconds
+  - Dark theme UI consistent with main dashboard
+  - Dashboard URL: `/analytics`
+  - Dashboard file: `public/analytics.html`
+
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).
