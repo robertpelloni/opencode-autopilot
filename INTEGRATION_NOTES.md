@@ -1,6 +1,6 @@
-# OpenCode-Autopilot → AIOS Core Integration Notes
+# OpenCode-Autopilot → Borg Core Integration Notes
 
-> **Prepared for**: AIOS integration session  
+> **Prepared for**: Borg integration session  
 > **Date**: January 11, 2026  
 > **Status**: Ready for integration
 
@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-This document provides comprehensive notes for integrating opencode-autopilot's multi-model AI council functionality directly into AIOS core, eliminating the need for a separate executable/service.
+This document provides comprehensive notes for integrating opencode-autopilot's multi-model AI council functionality directly into Borg core, eliminating the need for a separate executable/service.
 
 ### Current Architecture
 ```
-AIOS Core (port 3002)          opencode-autopilot (port 3847)
+Borg Core (port 3002)          opencode-autopilot (port 3847)
 ├── Hono server                 ├── Hono server (SEPARATE)
 ├── CouncilManager ──spawns──►  ├── SupervisorCouncil
 ├── AgentManager                ├── 20+ services
@@ -22,7 +22,7 @@ AIOS Core (port 3002)          opencode-autopilot (port 3847)
 
 ### Target Architecture
 ```
-AIOS Core (port 3002) - UNIFIED
+Borg Core (port 3002) - UNIFIED
 ├── Hono server
 ├── SupervisorCouncilManager (native)
 ├── All council services (native)
@@ -37,8 +37,8 @@ AIOS Core (port 3002) - UNIFIED
 
 ### Location
 ```
-FROM: C:\Users\hyper\workspace\aios\submodules\opencode-autopilot\packages\server\src\
-TO:   C:\Users\hyper\workspace\aios\packages\core\src\
+FROM: C:\Users\hyper\workspace\borg\submodules\opencode-autopilot\packages\server\src\
+TO:   C:\Users\hyper\workspace\borg\packages\core\src\
 ```
 
 ### Priority 1: Core Council (CRITICAL)
@@ -111,9 +111,9 @@ TO:   C:\Users\hyper\workspace\aios\packages\core\src\
 const response = await openai.chat.completions.create({...});
 ```
 
-**Target** (AIOS): Use shared ModelGateway
+**Target** (Borg): Use shared ModelGateway
 ```typescript
-// Use AIOS ModelGateway
+// Use Borg ModelGateway
 const response = await this.modelGateway.chat(model, messages);
 ```
 
@@ -126,7 +126,7 @@ const response = await this.modelGateway.chat(model, messages);
 const apiKey = process.env.OPENAI_API_KEY;
 ```
 
-**Target**: Use AIOS SecretManager
+**Target**: Use Borg SecretManager
 ```typescript
 const apiKey = this.secretManager.getSecret('OPENAI_API_KEY');
 ```
@@ -140,13 +140,13 @@ const apiKey = this.secretManager.getSecret('OPENAI_API_KEY');
 wsManager.broadcast('council_decision', decision);
 ```
 
-**Target**: Use AIOS io instance
+**Target**: Use Borg io instance
 ```typescript
 this.io.emit('council:decision', decision);
 ```
 
 **Event Mapping**:
-| opencode-autopilot | AIOS |
+| opencode-autopilot | Borg |
 |-------------------|------|
 | `council_decision` | `council:decision` |
 | `session_update` | `council:session_update` |
@@ -161,7 +161,7 @@ this.io.emit('council:decision', decision);
 fs.writeFileSync('debate_history.json', JSON.stringify(data));
 ```
 
-**Target**: Use AIOS DatabaseManager (SQLite)
+**Target**: Use Borg DatabaseManager (SQLite)
 ```typescript
 // New table: council_debates
 this.db.prepare(`
@@ -207,7 +207,7 @@ CREATE TABLE supervisor_profiles (
 
 ### 5. Memory Integration
 
-**Opportunity**: Feed council decisions into AIOS MemoryManager for context
+**Opportunity**: Feed council decisions into Borg MemoryManager for context
 ```typescript
 // After debate completes
 await this.memoryManager.remember({
@@ -222,8 +222,8 @@ await this.memoryManager.remember({
 
 ### Location
 ```
-FROM: C:\Users\hyper\workspace\aios\submodules\opencode-autopilot\packages\shared\src\types.ts
-TO:   C:\Users\hyper\workspace\aios\packages\core\src\types\council.ts
+FROM: C:\Users\hyper\workspace\borg\submodules\opencode-autopilot\packages\shared\src\types.ts
+TO:   C:\Users\hyper\workspace\borg\packages\core\src\types\council.ts
 ```
 
 ### Key Types to Port
@@ -341,14 +341,14 @@ export type TaskType =
 
 ### Phase 5: Cleanup (Estimate: 2 hours)
 
-1. **Migrate tests**: Convert to AIOS test patterns
+1. **Migrate tests**: Convert to Borg test patterns
 2. **Update UI**: Point dashboard to new endpoints
 3. **Remove submodule dependency** (optional - can keep for reference)
 4. **Documentation**: Update README, API docs
 
 ---
 
-## Files to Modify in AIOS Core
+## Files to Modify in Borg Core
 
 ### Definite Changes
 
@@ -442,7 +442,7 @@ TO:   packages/core/src/__tests__/council/
 
 ## Configuration
 
-### Environment Variables (Already in AIOS)
+### Environment Variables (Already in Borg)
 ```bash
 OPENAI_API_KEY          # Used by OpenAISupervisor
 ANTHROPIC_API_KEY       # Used by AnthropicSupervisor
@@ -455,7 +455,7 @@ KIMI_API_KEY            # Used by GenericOpenAISupervisor
 
 ### New Config Options
 ```typescript
-// In AIOS config
+// In Borg config
 council: {
   enabled: true,
   debateRounds: 2,
@@ -474,9 +474,9 @@ council: {
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Breaking existing AIOS functionality | High | Test each phase independently |
+| Breaking existing Borg functionality | High | Test each phase independently |
 | API incompatibility with UI | Medium | Keep same endpoint paths |
-| Performance regression | Medium | Use AIOS's existing caching/pooling |
+| Performance regression | Medium | Use Borg's existing caching/pooling |
 | Missing edge cases | Low | Port existing tests |
 
 ---
@@ -484,13 +484,13 @@ council: {
 ## Quick Reference Commands
 
 ```bash
-# AIOS project root
-cd C:\Users\hyper\workspace\aios
+# Borg project root
+cd C:\Users\hyper\workspace\borg
 
-# Start AIOS core dev
+# Start Borg core dev
 cd packages/core && bun run dev
 
-# Run AIOS core tests
+# Run Borg core tests
 cd packages/core && bun test
 
 # View opencode-autopilot source
@@ -513,4 +513,4 @@ bun run typecheck
 4. No separate process spawning required
 5. Unified port (3002) for all functionality
 
-**Next Step**: Switch to AIOS session and begin Phase 1 (Core Council integration)
+**Next Step**: Switch to Borg session and begin Phase 1 (Core Council integration)
