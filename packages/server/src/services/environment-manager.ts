@@ -38,12 +38,49 @@ const CLI_SPECIFIC_VARS: Record<CLIType, string[]> = {
   cody: ['SRC_*', 'CODY_*'],
   copilot: ['GITHUB_*', 'GH_*'],
   custom: [],
+  adrenaline: ['ADRENALINE_*', 'OPENAI_API_KEY'],
+  'amazon-q': ['AWS_*', 'Q_*'],
+  'amazon-q-developer': ['AWS_*', 'Q_*'],
+  'amp-code': ['AMP_*'],
+  auggie: ['AUGGIE_*'],
+  'azure-openai': ['AZURE_*', 'OPENAI_*'],
+  bito: ['BITO_*'],
+  byterover: ['BYTEROVER_*'],
+  'claude-code': ['ANTHROPIC_API_KEY', 'CLAUDE_*'],
+  'code-codex': ['CODEX_*'],
+  codebuff: ['CODEBUFF_*'],
+  codemachine: ['CODEMACHINE_*'],
+  codex: ['CODEX_*', 'OPENAI_API_KEY'],
+  crush: ['CRUSH_*'],
+  dolt: ['DOLT_*'],
+  factory: ['FACTORY_*'],
+  gemini: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'],
+  goose: ['GOOSE_*'],
+  grok: ['GROK_API_KEY', 'XAI_API_KEY'],
+  jules: ['JULES_*'],
+  'kilo-code': ['KILO_*'],
+  kimi: ['KIMI_API_KEY', 'MOONSHOT_API_KEY'],
+  llm: ['LLM_*', 'OPENAI_API_KEY'],
+  litellm: ['LITELLM_*', 'OPENAI_API_KEY'],
+  llamafile: ['LLAMAFILE_*'],
+  manus: ['MANUS_*'],
+  'mistral-vibe': ['MISTRAL_API_KEY'],
+  ollama: ['OLLAMA_*'],
+  'open-interpreter': ['INTERPRETER_*', 'OPENAI_API_KEY'],
+  'qwen-code': ['QWEN_API_KEY', 'DASHSCOPE_API_KEY'],
+  rowboatx: ['ROWBOATX_*'],
+  rovo: ['ROVO_*'],
+  'shell-pilot': ['SHELL_PILOT_*'],
+  smithery: ['SMITHERY_*'],
+  trae: ['TRAE_*'],
 };
 
 class EnvironmentManager {
   private sessions: Map<string, SessionEnvironment> = new Map();
   private globalOverrides: Record<string, string> = {};
   private globalSecrets: Set<string> = new Set();
+
+  constructor() {}
 
   setGlobalOverride(key: string, value: string): void {
     this.globalOverrides[key] = value;
@@ -85,10 +122,12 @@ class EnvironmentManager {
     const result: Record<string, string> = {};
 
     if (config.inherit) {
+      // Safely handle missing CLI types if any future ones are added without updating map
+      const cliSpecific = CLI_SPECIFIC_VARS[cliType] || [];
       const passthroughPatterns = [
         ...DEFAULT_PASSTHROUGH_VARS,
         ...config.passthrough,
-        ...CLI_SPECIFIC_VARS[cliType],
+        ...cliSpecific,
       ];
 
       for (const [key, value] of Object.entries(process.env)) {
@@ -192,8 +231,44 @@ class EnvironmentManager {
       cody: ['SRC_ACCESS_TOKEN'],
       copilot: ['GITHUB_TOKEN'],
       custom: [],
+      adrenaline: [],
+      'amazon-q': [],
+      'amazon-q-developer': [],
+      'amp-code': [],
+      auggie: [],
+      'azure-openai': ['AZURE_OPENAI_API_KEY', 'AZURE_OPENAI_ENDPOINT'],
+      bito: [],
+      byterover: [],
+      'claude-code': ['ANTHROPIC_API_KEY'],
+      'code-codex': [],
+      codebuff: [],
+      codemachine: [],
+      codex: [],
+      crush: [],
+      dolt: [],
+      factory: [],
+      gemini: ['GEMINI_API_KEY'],
+      goose: [],
+      grok: ['GROK_API_KEY'],
+      jules: [],
+      'kilo-code': [],
+      kimi: ['KIMI_API_KEY'],
+      llm: [],
+      litellm: [],
+      llamafile: [],
+      manus: [],
+      'mistral-vibe': ['MISTRAL_API_KEY'],
+      ollama: [],
+      'open-interpreter': [],
+      'qwen-code': ['QWEN_API_KEY'],
+      rowboatx: [],
+      rovo: [],
+      'shell-pilot': [],
+      smithery: [],
+      trae: [],
     };
-    return required[cliType];
+
+    return required[cliType] || [];
   }
 
   validateEnvironmentForCLI(cliType: CLIType, env: Record<string, string>): { valid: boolean; missing: string[] } {
