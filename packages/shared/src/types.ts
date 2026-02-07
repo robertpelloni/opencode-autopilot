@@ -148,7 +148,50 @@ export interface SessionPersistenceConfig {
   maxPersistedSessions: number;
 }
 
-export type CLIType = 'opencode' | 'claude' | 'aider' | 'cursor' | 'continue' | 'cody' | 'copilot' | 'custom';
+export type CLIType =
+  | 'opencode'
+  | 'claude'
+  | 'aider'
+  | 'cursor'
+  | 'continue'
+  | 'cody'
+  | 'copilot'
+  | 'custom'
+  | 'adrenaline'
+  | 'amazon-q'
+  | 'amazon-q-developer'
+  | 'amp-code'
+  | 'auggie'
+  | 'azure-openai'
+  | 'bito'
+  | 'byterover'
+  | 'claude-code'
+  | 'code-codex'
+  | 'codebuff'
+  | 'codemachine'
+  | 'codex'
+  | 'crush'
+  | 'dolt'
+  | 'factory'
+  | 'gemini'
+  | 'goose'
+  | 'grok'
+  | 'jules'
+  | 'kilo-code'
+  | 'kimi'
+  | 'llm'
+  | 'litellm'
+  | 'llamafile'
+  | 'manus'
+  | 'mistral-vibe'
+  | 'ollama'
+  | 'open-interpreter'
+  | 'qwen-code'
+  | 'rowboatx'
+  | 'rovo'
+  | 'shell-pilot'
+  | 'smithery'
+  | 'trae';
 
 export interface CLITool {
   type: CLIType;

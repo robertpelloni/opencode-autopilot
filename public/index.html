@@ -75,12 +75,19 @@
             letter-spacing: -0.025em;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .connection-status {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.75rem;
             color: var(--text-muted);
+            margin-right: 1rem;
         }
 
         .status-dot {
@@ -102,31 +109,54 @@
         /* Main Layout */
         main {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 1.5rem;
+            background: var(--bg-secondary);
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { color: var(--text-primary); }
+        .tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .tab-content.active { display: block; }
+
+        /* Dashboard Layout */
+        .dashboard-layout {
             display: grid;
             grid-template-columns: 1fr 320px;
-            gap: 0;
+            gap: 1.5rem;
+            height: 100%;
         }
 
         @media (max-width: 1024px) {
-            main { grid-template-columns: 1fr; }
+            .dashboard-layout { grid-template-columns: 1fr; }
             .sidebar { display: none; }
-        }
-
-        /* Content Area */
-        .content {
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background: var(--bg-secondary);
-            border-left: 1px solid var(--border-color);
-            padding: 1.5rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
         }
 
         /* Section */
@@ -135,7 +165,10 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 1.5rem;
         }
+
+        .section:last-child { margin-bottom: 0; }
 
         .section-header {
             padding: 1rem 1.25rem;
@@ -199,20 +232,9 @@
         }
         .btn-success:hover { background: rgba(34, 197, 94, 0.25); }
 
-        .btn-sm {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-        }
-
-        .btn-xs {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.6875rem;
-        }
-
-        .btn-icon {
-            padding: 0.5rem;
-            border-radius: 6px;
-        }
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.6875rem; }
+        .btn-icon { padding: 0.5rem; border-radius: 6px; }
 
         /* Sessions Grid */
         .sessions-grid {
@@ -290,25 +312,10 @@
             letter-spacing: 0.025em;
         }
 
-        .status-running {
-            background: rgba(34, 197, 94, 0.15);
-            color: var(--accent-green);
-        }
-
-        .status-stopped {
-            background: rgba(113, 113, 122, 0.15);
-            color: #71717a;
-        }
-
-        .status-error {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--accent-red);
-        }
-
-        .status-starting {
-            background: rgba(234, 179, 8, 0.15);
-            color: var(--accent-yellow);
-        }
+        .status-running { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .status-stopped { background: rgba(113, 113, 122, 0.15); color: #71717a; }
+        .status-error { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .status-starting { background: rgba(234, 179, 8, 0.15); color: var(--accent-yellow); }
 
         .session-meta {
             display: flex;
@@ -329,11 +336,7 @@
             gap: 0.25rem;
         }
 
-        .tag-remove {
-            cursor: pointer;
-            opacity: 0.6;
-            font-size: 0.75rem;
-        }
+        .tag-remove { cursor: pointer; opacity: 0.6; font-size: 0.75rem; }
         .tag-remove:hover { opacity: 1; }
 
         .add-tag-btn {
@@ -347,104 +350,36 @@
         }
         .add-tag-btn:hover { border-color: var(--accent-purple); color: var(--text-primary); }
 
-        .session-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
+        .session-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .session-actions .btn { flex: 1; min-width: 60px; }
 
-        .export-dropdown {
-            position: relative;
-            display: inline-block;
-        }
+        /* Tables */
+        .table-container { overflow-x: auto; }
 
-        .export-menu {
-            display: none;
-            position: absolute;
-            bottom: 100%;
-            right: 0;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.25rem;
-            margin-bottom: 0.25rem;
-            min-width: 80px;
-            z-index: 10;
-        }
-
-        .export-menu.show { display: block; }
-
-        .export-menu button {
-            display: block;
+        .table {
             width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .table th {
             text-align: left;
-            padding: 0.375rem 0.5rem;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .export-menu button:hover { background: var(--bg-secondary); color: var(--text-primary); }
-
-        /* Bulk Operations */
-        .bulk-ops {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .bulk-row {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .bulk-row input, .bulk-row select {
-            flex: 1;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.5rem;
-            color: var(--text-primary);
-            font-size: 0.8125rem;
-        }
-
-        .bulk-row input:focus, .bulk-row select:focus {
-            outline: none;
-            border-color: var(--accent-purple);
-        }
-
-        /* Council Config */
-        .config-group {
-            margin-bottom: 1rem;
-        }
-
-        .config-group:last-child { margin-bottom: 0; }
-
-        .config-label {
-            font-size: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
             color: var(--text-muted);
-            margin-bottom: 0.375rem;
-            display: block;
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
 
-        .config-select, .config-input {
-            width: 100%;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.5rem;
-            color: var(--text-primary);
-            font-size: 0.8125rem;
+        .table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
         }
 
-        .config-select:focus, .config-input:focus {
-            outline: none;
-            border-color: var(--accent-purple);
-        }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover { background: rgba(255, 255, 255, 0.02); }
 
         /* Activity Log */
         .activity-log {
@@ -458,96 +393,15 @@
             line-height: 1.6;
         }
 
-        .log-entry {
-            padding: 0.25rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
+        .log-entry { padding: 0.25rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .log-entry:last-child { border-bottom: none; }
-
-        .log-time {
-            color: var(--text-muted);
-            margin-right: 0.5rem;
-        }
-
+        .log-time { color: var(--text-muted); margin-right: 0.5rem; }
         .log-info { color: var(--accent-blue); }
         .log-warn { color: var(--accent-yellow); }
         .log-error { color: var(--accent-red); }
         .log-success { color: var(--accent-green); }
 
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            z-index: 1000;
-        }
-
-        .toast {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-size: 0.8125rem;
-            box-shadow: var(--shadow);
-            animation: slideIn 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .toast.success { border-color: var(--accent-green); }
-        .toast.error { border-color: var(--accent-red); }
-        .toast.info { border-color: var(--accent-blue); }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-muted);
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Stats */
-        .stats-row {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            flex: 1;
-            min-width: 100px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* Modal */
+        /* Modals */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -564,90 +418,108 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             width: 90%;
-            max-width: 400px;
-            padding: 1.5rem;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
         }
 
-        .modal-title {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.25rem;
-        }
+        .modal-title { font-size: 1rem; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; }
         .modal-close:hover { color: var(--text-primary); }
 
-        .modal-body {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+        .modal-body { padding: 1.5rem; overflow-y: auto; }
+        .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.5rem; }
 
-        .modal-footer {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1.25rem;
-            justify-content: flex-end;
-        }
-
-        /* CLI Tools List */
-        .cli-tool-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-        }
-        .cli-tool-item:last-child { margin-bottom: 0; }
-
-        .cli-tool-name {
-            font-weight: 500;
-            font-size: 0.8125rem;
-        }
-
-        .cli-tool-status {
-            font-size: 0.6875rem;
-            padding: 0.125rem 0.5rem;
-            border-radius: 4px;
-        }
-        .cli-tool-status.available {
-            background: rgba(34, 197, 94, 0.15);
-            color: var(--accent-green);
-        }
-        .cli-tool-status.unavailable {
-            background: rgba(113, 113, 122, 0.15);
-            color: #71717a;
-        }
-
-        /* Tag Input */
-        .tag-input-container {
-            display: flex;
-            gap: 0.25rem;
-        }
-        .tag-input {
-            flex: 1;
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; margin-bottom: 0.375rem; color: var(--text-secondary); }
+        .form-control {
+            width: 100%;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
             color: var(--text-primary);
+            font-size: 0.875rem;
         }
-        .tag-input:focus { outline: none; border-color: var(--accent-purple); }
+        .form-control:focus { outline: none; border-color: var(--accent-purple); }
+
+        /* Tooltips */
+        .tooltip-trigger {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dashed var(--text-muted);
+        }
+
+        .tooltip-trigger:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stats */
+        .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .stat-card {
+            flex: 1;
+            min-width: 100px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toast.success { border-color: var(--accent-green); }
+        .toast.error { border-color: var(--accent-red); }
+        .toast.info { border-color: var(--accent-blue); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
@@ -657,164 +529,245 @@
                 <div class="logo-icon">&#129302;</div>
                 <h1>OpenCode Autopilot</h1>
             </div>
-            <div class="connection-status">
-                <span class="status-dot" id="ws-status"></span>
-                <span id="ws-status-text">Connecting...</span>
+            <div class="header-actions">
+                <div class="connection-status">
+                    <span class="status-dot" id="ws-status"></span>
+                    <span id="ws-status-text">Connecting...</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
+                    <span>?</span> Help
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
+                    <span>&#9881;</span> Settings
+                </button>
             </div>
         </header>
 
-        <main>
-            <div class="content">
-                <!-- Stats -->
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-value" id="stat-total">0</div>
-                        <div class="stat-label">Total Sessions</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="stat-active" style="color: var(--accent-green)">0</div>
-                        <div class="stat-label">Running</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="stat-healthy" style="color: var(--accent-blue)">0</div>
-                        <div class="stat-label">Healthy</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="stat-supervisors" style="color: var(--accent-purple)">0</div>
-                        <div class="stat-label">Supervisors</div>
-                    </div>
-                </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+            <div class="tab" onclick="switchTab('debate-history')">Debate History</div>
+            <div class="tab" onclick="switchTab('supervisors')">Supervisors</div>
+        </div>
 
-                <!-- Sessions -->
-                <div class="section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>&#128230;</span> Sessions
+        <main>
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-layout">
+                    <div class="main-column">
+                         <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value" id="stat-total">0</div>
+                                <div class="stat-label">Total Sessions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="stat-active" style="color: var(--accent-green)">0</div>
+                                <div class="stat-label">Running</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="stat-healthy" style="color: var(--accent-blue)">0</div>
+                                <div class="stat-label">Healthy</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="stat-supervisors" style="color: var(--accent-purple)">0</div>
+                                <div class="stat-label">Supervisors</div>
+                            </div>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="openNewSessionModal()">
-                            + New Session
-                        </button>
-                    </div>
-                    <div class="section-body">
-                        <div class="sessions-grid" id="sessions-grid">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">&#128237;</div>
-                                <p>No sessions yet</p>
-                                <p style="font-size: 0.75rem; margin-top: 0.5rem;">Start a new session or wait for connections</p>
+
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128230;</span> Sessions
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="openNewSessionModal()">
+                                    + New Session
+                                </button>
+                            </div>
+                            <div class="section-body">
+                                <div class="sessions-grid" id="sessions-grid">
+                                    <!-- Sessions injected here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128203;</span> Activity
+                                </div>
+                                <button class="btn btn-secondary btn-sm" onclick="clearLogs()">Clear</button>
+                            </div>
+                            <div class="section-body" style="padding: 0.75rem;">
+                                <div class="activity-log" id="activity-log">
+                                    <div class="log-entry">
+                                        <span class="log-time">--:--:--</span>
+                                        <span class="log-info">Dashboard initialized</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Activity Log -->
-                <div class="section" style="margin-top: 1.5rem;">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>&#128203;</span> Activity
+                    <div class="sidebar">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#9889;</span> Bulk Operations
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="number" id="bulk-count" class="form-control" placeholder="Count" value="3" min="1" max="50">
+                                        <select id="bulk-cli-type" class="form-control">
+                                            <option value="">Default CLI</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="startBulkSessions()">Start N Sessions</button>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-danger" style="flex: 1;" onclick="stopAllSessions()">Stop All</button>
+                                        <button class="btn btn-success" style="flex: 1;" onclick="resumeAllSessions()">Resume All</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-secondary btn-sm" onclick="clearLogs()">Clear</button>
-                    </div>
-                    <div class="section-body" style="padding: 0.75rem;">
-                        <div class="activity-log" id="activity-log">
-                            <div class="log-entry">
-                                <span class="log-time">--:--:--</span>
-                                <span class="log-info">Dashboard initialized</span>
+
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128736;</span> CLI Tools
+                                </div>
+                                <button class="btn btn-secondary btn-xs" onclick="refreshCLITools()">Refresh</button>
+                            </div>
+                            <div class="section-body" id="cli-tools-list" style="max-height: 400px; overflow-y: auto;">
+                                Loading...
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="sidebar">
-                <!-- Bulk Operations -->
+            <!-- Debate History Tab -->
+            <div id="tab-debate-history" class="tab-content">
                 <div class="section">
                     <div class="section-header">
-                        <div class="section-title">
-                            <span>&#9889;</span> Bulk Operations
-                        </div>
+                        <div class="section-title">Debate History</div>
+                        <button class="btn btn-secondary btn-sm" onclick="fetchDebateHistory()">Refresh</button>
                     </div>
                     <div class="section-body">
-                        <div class="bulk-ops">
-                            <div class="bulk-row">
-                                <input type="number" id="bulk-count" placeholder="Count" value="3" min="1" max="50">
-                                <select id="bulk-cli-type">
-                                    <option value="">Default CLI</option>
-                                </select>
-                            </div>
-                            <div class="bulk-row">
-                                <button class="btn btn-primary" style="flex: 1;" onclick="startBulkSessions()">Start N</button>
-                            </div>
-                            <div class="bulk-row">
-                                <button class="btn btn-danger" style="flex: 1;" onclick="stopAllSessions()">Stop All</button>
-                                <button class="btn btn-success" style="flex: 1;" onclick="resumeAllSessions()">Resume All</button>
-                            </div>
+                        <div class="table-container">
+                            <table class="table" id="debate-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Result</th>
+                                        <th>Consensus</th>
+                                        <th>Votes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="4" style="text-align: center;">No history available</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- CLI Tools -->
+            <!-- Supervisors Tab -->
+            <div id="tab-supervisors" class="tab-content">
                 <div class="section">
                     <div class="section-header">
-                        <div class="section-title">
-                            <span>&#128736;</span> CLI Tools
-                        </div>
-                        <button class="btn btn-secondary btn-xs" onclick="refreshCLITools()">Refresh</button>
-                    </div>
-                    <div class="section-body" id="cli-tools-list" style="font-size: 0.8125rem;">
-                        Loading...
-                    </div>
-                </div>
-
-                <!-- Council Config -->
-                <div class="section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>&#127963;</span> Council Config
-                        </div>
+                        <div class="section-title">Supervisor Configuration</div>
                     </div>
                     <div class="section-body">
-                        <div class="config-group">
-                            <label class="config-label">Consensus Mode</label>
-                            <select class="config-select" id="consensus-mode" onchange="updateConsensusMode()">
-                                <option value="simple-majority">Simple Majority (>50%)</option>
-                                <option value="supermajority">Supermajority (>66%)</option>
-                                <option value="unanimous">Unanimous (100%)</option>
-                                <option value="weighted" selected>Weighted Voting</option>
-                                <option value="ceo-override">CEO Override</option>
-                                <option value="ceo-veto">CEO Veto Only</option>
-                                <option value="hybrid-ceo-majority">Hybrid CEO-Majority</option>
-                                <option value="ranked-choice">Ranked Choice</option>
-                            </select>
+                        <div class="table-container">
+                            <table class="table" id="supervisors-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Provider</th>
+                                        <th>Model</th>
+                                        <th>Weight</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Supervisors injected here -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="config-group">
-                            <label class="config-label">Lead Supervisor (CEO)</label>
-                            <input type="text" class="config-input" id="lead-supervisor" placeholder="e.g., GPT-4o" onchange="updateLeadSupervisor()">
-                        </div>
-                        <div class="config-group">
-                            <label class="config-label">Consensus Threshold</label>
-                            <input type="range" id="threshold-slider" min="0" max="100" value="70" style="width: 100%;" onchange="updateThreshold()">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--text-muted);">
-                                <span>0%</span>
-                                <span id="threshold-value">70%</span>
-                                <span>100%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Supervisors -->
-                <div class="section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>&#128101;</span> Supervisors
-                        </div>
-                    </div>
-                    <div class="section-body" id="supervisors-list" style="font-size: 0.8125rem; color: var(--text-secondary);">
-                        Loading...
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Settings</div>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" data-tooltip="Determines how the council reaches a decision">Consensus Mode <span class="tooltip-trigger" data-tooltip="?">(?)</span></label>
+                    <select class="form-control" id="settings-consensus-mode">
+                        <option value="simple-majority">Simple Majority (>50%)</option>
+                        <option value="supermajority">Supermajority (>66%)</option>
+                        <option value="unanimous">Unanimous (100%)</option>
+                        <option value="weighted">Weighted Voting</option>
+                        <option value="ceo-override">CEO Override</option>
+                        <option value="ceo-veto">CEO Veto Only</option>
+                        <option value="hybrid-ceo-majority">Hybrid CEO-Majority</option>
+                        <option value="ranked-choice">Ranked Choice</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Consensus Threshold (<span id="settings-threshold-val">70%</span>)</label>
+                    <input type="range" id="settings-threshold" min="0" max="100" value="70" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Debate Rounds</label>
+                    <input type="number" id="settings-rounds" class="form-control" min="1" max="5" value="2">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="help-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Documentation</div>
+                <button class="modal-close" onclick="closeHelpModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Consensus Modes</h3>
+                <ul style="padding-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Simple Majority:</strong> Requires >50% approval.</li>
+                    <li><strong>Supermajority:</strong> Requires >66% approval.</li>
+                    <li><strong>Unanimous:</strong> Requires 100% approval.</li>
+                    <li><strong>Weighted:</strong> Uses supervisor weights and confidence scores.</li>
+                    <li><strong>CEO Override:</strong> Lead supervisor decides.</li>
+                    <li><strong>CEO Veto:</strong> Lead supervisor can veto decisions.</li>
+                    <li><strong>Hybrid CEO-Majority:</strong> CEO breaks ties, otherwise majority.</li>
+                    <li><strong>Ranked Choice:</strong> Supervisors rank options.</li>
+                </ul>
+                <h3>CLI Tools</h3>
+                <p>The system automatically detects installed CLI tools. Supported tools include OpenCode, Claude, Aider, Cursor, and many others.</p>
+                <h3>Usage</h3>
+                <p>Start a new session to begin. The council will monitor your activity and provide guidance based on the configured consensus rules.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHelpModal()">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- New Session Modal -->
@@ -825,21 +778,21 @@
                 <button class="modal-close" onclick="closeNewSessionModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="config-group">
-                    <label class="config-label">CLI Tool</label>
-                    <select class="config-select" id="new-session-cli">
+                <div class="form-group">
+                    <label class="form-label">CLI Tool</label>
+                    <select class="form-control" id="new-session-cli">
                         <option value="">Default (opencode)</option>
                     </select>
                 </div>
-                <div class="config-group">
-                    <label class="config-label">Template</label>
-                    <select class="config-select" id="new-session-template">
+                <div class="form-group">
+                    <label class="form-label">Template</label>
+                    <select class="form-control" id="new-session-template">
                         <option value="">None</option>
                     </select>
                 </div>
-                <div class="config-group">
-                    <label class="config-label">Tags (comma-separated)</label>
-                    <input type="text" class="config-input" id="new-session-tags" placeholder="e.g., test, dev">
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <input type="text" class="form-control" id="new-session-tags" placeholder="e.g., test, dev">
                 </div>
             </div>
             <div class="modal-footer">
@@ -849,144 +802,66 @@
         </div>
     </div>
 
-    <!-- Add Tag Modal -->
-    <div class="modal-overlay" id="add-tag-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title">Add Tag</div>
-                <button class="modal-close" onclick="closeAddTagModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="config-group">
-                    <label class="config-label">Tag Name</label>
-                    <input type="text" class="config-input" id="add-tag-input" placeholder="Enter tag name">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAddTagModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmAddTag()">Add Tag</button>
-            </div>
-        </div>
-    </div>
-
     <div class="toast-container" id="toast-container"></div>
 
     <script>
+        // --- State ---
         let ws = null;
         let sessions = [];
-        let sessionHealth = {};
-        let councilStatus = {};
         let cliTools = [];
-        let templates = [];
-        let reconnectAttempts = 0;
-        let currentTagSessionId = null;
-        const maxReconnectAttempts = 10;
+        let councilStatus = {};
 
+        // --- WebSocket ---
         function connectWebSocket() {
-            const wsUrl = `ws://${window.location.host}/ws`;
-            ws = new WebSocket(wsUrl);
-
+            ws = new WebSocket(`ws://${window.location.host}/ws`);
             ws.onopen = () => {
-                reconnectAttempts = 0;
-                updateConnectionStatus('connected');
-                addLog('Connected to server', 'success');
+                document.getElementById('ws-status').classList.remove('connecting');
+                document.getElementById('ws-status').classList.add('connected');
+                document.getElementById('ws-status-text').textContent = 'Connected';
                 fetchInitialData();
             };
-
-            ws.onclose = () => {
-                updateConnectionStatus('disconnected');
-                addLog('Disconnected from server', 'warn');
-                scheduleReconnect();
-            };
-
-            ws.onerror = () => {
-                updateConnectionStatus('error');
-            };
-
             ws.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
-                    handleWebSocketMessage(msg);
-                } catch (e) {
-                    console.error('Failed to parse WS message:', e);
-                }
+                    if (msg.type === 'session_update') {
+                        updateSession(msg.payload);
+                    } else if (msg.type === 'log') {
+                        addLog(msg.payload.message, msg.payload.level);
+                    } else if (msg.type === 'council_decision') {
+                        showToast(`Decision: ${msg.payload.approved ? 'Approved' : 'Rejected'}`, msg.payload.approved ? 'success' : 'error');
+                        fetchDebateHistory(); // Refresh history on new decision
+                    }
+                } catch(e) { console.error('WS Error', e); }
+            };
+            ws.onclose = () => {
+                document.getElementById('ws-status').classList.remove('connected');
+                document.getElementById('ws-status-text').textContent = 'Disconnected';
+                setTimeout(connectWebSocket, 3000);
             };
         }
 
-        function scheduleReconnect() {
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-                updateConnectionStatus('connecting');
-                setTimeout(connectWebSocket, delay);
-            }
-        }
-
-        function updateConnectionStatus(status) {
-            const dot = document.getElementById('ws-status');
-            const text = document.getElementById('ws-status-text');
+        // --- Tabs ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            dot.className = 'status-dot ' + status;
-            text.textContent = status === 'connected' ? 'Connected' : 
-                               status === 'connecting' ? 'Reconnecting...' : 'Disconnected';
+            const tabs = document.querySelectorAll('.tab');
+            if(tabId === 'dashboard') tabs[0].classList.add('active');
+            if(tabId === 'debate-history') tabs[1].classList.add('active');
+            if(tabId === 'supervisors') tabs[2].classList.add('active');
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if(tabId === 'debate-history') fetchDebateHistory();
+            if(tabId === 'supervisors') fetchCouncilStatus();
         }
 
-        function handleWebSocketMessage(msg) {
-            switch (msg.type) {
-                case 'session_update':
-                    updateSession(msg.payload);
-                    break;
-                case 'bulk_update':
-                    addLog(`Bulk ${msg.payload.action}: ${msg.payload.count || msg.payload.stopped} sessions`, 'info');
-                    fetchSessions();
-                    break;
-                case 'log':
-                    addLog(msg.payload.message, msg.payload.level);
-                    break;
-                case 'council_decision':
-                    handleCouncilDecision(msg.payload);
-                    break;
-                case 'supervisor_fallback':
-                    addLog(`Supervisor fallback: ${msg.payload.from} -> ${msg.payload.to}`, 'warn');
-                    break;
-                case 'health_status_changed':
-                    handleHealthChange(msg.payload);
-                    break;
-            }
-        }
-
-        function updateSession(session) {
-            const idx = sessions.findIndex(s => s.id === session.id);
-            if (idx >= 0) {
-                sessions[idx] = { ...sessions[idx], ...session };
-            } else {
-                sessions.push(session);
-            }
-            renderSessions();
-        }
-
-        function handleHealthChange(payload) {
-            sessionHealth[payload.sessionId] = payload.status;
-            addLog(`Session ${payload.sessionId.slice(0, 8)} health: ${payload.previous} -> ${payload.status}`, 
-                   payload.status === 'healthy' ? 'success' : payload.status === 'crashed' ? 'error' : 'warn');
-            renderSessions();
-            updateStats();
-        }
-
-        function handleCouncilDecision(decision) {
-            const status = decision.approved ? 'APPROVED' : 'REJECTED';
-            const level = decision.approved ? 'success' : 'warn';
-            addLog(`Council Decision: ${status} (${(decision.consensus * 100).toFixed(0)}% consensus)`, level);
-            showToast(`Task ${status}`, decision.approved ? 'success' : 'error');
-        }
-
+        // --- Data Fetching ---
         async function fetchInitialData() {
             await Promise.all([
                 fetchSessions(),
-                fetchCouncilStatus(),
                 fetchCLITools(),
-                fetchTemplates(),
-                fetchSessionHealth()
+                fetchCouncilStatus()
             ]);
         }
 
@@ -997,27 +872,7 @@
                 sessions = data.data || [];
                 renderSessions();
                 updateStats();
-            } catch (e) {
-                console.error('Failed to fetch sessions:', e);
-            }
-        }
-
-        async function fetchSessionHealth() {
-            try {
-                const res = await fetch('/api/health/sessions');
-                const data = await res.json();
-                if (data.success && data.data) {
-                    // data.data is Record<string, SessionHealth>, extract status for each session
-                    sessionHealth = {};
-                    for (const [sessionId, health] of Object.entries(data.data)) {
-                        sessionHealth[sessionId] = health.status;
-                    }
-                    renderSessions();
-                    updateStats();
-                }
-            } catch (e) {
-                console.error('Failed to fetch session health:', e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchCLITools() {
@@ -1027,30 +882,7 @@
                 cliTools = data.data || [];
                 renderCLITools();
                 updateCLISelects();
-            } catch (e) {
-                console.error('Failed to fetch CLI tools:', e);
-            }
-        }
-
-        async function refreshCLITools() {
-            try {
-                await fetch('/api/cli/tools/refresh', { method: 'POST' });
-                await fetchCLITools();
-                showToast('CLI tools refreshed', 'success');
-            } catch (e) {
-                showToast('Failed to refresh CLI tools', 'error');
-            }
-        }
-
-        async function fetchTemplates() {
-            try {
-                const res = await fetch('/api/sessions/templates');
-                const data = await res.json();
-                templates = data.data || [];
-                updateTemplateSelect();
-            } catch (e) {
-                console.error('Failed to fetch templates:', e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchCouncilStatus() {
@@ -1058,424 +890,254 @@
                 const res = await fetch('/api/council/status');
                 const data = await res.json();
                 councilStatus = data.data || {};
-                renderCouncilStatus();
-                updateStats();
-            } catch (e) {
-                console.error('Failed to fetch council status:', e);
+                renderSupervisors();
+
+                if(councilStatus.config) {
+                    document.getElementById('settings-consensus-mode').value = councilStatus.config.consensusMode || 'weighted';
+                    document.getElementById('settings-rounds').value = councilStatus.config.debateRounds || 2;
+                    document.getElementById('settings-threshold').value = (councilStatus.config.consensusThreshold || 0.7) * 100;
+                    document.getElementById('settings-threshold-val').textContent = Math.round((councilStatus.config.consensusThreshold || 0.7) * 100) + '%';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchDebateHistory() {
+            try {
+                const res = await fetch('/api/debate-history/list');
+                const data = await res.json();
+                const history = data.data || [];
+
+                const tbody = document.querySelector('#debate-history-table tbody');
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No history available</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = history.map(h => `
+                    <tr>
+                        <td style="color: var(--text-muted);">${new Date(h.timestamp).toLocaleString()}</td>
+                        <td style="color: ${h.decision.approved ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                            ${h.decision.approved ? 'APPROVED' : 'REJECTED'}
+                        </td>
+                        <td>${Math.round(h.decision.consensus * 100)}%</td>
+                        <td>${h.decision.votes.length} votes</td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        // --- Rendering ---
+        function renderSessions() {
+            const grid = document.getElementById('sessions-grid');
+            if (sessions.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted)">No sessions active</div>';
+                return;
             }
+            grid.innerHTML = sessions.map(s => `
+                <div class="session-card">
+                    <div class="session-card-header">
+                        <div>
+                            <div class="session-id">${s.id}</div>
+                            <div class="session-port">
+                                Port ${s.port || '--'}
+                                <span class="cli-badge">${s.cliType || 'opencode'}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-${s.status}">${s.status}</span>
+                    </div>
+                    <div class="session-meta">
+                        ${(s.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+                    </div>
+                    <div class="session-actions">
+                        ${s.status === 'running'
+                            ? `<button class="btn btn-danger btn-sm" onclick="stopSession('${s.id}')">Stop</button>`
+                            : `<button class="btn btn-success btn-sm" onclick="resumeSession('${s.id}')">Resume</button>`
+                        }
+                        <button class="btn btn-secondary btn-sm" onclick="deleteSession('${s.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderCLITools() {
             const list = document.getElementById('cli-tools-list');
-            if (cliTools.length === 0) {
-                list.innerHTML = '<span style="color: var(--text-muted);">No CLI tools detected</span>';
-                return;
-            }
-            list.innerHTML = cliTools.map(tool => `
-                <div class="cli-tool-item">
-                    <span class="cli-tool-name">${tool.name || tool.type}</span>
-                    <span class="cli-tool-status ${tool.available ? 'available' : 'unavailable'}">
-                        ${tool.available ? 'Available' : 'Not Found'}
-                    </span>
+            list.innerHTML = cliTools.map(t => `
+                <div style="display:flex; justify-content:space-between; padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05)">
+                    <span>${t.name}</span>
+                    <span style="font-size:0.75rem; color:var(--accent-green)">Available</span>
                 </div>
+            `).join('');
+        }
+
+        function renderSupervisors() {
+            const tbody = document.querySelector('#supervisors-table tbody');
+            const supervisors = councilStatus.config?.supervisors || [];
+            
+            if(supervisors.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No supervisors configured</td></tr>';
+                 return;
+            }
+
+            tbody.innerHTML = supervisors.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.provider}</td>
+                    <td>${s.model || 'default'}</td>
+                    <td>
+                        <input type="number" class="form-control" style="width: 80px; padding: 0.25rem;"
+                               value="${s.weight || 1}" step="0.1" min="0" max="2"
+                               id="weight-${s.name}">
+                    </td>
+                    <td><span style="color: var(--accent-green)">Active</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-xs" onclick="saveSupervisorWeight('${s.name}')">Save</button>
+                    </td>
+                </tr>
             `).join('');
         }
 
         function updateCLISelects() {
-            const options = '<option value="">Default CLI</option>' + 
-                cliTools.filter(t => t.available).map(t => 
-                    `<option value="${t.type}">${t.name || t.type}</option>`
-                ).join('');
-            document.getElementById('bulk-cli-type').innerHTML = options;
-            document.getElementById('new-session-cli').innerHTML = options;
-        }
-
-        function updateTemplateSelect() {
-            const select = document.getElementById('new-session-template');
-            select.innerHTML = '<option value="">None</option>' +
-                templates.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-        }
-
-        function renderSessions() {
-            const grid = document.getElementById('sessions-grid');
-            
-            if (sessions.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">&#128237;</div>
-                        <p>No sessions yet</p>
-                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Start a new session to get started</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = sessions.map(session => {
-                const statusClass = session.status === 'running' ? 'status-running' :
-                                   session.status === 'error' ? 'status-error' :
-                                   session.status === 'starting' ? 'status-starting' : 'status-stopped';
-                
-                const isRunning = session.status === 'running';
-                const tags = session.tags || [];
-                const health = sessionHealth[session.id] || 'healthy';
-                const cliType = session.cliType || 'opencode';
-                
-                return `
-                    <div class="session-card">
-                        <div class="session-card-header">
-                            <div>
-                                <div class="session-id">${session.id}</div>
-                                <div class="session-port">
-                                    Port ${session.port || '---'}
-                                    <span class="cli-badge">${cliType}</span>
-                                    ${isRunning ? `<span class="health-indicator health-${health}" title="Health: ${health}"></span>` : ''}
-                                </div>
-                            </div>
-                            <span class="status-badge ${statusClass}">
-                                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
-                                ${session.status}
-                            </span>
-                        </div>
-                        <div class="session-meta">
-                            ${tags.map(t => `<span class="tag">${t}<span class="tag-remove" onclick="removeTag('${session.id}', '${t}')">&times;</span></span>`).join('')}
-                            <button class="add-tag-btn" onclick="openAddTagModal('${session.id}')">+ tag</button>
-                        </div>
-                        <div class="session-actions">
-                            ${isRunning ? 
-                                `<button class="btn btn-danger btn-sm" onclick="stopSession('${session.id}')">Stop</button>` :
-                                `<button class="btn btn-success btn-sm" onclick="resumeSession('${session.id}')">Resume</button>`
-                            }
-                            <div class="export-dropdown">
-                                <button class="btn btn-secondary btn-sm" onclick="toggleExportMenu('${session.id}')">Export</button>
-                                <div class="export-menu" id="export-menu-${session.id}">
-                                    <button onclick="exportLogs('${session.id}', 'json')">JSON</button>
-                                    <button onclick="exportLogs('${session.id}', 'csv')">CSV</button>
-                                    <button onclick="exportLogs('${session.id}', 'text')">Text</button>
-                                </div>
-                            </div>
-                            <button class="btn btn-secondary btn-sm btn-icon" onclick="deleteSession('${session.id}')">&#128465;</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderCouncilStatus() {
-            const list = document.getElementById('supervisors-list');
-            const supervisors = councilStatus.config?.supervisors || [];
-            
-            if (supervisors.length === 0) {
-                list.innerHTML = '<span style="color: var(--text-muted);">No supervisors configured</span>';
-                return;
-            }
-
-            list.innerHTML = supervisors.map(s => `
-                <div style="padding: 0.5rem; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 0.5rem;">
-                    <div style="font-weight: 500;">${s.name}</div>
-                    <div style="font-size: 0.6875rem; color: var(--text-muted);">${s.provider} - ${s.model || 'default'}</div>
-                </div>
-            `).join('');
-
-            if (councilStatus.config?.consensusMode) {
-                document.getElementById('consensus-mode').value = councilStatus.config.consensusMode;
-            }
-            if (councilStatus.config?.leadSupervisor) {
-                document.getElementById('lead-supervisor').value = councilStatus.config.leadSupervisor;
-            }
-            if (councilStatus.config?.consensusThreshold) {
-                const slider = document.getElementById('threshold-slider');
-                slider.value = councilStatus.config.consensusThreshold * 100;
-                document.getElementById('threshold-value').textContent = `${Math.round(councilStatus.config.consensusThreshold * 100)}%`;
-            }
+            const opts = '<option value="">Default CLI</option>' +
+                cliTools.map(t => `<option value="${t.type}">${t.name}</option>`).join('');
+            document.getElementById('bulk-cli-type').innerHTML = opts;
+            document.getElementById('new-session-cli').innerHTML = opts;
         }
 
         function updateStats() {
-            const total = sessions.length;
-            const active = sessions.filter(s => s.status === 'running').length;
-            const healthy = Object.values(sessionHealth).filter(h => h === 'healthy').length;
-            
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-active').textContent = active;
-            document.getElementById('stat-healthy').textContent = healthy;
-            document.getElementById('stat-supervisors').textContent = councilStatus.supervisorCount || 0;
+            document.getElementById('stat-total').textContent = sessions.length;
+            document.getElementById('stat-active').textContent = sessions.filter(s => s.status === 'running').length;
+            document.getElementById('stat-supervisors').textContent = councilStatus.config?.supervisors?.length || 0;
         }
 
-        function openNewSessionModal() {
-            document.getElementById('new-session-modal').classList.add('show');
+        function addLog(msg, level) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-${level}">${msg}</span>`;
+            document.getElementById('activity-log').prepend(div);
         }
 
-        function closeNewSessionModal() {
-            document.getElementById('new-session-modal').classList.remove('show');
-            document.getElementById('new-session-cli').value = '';
-            document.getElementById('new-session-template').value = '';
-            document.getElementById('new-session-tags').value = '';
+        // --- Actions ---
+        function updateSession(session) {
+            const idx = sessions.findIndex(s => s.id === session.id);
+            if (idx >= 0) sessions[idx] = { ...sessions[idx], ...session };
+            else sessions.push(session);
+            renderSessions();
+            updateStats();
         }
 
         async function createNewSession() {
             const cliType = document.getElementById('new-session-cli').value;
-            const template = document.getElementById('new-session-template').value;
-            const tagsStr = document.getElementById('new-session-tags').value;
-            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
-
+            const tags = document.getElementById('new-session-tags').value.split(',').filter(t => t.trim());
             try {
-                const body = {};
-                if (cliType) body.cliType = cliType;
-                if (template) body.templateName = template;
-                if (tags.length) body.tags = tags;
-
-                const res = await fetch('/api/sessions/start', {
+                await fetch('/api/sessions/start', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cliType, tags })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('Session started', 'success');
-                    closeNewSessionModal();
-                    fetchSessions();
-                } else {
-                    showToast(data.error || 'Failed to start session', 'error');
-                }
-            } catch (e) {
-                showToast('Failed to start session', 'error');
+                closeNewSessionModal();
+                showToast('Session started', 'success');
+            } catch(e) { showToast('Failed to start session', 'error'); }
+        }
+
+        async function stopSession(id) {
+            await fetch(`/api/sessions/${id}/stop`, { method: 'POST' });
+        }
+
+        async function resumeSession(id) {
+            await fetch(`/api/sessions/${id}/resume`, { method: 'POST' });
+        }
+
+        async function deleteSession(id) {
+            if(confirm('Delete session?')) {
+                await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+                sessions = sessions.filter(s => s.id !== id);
+                renderSessions();
+                updateStats();
             }
         }
 
         async function startBulkSessions() {
-            const count = parseInt(document.getElementById('bulk-count').value) || 3;
+            const count = document.getElementById('bulk-count').value;
             const cliType = document.getElementById('bulk-cli-type').value;
-            try {
-                const body = { count };
-                if (cliType) body.cliType = cliType;
-                
-                const res = await fetch('/api/sessions/bulk/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast(`Started ${data.data.sessions.length} sessions`, 'success');
-                    fetchSessions();
-                } else {
-                    showToast(data.error || 'Failed to start sessions', 'error');
-                }
-            } catch (e) {
-                showToast('Failed to start sessions', 'error');
-            }
+            await fetch('/api/sessions/bulk/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ count: parseInt(count), cliType })
+            });
+            showToast('Bulk sessions started', 'success');
         }
 
         async function stopAllSessions() {
-            if (!confirm('Stop all sessions?')) return;
-            try {
-                const res = await fetch('/api/sessions/bulk/stop', { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    showToast(`Stopped ${data.data.stopped} sessions`, 'success');
-                    fetchSessions();
-                }
-            } catch (e) {
-                showToast('Failed to stop sessions', 'error');
-            }
+            if(confirm('Stop all?')) await fetch('/api/sessions/bulk/stop', { method: 'POST' });
         }
 
         async function resumeAllSessions() {
-            try {
-                const res = await fetch('/api/sessions/bulk/resume', { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    showToast(`Resumed ${data.data.sessions.length} sessions`, 'success');
-                    fetchSessions();
-                }
-            } catch (e) {
-                showToast('Failed to resume sessions', 'error');
-            }
+            await fetch('/api/sessions/bulk/resume', { method: 'POST' });
         }
 
-        async function stopSession(id) {
-            try {
-                await fetch(`/api/sessions/${id}/stop`, { method: 'POST' });
-                showToast('Session stopped', 'success');
-                fetchSessions();
-            } catch (e) {
-                showToast('Failed to stop session', 'error');
-            }
+        async function refreshCLITools() {
+            await fetch('/api/cli/tools/refresh', { method: 'POST' });
+            fetchCLITools();
+            showToast('CLI tools refreshed', 'success');
         }
 
-        async function resumeSession(id) {
-            try {
-                await fetch(`/api/sessions/${id}/resume`, { method: 'POST' });
-                showToast('Session resumed', 'success');
-                fetchSessions();
-            } catch (e) {
-                showToast('Failed to resume session', 'error');
-            }
-        }
+        // --- Settings & Config ---
+        async function saveSettings() {
+            const mode = document.getElementById('settings-consensus-mode').value;
+            const rounds = parseInt(document.getElementById('settings-rounds').value);
+            const threshold = parseInt(document.getElementById('settings-threshold').value) / 100;
 
-        async function deleteSession(id) {
-            if (!confirm('Delete this session?')) return;
-            try {
-                await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-                sessions = sessions.filter(s => s.id !== id);
-                delete sessionHealth[id];
-                renderSessions();
-                updateStats();
-                showToast('Session deleted', 'success');
-            } catch (e) {
-                showToast('Failed to delete session', 'error');
-            }
-        }
-
-        function openAddTagModal(sessionId) {
-            currentTagSessionId = sessionId;
-            document.getElementById('add-tag-modal').classList.add('show');
-            document.getElementById('add-tag-input').value = '';
-            document.getElementById('add-tag-input').focus();
-        }
-
-        function closeAddTagModal() {
-            document.getElementById('add-tag-modal').classList.remove('show');
-            currentTagSessionId = null;
-        }
-
-        async function confirmAddTag() {
-            const tag = document.getElementById('add-tag-input').value.trim();
-            if (!tag || !currentTagSessionId) return;
-            
-            try {
-                await fetch(`/api/sessions/${currentTagSessionId}/tags`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tag })
-                });
-                closeAddTagModal();
-                fetchSessions();
-                showToast('Tag added', 'success');
-            } catch (e) {
-                showToast('Failed to add tag', 'error');
-            }
-        }
-
-        async function removeTag(sessionId, tag) {
-            try {
-                await fetch(`/api/sessions/${sessionId}/tags/${encodeURIComponent(tag)}`, { method: 'DELETE' });
-                fetchSessions();
-                showToast('Tag removed', 'success');
-            } catch (e) {
-                showToast('Failed to remove tag', 'error');
-            }
-        }
-
-        function toggleExportMenu(sessionId) {
-            const menu = document.getElementById(`export-menu-${sessionId}`);
-            document.querySelectorAll('.export-menu').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
-            });
-            menu.classList.toggle('show');
-        }
-
-        function exportLogs(sessionId, format) {
-            const url = `/api/sessions/${sessionId}/logs/export?format=${format}`;
-            window.open(url, '_blank');
-            document.querySelectorAll('.export-menu').forEach(m => m.classList.remove('show'));
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.export-dropdown')) {
-                document.querySelectorAll('.export-menu').forEach(m => m.classList.remove('show'));
-            }
-        });
-
-        async function updateConsensusMode() {
-            const mode = document.getElementById('consensus-mode').value;
-            try {
-                await fetch('/api/council/consensus-mode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode })
-                });
-                showToast(`Consensus mode: ${mode}`, 'info');
-            } catch (e) {
-                showToast('Failed to update consensus mode', 'error');
-            }
-        }
-
-        async function updateLeadSupervisor() {
-            const name = document.getElementById('lead-supervisor').value;
-            if (!name) return;
-            try {
-                await fetch('/api/council/lead-supervisor', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                showToast(`Lead supervisor: ${name}`, 'info');
-            } catch (e) {
-                showToast('Failed to update lead supervisor', 'error');
-            }
-        }
-
-        async function updateThreshold() {
-            const slider = document.getElementById('threshold-slider');
-            const value = slider.value / 100;
-            document.getElementById('threshold-value').textContent = `${slider.value}%`;
             try {
                 await fetch('/api/council/config', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ consensusThreshold: value })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        consensusMode: mode,
+                        debateRounds: rounds,
+                        consensusThreshold: threshold
+                    })
                 });
-            } catch (e) {
-                console.error('Failed to update threshold:', e);
-            }
+                closeSettingsModal();
+                showToast('Settings saved', 'success');
+                fetchCouncilStatus();
+            } catch(e) { showToast('Failed to save settings', 'error'); }
         }
 
-        function addLog(message, level = 'info') {
-            const log = document.getElementById('activity-log');
-            const time = new Date().toLocaleTimeString();
-            const levelClass = level === 'error' ? 'log-error' : 
-                              level === 'warn' ? 'log-warn' : 
-                              level === 'success' ? 'log-success' : 'log-info';
-            
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">${time}</span><span class="${levelClass}">${message}</span>`;
-            log.appendChild(entry);
-            log.scrollTop = log.scrollHeight;
-
-            while (log.children.length > 100) {
-                log.removeChild(log.firstChild);
-            }
+        async function saveSupervisorWeight(name) {
+            const weight = parseFloat(document.getElementById(`weight-${name}`).value);
+            try {
+                await fetch('/api/council/supervisor-weight', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, weight })
+                });
+                showToast(`Updated weight for ${name}`, 'success');
+            } catch(e) { showToast('Failed to update weight', 'error'); }
         }
 
-        function clearLogs() {
-            const log = document.getElementById('activity-log');
-            log.innerHTML = '';
-            addLog('Logs cleared', 'info');
+        // --- Modals ---
+        function openNewSessionModal() { document.getElementById('new-session-modal').classList.add('show'); }
+        function closeNewSessionModal() { document.getElementById('new-session-modal').classList.remove('show'); }
+
+        function openSettingsModal() { document.getElementById('settings-modal').classList.add('show'); }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.remove('show'); }
+
+        function openHelpModal() { document.getElementById('help-modal').classList.add('show'); }
+        function closeHelpModal() { document.getElementById('help-modal').classList.remove('show'); }
+
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <span>${type === 'success' ? '&#10003;' : type === 'error' ? '&#10005;' : '&#8505;'}</span>
-                <span>${message}</span>
-            `;
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // Handle Enter key in add tag modal
-        document.getElementById('add-tag-input')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') confirmAddTag();
-        });
-
+        // --- Init ---
         connectWebSocket();
+        document.getElementById('settings-threshold').addEventListener('input', (e) => {
+            document.getElementById('settings-threshold-val').textContent = e.target.value + '%';
+        });
     </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ interface DashboardProps {
   sessions: Session[];
   council: { enabled: boolean; supervisorCount: number; availableCount?: number; config: CouncilConfig } | null;
   smartPilot: SmartPilotStatus | null;
-  view: 'dashboard' | 'logs' | 'council' | 'pilot';
+  view: 'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help';
   wsLogs?: LogEntry[];
   wsDecisions?: CouncilDecision[];
 }
@@ -37,6 +37,7 @@ export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], ws
               <Text>{s.id}</Text>
               <Text color="gray">{s.status}</Text>
               <Text color="gray">{s.currentTask || 'idle'}</Text>
+              {s.templateName && <Text color="blue">[{s.templateName}]</Text>}
             </Box>
           ))
         )}
@@ -118,6 +119,10 @@ export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], ws
               <Text>Consensus:</Text>
               <Text>{(council.config.consensusThreshold || 0.7) * 100}%</Text>
             </Box>
+            <Box gap={2}>
+              <Text>Mode:</Text>
+              <Text>{council.config.consensusMode || 'weighted'}</Text>
+            </Box>
             
             {council.config.supervisors.length > 0 && (
               <Box flexDirection="column" marginTop={1}>
@@ -127,6 +132,7 @@ export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], ws
                     <Text color="cyan">•</Text>
                     <Text>{s.name}</Text>
                     <Text color="gray">({s.provider})</Text>
+                    <Text color="gray">w: {s.weight || 1}</Text>
                     <Text color="gray">{s.model || 'default'}</Text>
                   </Box>
                 ))}
@@ -209,6 +215,51 @@ export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], ws
             ))}
           </Box>
         )}
+      </Box>
+    );
+  }
+
+  if (view === 'settings') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline>Settings</Text>
+        </Box>
+        <Text color="gray">Edit settings via Web Dashboard (http://localhost:3847/dashboard)</Text>
+
+        <Box marginTop={1} flexDirection="column">
+          <Text bold>Environment Variables:</Text>
+          <Text>Use `opencode env set KEY=VALUE`</Text>
+        </Box>
+
+        <Box marginTop={1} flexDirection="column">
+          <Text bold>CLI Tools:</Text>
+          <Text>Auto-detected on startup. Use `opencode cli refresh` to rescan.</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (view === 'help') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline>Help & Documentation</Text>
+        </Box>
+        <Box flexDirection="column" gap={1}>
+          <Box>
+            <Text bold>Keys:</Text>
+            <Text> [1-6] Switch Views | [r] Refresh | [t] Toggle Council | [p] Toggle Pilot | [q] Quit</Text>
+          </Box>
+          <Box>
+            <Text bold>Consensus Modes:</Text>
+            <Text> Simple Majority, Supermajority, Unanimous, Weighted, CEO Override</Text>
+          </Box>
+          <Box>
+            <Text bold>Web Dashboard:</Text>
+            <Text color="blue"> http://localhost:3847/dashboard</Text>
+          </Box>
+        </Box>
       </Box>
     );
   }

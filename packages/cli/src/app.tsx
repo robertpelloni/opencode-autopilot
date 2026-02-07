@@ -6,7 +6,7 @@ import { useWebSocket } from './hooks/useWebSocket.js';
 
 export function App() {
   const { exit } = useApp();
-  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help'>('dashboard');
   const { sessions, council, smartPilot, refresh, toggleCouncil, toggleSmartPilot } = useApi();
   const ws = useWebSocket({ autoReconnect: true });
 
@@ -18,6 +18,8 @@ export function App() {
     if (input === '2') setView('logs');
     if (input === '3') setView('council');
     if (input === '4') setView('pilot');
+    if (input === '5') setView('settings');
+    if (input === '6') setView('help');
     if (input === 'r') refresh();
     if (input === 't') toggleCouncil();
     if (input === 'p') toggleSmartPilot();
@@ -44,6 +46,10 @@ export function App() {
         <Text color={view === 'council' ? 'green' : 'gray'}>[3] Council</Text>
         <Text> </Text>
         <Text color={view === 'pilot' ? 'green' : 'gray'}>[4] Pilot</Text>
+        <Text> </Text>
+        <Text color={view === 'settings' ? 'green' : 'gray'}>[5] Settings</Text>
+        <Text> </Text>
+        <Text color={view === 'help' ? 'green' : 'gray'}>[6] Help</Text>
         <Text> │ </Text>
         <Text color="gray">[r] Refresh [t] Toggle Council [p] Toggle Pilot [q] Quit</Text>
         <Text> │ </Text>
