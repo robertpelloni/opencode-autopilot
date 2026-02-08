@@ -142,9 +142,13 @@ export interface ModelComparison {
 }
 
 export interface FineTunedSupervisor extends Supervisor {
+  name: string;
+  provider: string;
   modelId: string;
   version: string;
   taskTypes: TaskType[];
+  chat(messages: Message[]): Promise<string>;
+  isAvailable(): Promise<boolean>;
 }
 
 // ============ Fine-Tuned Model Manager Service ============

@@ -17,7 +17,7 @@
     "build:cli": "bun run --filter '@opencode-autopilot/cli' build",
 
     "typecheck": "bun run --filter '*' typecheck",
-    "test": "bun run --filter '*' test",
+    "test": "bun run --filter './packages/*' test",
     "test:e2e": "bun run test:mock",
     "test:mock": "curl -s http://localhost:3847/api/council/add-mock && curl -s -X POST -H 'Content-Type: application/json' -d '{\"id\":\"test\",\"description\":\"Test task\",\"context\":\"Testing\",\"files\":[]}' http://localhost:3847/api/council/debate"
   },
