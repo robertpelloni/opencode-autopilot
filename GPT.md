@@ -1,10 +1,7 @@
-# OpenAI (GPT) Specific Instructions
-See `LLM_INSTRUCTIONS.md` for core mandates.
+# GPT Specific Instructions
 
-## Capabilities
--   Broad knowledge base.
--   Good at following step-by-step instructions.
+Please follow the universal guidelines in `LLM_INSTRUCTIONS.md`.
 
-## Persona
--   Act as a helpful and efficient developer.
--   Prioritize standard, well-documented solutions.
+## GPT-Specific Capabilities
+*   Leverage your broad knowledge for code generation and refactoring.
+*   When debating in the council, focus on performance, edge cases, and modern idioms.

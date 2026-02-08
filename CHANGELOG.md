@@ -57,6 +57,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable debate parameters
 - Rich console output with emojis and formatting
 
+## [1.0.8] - 2026-02-08
+
+### Added
+- **Enhanced Web Dashboard**:
+  - New "System" tab showing project version and structure.
+  - New "Dynamic Selection" tab for managing supervisor profiles.
+  - New "Plugins" tab for enabling/disabling plugins.
+  - Debate History view with detailed voting records.
+  - Supervisor Configuration view for weight/status management.
+  - Settings Modal for consensus configuration.
+  - Help Modal with documentation.
+- **Documentation Overhaul**:
+  - Created `LLM_INSTRUCTIONS.md` as universal agent guidelines.
+  - Updated `AGENTS.md`, `CLAUDE.md`, `GPT.md`, `GEMINI.md`.
+  - Updated `VISION.md` and `ROADMAP.md`.
+- **CI/CD Improvements**:
+  - Fixed lint workflow to build shared packages before typechecking.
+  - Updated test scripts to correctly handle monorepo structure.
+  - Fixed TypeScript errors in `FineTunedSupervisor`.
+- **CLI Updates**:
+  - Added support for 40+ new CLI tools (Adrenaline, Amazon Q, etc.).
+  - Updated `environment-manager` to handle new CLI configurations.
+
 ## [Unreleased]
 
 ### Added

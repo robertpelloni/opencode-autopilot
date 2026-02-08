@@ -1,6 +1,6 @@
 {
   "name": "opencode-autopilot",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "private": true,
   "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
   "type": "module",

@@ -120,6 +120,7 @@
             border-bottom: 1px solid var(--border-color);
             padding: 0 1.5rem;
             background: var(--bg-secondary);
+            overflow-x: auto;
         }
 
         .tab {
@@ -129,6 +130,7 @@
             cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .tab:hover { color: var(--text-primary); }
@@ -547,6 +549,9 @@
             <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
             <div class="tab" onclick="switchTab('debate-history')">Debate History</div>
             <div class="tab" onclick="switchTab('supervisors')">Supervisors</div>
+            <div class="tab" onclick="switchTab('system')">System</div>
+            <div class="tab" onclick="switchTab('dynamic')">Dynamic Selection</div>
+            <div class="tab" onclick="switchTab('plugins')">Plugins</div>
         </div>
 
         <main>
@@ -700,6 +705,98 @@
                     </div>
                 </div>
             </div>
+
+            <!-- System Tab -->
+            <div id="tab-system" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">System Information</div>
+                    </div>
+                    <div class="section-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div>
+                                <h3 style="margin-bottom: 1rem;">Project Details</h3>
+                                <div class="form-group">
+                                    <label class="form-label">Version</label>
+                                    <div id="system-version" class="form-control" readonly>Loading...</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Project Structure</label>
+                                    <pre id="system-structure" style="background: var(--bg-primary); padding: 1rem; border-radius: 6px; font-size: 0.75rem; overflow: auto; max-height: 200px;">
+/packages
+  /server  - Backend API (Hono)
+  /cli     - TUI (Ink)
+  /shared  - Shared Types
+/public    - Web Dashboard
+                                    </pre>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 style="margin-bottom: 1rem;">Submodules & Dependencies</h3>
+                                <div id="system-dependencies">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Selection Tab -->
+            <div id="tab-dynamic" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Dynamic Supervisor Selection</div>
+                        <button class="btn btn-secondary btn-sm" onclick="fetchDynamicConfig()">Refresh</button>
+                    </div>
+                    <div class="section-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            Automatically selects the best team of supervisors based on the task description (e.g., "Security Audit" vs "UI Design").
+                        </p>
+                        <div class="table-container">
+                            <table class="table" id="dynamic-profiles-table">
+                                <thead>
+                                    <tr>
+                                        <th>Profile Name</th>
+                                        <th>Strengths</th>
+                                        <th>Preferred Lead</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="3">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plugins Tab -->
+            <div id="tab-plugins" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Plugin Management</div>
+                        <button class="btn btn-secondary btn-sm" onclick="fetchPlugins()">Refresh</button>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table class="table" id="plugins-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Version</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="5">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -849,11 +946,17 @@
             if(tabId === 'dashboard') tabs[0].classList.add('active');
             if(tabId === 'debate-history') tabs[1].classList.add('active');
             if(tabId === 'supervisors') tabs[2].classList.add('active');
+            if(tabId === 'system') tabs[3].classList.add('active');
+            if(tabId === 'dynamic') tabs[4].classList.add('active');
+            if(tabId === 'plugins') tabs[5].classList.add('active');
 
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
             if(tabId === 'debate-history') fetchDebateHistory();
             if(tabId === 'supervisors') fetchCouncilStatus();
+            if(tabId === 'system') fetchSystemInfo();
+            if(tabId === 'dynamic') fetchDynamicConfig();
+            if(tabId === 'plugins') fetchPlugins();
         }
 
         // --- Data Fetching ---
@@ -924,6 +1027,80 @@
                     </tr>
                 `).join('');
             } catch (e) { console.error(e); }
+        }
+
+        async function fetchSystemInfo() {
+            try {
+                const res = await fetch('/');
+                const data = await res.json();
+                document.getElementById('system-version').textContent = data.version || 'Unknown';
+
+                // Fetch dependencies from server package info via a custom endpoint or just hardcode for now
+                // In a real scenario, we'd add an endpoint for this. Simulating for now.
+                document.getElementById('system-dependencies').innerHTML = `
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/server: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/cli: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px;">@opencode-autopilot/shared: ${data.version}</div>
+                `;
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchDynamicConfig() {
+            try {
+                const res = await fetch('/api/dynamic-selection/profiles');
+                const data = await res.json();
+                const profiles = data.data || [];
+
+                const tbody = document.querySelector('#dynamic-profiles-table tbody');
+                if(profiles.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">No profiles found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = profiles.map(p => `
+                    <tr>
+                        <td>${p.name}</td>
+                        <td>${p.strengths.join(', ')}</td>
+                        <td>${p.preferredForLeadOn?.join(', ') || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchPlugins() {
+            try {
+                const res = await fetch('/api/plugins/list');
+                const data = await res.json();
+                const plugins = data.data || [];
+
+                const tbody = document.querySelector('#plugins-table tbody');
+                if(plugins.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No plugins loaded</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = plugins.map(p => `
+                    <tr>
+                        <td>${p.manifest.name}</td>
+                        <td>${p.manifest.version}</td>
+                        <td>${p.manifest.description}</td>
+                        <td><span style="color: ${p.enabled ? 'var(--accent-green)' : 'var(--accent-red)'}">${p.enabled ? 'Enabled' : 'Disabled'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary btn-xs" onclick="togglePlugin('${p.manifest.name}', ${!p.enabled})">
+                                ${p.enabled ? 'Disable' : 'Enable'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function togglePlugin(name, enable) {
+            try {
+                await fetch(`/api/plugins/${name}/${enable ? 'enable' : 'disable'}`, { method: 'POST' });
+                fetchPlugins();
+                showToast(`Plugin ${enable ? 'enabled' : 'disabled'}`, 'success');
+            } catch(e) { showToast('Failed to toggle plugin', 'error'); }
         }
 
         // --- Rendering ---
