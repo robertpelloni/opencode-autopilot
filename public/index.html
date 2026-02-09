@@ -552,6 +552,8 @@
             <div class="tab" onclick="switchTab('system')">System</div>
             <div class="tab" onclick="switchTab('dynamic')">Dynamic Selection</div>
             <div class="tab" onclick="switchTab('plugins')">Plugins</div>
+            <div class="tab" onclick="switchTab('collaborative')">Collaborative</div>
+            <div class="tab" onclick="switchTab('simulator')">Simulator</div>
         </div>
 
         <main>
@@ -797,6 +799,63 @@
                 </div>
             </div>
 
+            <!-- Collaborative Debates Tab -->
+            <div id="tab-collaborative" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Collaborative Debates</div>
+                        <button class="btn btn-primary btn-sm" onclick="openCreateDebateModal()">Create Debate</button>
+                    </div>
+                    <div class="section-body">
+                         <div class="table-container">
+                            <table class="table" id="collaborative-debates-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Task Type</th>
+                                        <th>Participants</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="6">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulator Tab -->
+            <div id="tab-simulator" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Debate Simulator</div>
+                        <button class="btn btn-primary btn-sm" onclick="openRunSimulationModal()">Run Simulation</button>
+                    </div>
+                    <div class="section-body">
+                         <div class="table-container">
+                            <table class="table" id="simulations-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Topic</th>
+                                        <th>Mode</th>
+                                        <th>Outcome</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="5">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -858,8 +917,8 @@
                 </ul>
                 <h3>CLI Tools</h3>
                 <p>The system automatically detects installed CLI tools. Supported tools include OpenCode, Claude, Aider, Cursor, and many others.</p>
-                <h3>Usage</h3>
-                <p>Start a new session to begin. The council will monitor your activity and provide guidance based on the configured consensus rules.</p>
+                <h3>Collaborative Debates</h3>
+                <p>Allows multiple human participants to debate alongside AI supervisors. Create invites to add team members.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeHelpModal()">Close</button>
@@ -895,6 +954,39 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="createNewSession()">Create Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Collaborative Debate Modal -->
+    <div class="modal-overlay" id="create-debate-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Create Collaborative Debate</div>
+                <button class="modal-close" onclick="closeCreateDebateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-control" id="create-debate-title" placeholder="e.g., Architecture Review">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="create-debate-desc" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Task Type</label>
+                    <select class="form-control" id="create-debate-type">
+                        <option value="general">General</option>
+                        <option value="code-review">Code Review</option>
+                        <option value="architecture">Architecture</option>
+                        <option value="security-audit">Security Audit</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateDebateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitCreateDebate()">Create</button>
             </div>
         </div>
     </div>
@@ -943,12 +1035,10 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
             const tabs = document.querySelectorAll('.tab');
-            if(tabId === 'dashboard') tabs[0].classList.add('active');
-            if(tabId === 'debate-history') tabs[1].classList.add('active');
-            if(tabId === 'supervisors') tabs[2].classList.add('active');
-            if(tabId === 'system') tabs[3].classList.add('active');
-            if(tabId === 'dynamic') tabs[4].classList.add('active');
-            if(tabId === 'plugins') tabs[5].classList.add('active');
+            // Mapping index to tab ID manually based on order
+            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator'];
+            const idx = tabOrder.indexOf(tabId);
+            if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
 
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
@@ -957,6 +1047,8 @@
             if(tabId === 'system') fetchSystemInfo();
             if(tabId === 'dynamic') fetchDynamicConfig();
             if(tabId === 'plugins') fetchPlugins();
+            if(tabId === 'collaborative') fetchCollaborativeDebates();
+            if(tabId === 'simulator') fetchSimulations();
         }
 
         // --- Data Fetching ---
@@ -1035,8 +1127,6 @@
                 const data = await res.json();
                 document.getElementById('system-version').textContent = data.version || 'Unknown';
 
-                // Fetch dependencies from server package info via a custom endpoint or just hardcode for now
-                // In a real scenario, we'd add an endpoint for this. Simulating for now.
                 document.getElementById('system-dependencies').innerHTML = `
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/server: ${data.version}</div>
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/cli: ${data.version}</div>
@@ -1103,94 +1193,54 @@
             } catch(e) { showToast('Failed to toggle plugin', 'error'); }
         }
 
-        // --- Rendering ---
-        function renderSessions() {
-            const grid = document.getElementById('sessions-grid');
-            if (sessions.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted)">No sessions active</div>';
-                return;
-            }
-            grid.innerHTML = sessions.map(s => `
-                <div class="session-card">
-                    <div class="session-card-header">
-                        <div>
-                            <div class="session-id">${s.id}</div>
-                            <div class="session-port">
-                                Port ${s.port || '--'}
-                                <span class="cli-badge">${s.cliType || 'opencode'}</span>
-                            </div>
-                        </div>
-                        <span class="status-badge status-${s.status}">${s.status}</span>
-                    </div>
-                    <div class="session-meta">
-                        ${(s.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-                    </div>
-                    <div class="session-actions">
-                        ${s.status === 'running'
-                            ? `<button class="btn btn-danger btn-sm" onclick="stopSession('${s.id}')">Stop</button>`
-                            : `<button class="btn btn-success btn-sm" onclick="resumeSession('${s.id}')">Resume</button>`
-                        }
-                        <button class="btn btn-secondary btn-sm" onclick="deleteSession('${s.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
+        async function fetchCollaborativeDebates() {
+            try {
+                const res = await fetch('/api/collaborative-debates');
+                const data = await res.json();
+                const debates = data.data || [];
+                const tbody = document.querySelector('#collaborative-debates-table tbody');
+
+                if (debates.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No collaborative debates</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = debates.map(d => `
+                    <tr>
+                        <td>${d.title}</td>
+                        <td><span class="status-badge status-${d.status}">${d.status}</span></td>
+                        <td>${d.taskType}</td>
+                        <td>${Object.keys(d.participants).length}</td>
+                        <td>${new Date(d.createdAt).toLocaleDateString()}</td>
+                        <td><button class="btn btn-secondary btn-xs">View</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
         }
 
-        function renderCLITools() {
-            const list = document.getElementById('cli-tools-list');
-            list.innerHTML = cliTools.map(t => `
-                <div style="display:flex; justify-content:space-between; padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05)">
-                    <span>${t.name}</span>
-                    <span style="font-size:0.75rem; color:var(--accent-green)">Available</span>
-                </div>
-            `).join('');
-        }
+        async function fetchSimulations() {
+            try {
+                // Assuming an endpoint like this exists based on simulator service
+                const res = await fetch('/api/simulator/debates'); // Note: Adjust if endpoint is different
+                const data = await res.json();
+                const sims = data.data || []; // Adjust based on actual API response structure for simulations
+                const tbody = document.querySelector('#simulations-table tbody');
 
-        function renderSupervisors() {
-            const tbody = document.querySelector('#supervisors-table tbody');
-            const supervisors = councilStatus.config?.supervisors || [];
-            
-            if(supervisors.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No supervisors configured</td></tr>';
-                 return;
-            }
+                if (sims.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No simulations run</td></tr>';
+                     return;
+                }
 
-            tbody.innerHTML = supervisors.map(s => `
-                <tr>
-                    <td>${s.name}</td>
-                    <td>${s.provider}</td>
-                    <td>${s.model || 'default'}</td>
-                    <td>
-                        <input type="number" class="form-control" style="width: 80px; padding: 0.25rem;"
-                               value="${s.weight || 1}" step="0.1" min="0" max="2"
-                               id="weight-${s.name}">
-                    </td>
-                    <td><span style="color: var(--accent-green)">Active</span></td>
-                    <td>
-                        <button class="btn btn-primary btn-xs" onclick="saveSupervisorWeight('${s.name}')">Save</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateCLISelects() {
-            const opts = '<option value="">Default CLI</option>' +
-                cliTools.map(t => `<option value="${t.type}">${t.name}</option>`).join('');
-            document.getElementById('bulk-cli-type').innerHTML = opts;
-            document.getElementById('new-session-cli').innerHTML = opts;
-        }
-
-        function updateStats() {
-            document.getElementById('stat-total').textContent = sessions.length;
-            document.getElementById('stat-active').textContent = sessions.filter(s => s.status === 'running').length;
-            document.getElementById('stat-supervisors').textContent = councilStatus.config?.supervisors?.length || 0;
-        }
-
-        function addLog(msg, level) {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-${level}">${msg}</span>`;
-            document.getElementById('activity-log').prepend(div);
+                tbody.innerHTML = sims.map(s => `
+                    <tr>
+                        <td>${s.id}</td>
+                        <td>${s.topic}</td>
+                        <td>${s.consensusMode}</td>
+                        <td>${s.outcome}</td>
+                        <td>${s.durationMs}ms</td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
         }
 
         // --- Actions ---
@@ -1290,6 +1340,108 @@
                 });
                 showToast(`Updated weight for ${name}`, 'success');
             } catch(e) { showToast('Failed to update weight', 'error'); }
+        }
+
+        // --- Collaborative Debates ---
+        function openCreateDebateModal() { document.getElementById('create-debate-modal').classList.add('show'); }
+        function closeCreateDebateModal() { document.getElementById('create-debate-modal').classList.remove('show'); }
+
+        async function submitCreateDebate() {
+            const title = document.getElementById('create-debate-title').value;
+            const description = document.getElementById('create-debate-desc').value;
+            const taskType = document.getElementById('create-debate-type').value;
+
+            try {
+                await fetch('/api/collaborative-debates', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        taskType,
+                        ownerId: 'current-user', // In a real app, this would be auth'd
+                        ownerName: 'Admin'
+                    })
+                });
+                closeCreateDebateModal();
+                showToast('Debate created', 'success');
+                fetchCollaborativeDebates();
+            } catch(e) { showToast('Failed to create debate', 'error'); }
+        }
+
+        function openRunSimulationModal() {
+            // Implementation for opening simulation modal
+            showToast('Simulation modal coming soon', 'info');
+        }
+
+        // --- Rendering ---
+        function renderSessions() {
+            const grid = document.getElementById('sessions-grid');
+            if (sessions.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted)">No sessions active</div>';
+                return;
+            }
+            grid.innerHTML = sessions.map(s => `
+                <div class="session-card">
+                    <div class="session-card-header">
+                        <div>
+                            <div class="session-id">${s.id}</div>
+                            <div class="session-port">
+                                Port ${s.port || '--'}
+                                <span class="cli-badge">${s.cliType || 'opencode'}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-${s.status}">${s.status}</span>
+                    </div>
+                    <div class="session-meta">
+                        ${(s.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+                    </div>
+                    <div class="session-actions">
+                        ${s.status === 'running'
+                            ? `<button class="btn btn-danger btn-sm" onclick="stopSession('${s.id}')">Stop</button>`
+                            : `<button class="btn btn-success btn-sm" onclick="resumeSession('${s.id}')">Resume</button>`
+                        }
+                        <button class="btn btn-secondary btn-sm" onclick="deleteSession('${s.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCLITools() {
+            const list = document.getElementById('cli-tools-list');
+            list.innerHTML = cliTools.map(t => `
+                <div style="display:flex; justify-content:space-between; padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05)">
+                    <span>${t.name}</span>
+                    <span style="font-size:0.75rem; color:var(--accent-green)">Available</span>
+                </div>
+            `).join('');
+        }
+
+        function renderSupervisors() {
+            const tbody = document.querySelector('#supervisors-table tbody');
+            const supervisors = councilStatus.config?.supervisors || [];
+
+            if(supervisors.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No supervisors configured</td></tr>';
+                 return;
+            }
+
+            tbody.innerHTML = supervisors.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.provider}</td>
+                    <td>${s.model || 'default'}</td>
+                    <td>
+                        <input type="number" class="form-control" style="width: 80px; padding: 0.25rem;"
+                               value="${s.weight || 1}" step="0.1" min="0" max="2"
+                               id="weight-${s.name}">
+                    </td>
+                    <td><span style="color: var(--accent-green)">Active</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-xs" onclick="saveSupervisorWeight('${s.name}')">Save</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // --- Modals ---

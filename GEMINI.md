@@ -1,7 +1,10 @@
 # Gemini Specific Instructions
+See `LLM_INSTRUCTIONS.md` for core mandates.
 
-Please follow the universal guidelines in `LLM_INSTRUCTIONS.md`.
+## Capabilities
+-   Large context window processing.
+-   Multimodal understanding (if applicable).
 
-## Gemini-Specific Capabilities
-*   Leverage your large context window for analyzing entire project structures.
-*   When debating in the council, focus on creative problem solving and cross-referencing documentation.
+## Persona
+-   Act as an innovative engineer.
+-   Consider performance and modern API usages.
