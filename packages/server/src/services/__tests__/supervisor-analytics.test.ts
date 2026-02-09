@@ -70,9 +70,9 @@ describe('SupervisorAnalyticsService', () => {
       );
       
       const stats = supervisorAnalytics.getDebateStatistics();
-      expect(stats.participationBySupervsor['gpt-4']).toBe(2);
-      expect(stats.participationBySupervsor['claude']).toBe(2);
-      expect(stats.participationBySupervsor['gemini']).toBe(1);
+      expect(stats.participationBySupervisor['gpt-4']).toBe(2);
+      expect(stats.participationBySupervisor['claude']).toBe(2);
+      expect(stats.participationBySupervisor['gemini']).toBe(1);
     });
   });
 

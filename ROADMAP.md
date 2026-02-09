@@ -139,3 +139,12 @@ AUTOPILOT_SMART_PILOT=false
 - [x] Session Templates (default, review, debug, feature)
 - [x] Session Persistence & Auto-Resume
 - [x] Supervisor Fallback Chain with retry logic
+
+## Phase 12: Advanced UI & Analytics ✅
+- [x] Advanced Analytics Dashboard (`public/analytics.html`)
+- [x] Debate Templates Management UI
+- [x] Collaborative Debates UI
+- [x] Simulator UI
+- [x] Plugins Management UI
+- [x] Dynamic Supervisor Selection UI
+- [x] System & Submodule Information Tab

@@ -2,6 +2,7 @@ import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Messa
 import { metrics } from './metrics.js';
 import { dynamicSupervisorSelection } from './dynamic-supervisor-selection.js';
 import { debateHistory } from './debate-history.js';
+import { supervisorAnalytics } from './supervisor-analytics.js';
 
 interface ConsensusModeHandler {
   (votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string };
@@ -230,6 +231,7 @@ export class SupervisorCouncil {
 
     const voteResults = await Promise.all(
       available.map(async (supervisor) => {
+        const voteStartTime = Date.now();
         try {
           const votePrompt: Message = {
             role: 'user',
@@ -242,6 +244,7 @@ export class SupervisorCouncil {
           };
           
           const response = await supervisor.chat([votePrompt]);
+          const responseTimeMs = Date.now() - voteStartTime;
           const approved = this.parseVote(response);
           const confidence = this.parseConfidence(response);
           const weight = this.getSupervisorWeight(supervisor.name);
@@ -252,6 +255,7 @@ export class SupervisorCouncil {
             confidence,
             weight,
             comment: response,
+            responseTimeMs,
           };
         } catch {
           return {
@@ -260,6 +264,7 @@ export class SupervisorCouncil {
             confidence: 0.5,
             weight: this.getSupervisorWeight(supervisor.name),
             comment: 'Failed to vote',
+            responseTimeMs: Date.now() - voteStartTime,
           };
         }
       })
@@ -288,6 +293,34 @@ export class SupervisorCouncil {
 
     metrics.recordDebate(Date.now() - startTime, rounds, approved);
 
+    // Record to analytics
+    const durationMs = Date.now() - startTime;
+    supervisorAnalytics.recordDebateOutcome(
+      task.id,
+      task.description.substring(0, 100),
+      mode,
+      approved ? 'approved' : 'rejected',
+      available.map(s => s.name),
+      rounds,
+      durationMs
+    );
+
+    for (const vote of votes) {
+      // Find the response time from the augmented vote results
+      const result = voteResults.find(v => v.supervisor === vote.supervisor);
+      const responseTimeMs = (result as any).responseTimeMs || 0;
+
+      supervisorAnalytics.recordVote(
+        vote.supervisor,
+        task.id,
+        vote.approved ? 'approve' : 'reject',
+        vote.confidence,
+        responseTimeMs,
+        0, // tokensUsed not tracked yet
+        approved ? 'approve' : 'reject'
+      );
+    }
+
     const decision: CouncilDecision = {
       approved,
       consensus,
@@ -303,7 +336,7 @@ export class SupervisorCouncil {
         consensusMode: mode,
         leadSupervisor: leadSupervisorToUse,
         dynamicSelection: dynamicSelectionData,
-        durationMs: Date.now() - startTime,
+        durationMs,
       });
     }
 

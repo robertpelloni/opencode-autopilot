@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2026-02-08
+
+### Added
+- **Debate Templates UI**: Full management interface in Web Dashboard.
+  - Create new templates with JSON configuration editor.
+  - Clone existing templates.
+  - Delete custom templates.
+  - View built-in vs custom templates.
+- **Analytics Integration**:
+  - Connected Council debates to Supervisor Analytics service.
+  - Real-time vote recording and outcome tracking.
+  - Fixed route mounting for `/api/analytics` endpoints.
+  - Added "Analytics" button to main dashboard header.
+
+### Fixed
+- **Analytics Dashboard**: Updated API calls to match server routes.
+- **Supervisor Analytics**: Fixed typo in `participationBySupervisor` field.
+- **Vote Recording**: Added response time tracking to vote records.
+
 ## [1.0.9] - 2026-02-08
 
 ### Added

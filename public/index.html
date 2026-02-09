@@ -536,6 +536,9 @@
                     <span class="status-dot" id="ws-status"></span>
                     <span id="ws-status-text">Connecting...</span>
                 </div>
+                <a href="/analytics" class="btn btn-secondary btn-sm" target="_blank" style="text-decoration: none;">
+                    <span>&#128202;</span> Analytics
+                </a>
                 <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
                     <span>?</span> Help
                 </button>
@@ -554,6 +557,7 @@
             <div class="tab" onclick="switchTab('plugins')">Plugins</div>
             <div class="tab" onclick="switchTab('collaborative')">Collaborative</div>
             <div class="tab" onclick="switchTab('simulator')">Simulator</div>
+            <div class="tab" onclick="switchTab('templates')">Templates</div>
         </div>
 
         <main>
@@ -856,6 +860,33 @@
                 </div>
             </div>
 
+            <!-- Templates Tab -->
+            <div id="tab-templates" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Debate Templates</div>
+                        <button class="btn btn-primary btn-sm" onclick="openCreateTemplateModal()">Create Template</button>
+                    </div>
+                    <div class="section-body">
+                         <div class="table-container">
+                            <table class="table" id="templates-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="4">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -915,10 +946,10 @@
                     <li><strong>Hybrid CEO-Majority:</strong> CEO breaks ties, otherwise majority.</li>
                     <li><strong>Ranked Choice:</strong> Supervisors rank options.</li>
                 </ul>
-                <h3>CLI Tools</h3>
-                <p>The system automatically detects installed CLI tools. Supported tools include OpenCode, Claude, Aider, Cursor, and many others.</p>
-                <h3>Collaborative Debates</h3>
-                <p>Allows multiple human participants to debate alongside AI supervisors. Create invites to add team members.</p>
+                <h3>Advanced Features</h3>
+                <p><strong>Collaborative Debates:</strong> Create invites for human team members to join debates alongside AI supervisors.</p>
+                <p><strong>Debate Simulator:</strong> Replay past debates or run simulations to test different team compositions and consensus modes.</p>
+                <p><strong>Analytics:</strong> View detailed performance metrics and visual trends in the Analytics Dashboard.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeHelpModal()">Close</button>
@@ -991,6 +1022,63 @@
         </div>
     </div>
 
+    <!-- Create Template Modal -->
+    <div class="modal-overlay" id="create-template-modal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title">Create Debate Template</div>
+                <button class="modal-close" onclick="closeCreateTemplateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Template Name</label>
+                    <input type="text" class="form-control" id="create-template-name" placeholder="e.g., Quick Audit">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" id="create-template-desc" placeholder="Brief description">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-control" id="create-template-category">
+                        <option value="custom">Custom</option>
+                        <option value="code-review">Code Review</option>
+                        <option value="security-audit">Security Audit</option>
+                        <option value="architecture-review">Architecture Review</option>
+                        <option value="performance-review">Performance Review</option>
+                        <option value="api-design">API Design</option>
+                        <option value="testing-strategy">Testing Strategy</option>
+                        <option value="documentation">Documentation</option>
+                        <option value="refactoring">Refactoring</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Configuration (JSON)</label>
+                    <textarea class="form-control" id="create-template-config" rows="10" style="font-family: monospace; font-size: 0.75rem;">
+{
+  "config": {
+    "consensusMode": "weighted",
+    "debateRounds": 2
+  },
+  "prompts": {
+    "system": "You are a helpful assistant.",
+    "user": "Analyze this task."
+  },
+  "scoring": {
+    "clarity": 0.3,
+    "correctness": 0.7
+  }
+}
+                    </textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateTemplateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitCreateTemplate()">Create</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
     <script>
@@ -1036,7 +1124,7 @@
             
             const tabs = document.querySelectorAll('.tab');
             // Mapping index to tab ID manually based on order
-            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator'];
+            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator', 'templates'];
             const idx = tabOrder.indexOf(tabId);
             if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
 
@@ -1049,6 +1137,7 @@
             if(tabId === 'plugins') fetchPlugins();
             if(tabId === 'collaborative') fetchCollaborativeDebates();
             if(tabId === 'simulator') fetchSimulations();
+            if(tabId === 'templates') fetchTemplates();
         }
 
         // --- Data Fetching ---
@@ -1127,10 +1216,34 @@
                 const data = await res.json();
                 document.getElementById('system-version').textContent = data.version || 'Unknown';
 
+                // Hardcoded submodules list for now as requested, ideally fetched from backend
+                const submodules = [
+                    'memory/projects/claude-mem',
+                    'superai-cli/cli-tools/claude-code',
+                    'superai-cli/cli-tools/lynkr',
+                    'superai-cli/routers/claude-code-router',
+                    'superai-cli/cli-tools/cc-switch',
+                    'superai-cli/cli-tools/ccs',
+                    'superai-cli/cli-tools/emdash',
+                    'superai-cli/cli-tools/claude-squad',
+                    'superai-cli/cli-tools/code-assistant-manager',
+                    'superai-cli/cli-tools/code-nomad',
+                    'superai-cli/proxies/openai-gemini',
+                    'superai-cli/cli-tools/madappgang-claude-code',
+                    'superai-cli/proxies/gemini-openai-proxy-zhu'
+                ];
+
                 document.getElementById('system-dependencies').innerHTML = `
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/server: ${data.version}</div>
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/cli: ${data.version}</div>
-                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px;">@opencode-autopilot/shared: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">@opencode-autopilot/shared: ${data.version}</div>
+
+                    <h4 style="margin-bottom:0.5rem; color: var(--text-secondary);">Submodules (Initialized)</h4>
+                    ${submodules.map(sub => `
+                        <div style="font-size: 0.75rem; color: var(--text-muted); padding: 0.25rem 0.5rem; border-left: 2px solid var(--accent-blue); margin-bottom: 0.25rem; background: rgba(255,255,255,0.02);">
+                            ${sub}
+                        </div>
+                    `).join('')}
                 `;
             } catch (e) { console.error(e); }
         }
@@ -1220,10 +1333,9 @@
 
         async function fetchSimulations() {
             try {
-                // Assuming an endpoint like this exists based on simulator service
-                const res = await fetch('/api/simulator/debates'); // Note: Adjust if endpoint is different
+                const res = await fetch('/api/simulator/debates');
                 const data = await res.json();
-                const sims = data.data || []; // Adjust based on actual API response structure for simulations
+                const sims = data.data || [];
                 const tbody = document.querySelector('#simulations-table tbody');
 
                 if (sims.length === 0) {
@@ -1241,6 +1353,40 @@
                     </tr>
                 `).join('');
             } catch (e) { console.error(e); }
+        }
+
+        async function fetchTemplates() {
+             try {
+                const res = await fetch('/api/templates');
+                const templates = await res.json(); // API returns array directly
+                const tbody = document.querySelector('#templates-table tbody');
+
+                if (!Array.isArray(templates) || templates.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No templates found</td></tr>';
+                     return;
+                }
+
+                tbody.innerHTML = templates.map(t => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">${t.name}</div>
+                            ${t.isBuiltIn ? '<span class="tag">Built-in</span>' : ''}
+                        </td>
+                        <td>${t.description || '-'}</td>
+                        <td>${t.category || 'general'}</td>
+                        <td>
+                            <div class="session-actions">
+                                <button class="btn btn-secondary btn-xs" onclick="cloneTemplate('${t.id}', '${t.name}')">Clone</button>
+                                ${!t.isBuiltIn ? `<button class="btn btn-danger btn-xs" onclick="deleteTemplate('${t.id}')">Delete</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Also update New Session template dropdown
+                const select = document.getElementById('new-session-template');
+                select.innerHTML = '<option value="">None</option>' + templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            } catch (e) { console.error('Failed to fetch templates', e); }
         }
 
         // --- Actions ---
@@ -1359,7 +1505,7 @@
                         title,
                         description,
                         taskType,
-                        ownerId: 'current-user', // In a real app, this would be auth'd
+                        ownerId: 'current-user',
                         ownerName: 'Admin'
                     })
                 });
@@ -1370,8 +1516,63 @@
         }
 
         function openRunSimulationModal() {
-            // Implementation for opening simulation modal
             showToast('Simulation modal coming soon', 'info');
+        }
+
+        function openCreateTemplateModal() { document.getElementById('create-template-modal').classList.add('show'); }
+        function closeCreateTemplateModal() { document.getElementById('create-template-modal').classList.remove('show'); }
+
+        async function submitCreateTemplate() {
+             const name = document.getElementById('create-template-name').value;
+             const description = document.getElementById('create-template-desc').value;
+             const category = document.getElementById('create-template-category').value;
+             const configStr = document.getElementById('create-template-config').value;
+
+             try {
+                 const configJson = JSON.parse(configStr);
+
+                 await fetch('/api/templates', {
+                     method: 'POST',
+                     headers: {'Content-Type': 'application/json'},
+                     body: JSON.stringify({
+                         name,
+                         description,
+                         category,
+                         ...configJson
+                     })
+                 });
+
+                 closeCreateTemplateModal();
+                 showToast('Template created', 'success');
+                 fetchTemplates();
+             } catch(e) {
+                 showToast('Failed to create template: ' + e.message, 'error');
+             }
+        }
+
+        async function deleteTemplate(id) {
+            if(confirm('Delete this template?')) {
+                try {
+                    await fetch(`/api/templates/${id}`, { method: 'DELETE' });
+                    fetchTemplates();
+                    showToast('Template deleted', 'success');
+                } catch(e) { showToast('Failed to delete template', 'error'); }
+            }
+        }
+
+        async function cloneTemplate(id, name) {
+            const newName = prompt('Enter name for cloned template:', name + ' (Copy)');
+            if(newName) {
+                try {
+                    await fetch(`/api/templates/${id}/clone`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ newName })
+                    });
+                    fetchTemplates();
+                    showToast('Template cloned', 'success');
+                } catch(e) { showToast('Failed to clone template', 'error'); }
+            }
         }
 
         // --- Rendering ---

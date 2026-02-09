@@ -866,7 +866,7 @@
         // Load summary
         async function loadSummary() {
             try {
-                const res = await fetch('/api/supervisor-analytics/summary');
+                const res = await fetch('/api/analytics/summary');
                 const data = await res.json();
                 
                 document.getElementById('stat-supervisors').textContent = data.totalSupervisors || 0;
@@ -902,7 +902,7 @@
         // Load debate statistics
         async function loadDebateStats(start, end) {
             try {
-                const res = await fetch(`/api/supervisor-analytics/debates?from=${start}&to=${end}`);
+                const res = await fetch(`/api/analytics/debates?from=${start}&to=${end}`);
                 const data = await res.json();
                 
                 const approved = data.byOutcome?.approved || 0;
@@ -936,7 +936,7 @@
         // Load trends
         async function loadTrends(days) {
             try {
-                const res = await fetch(`/api/supervisor-analytics/trends?periodDays=${days}&bucketCount=${Math.min(days, 14)}`);
+                const res = await fetch(`/api/analytics/trends?periodDays=${days}&bucketCount=${Math.min(days, 14)}`);
                 const data = await res.json();
                 
                 updateTrendsChart(data);
@@ -958,7 +958,7 @@
         // Load comparisons (leaderboard)
         async function loadComparisons(start, end) {
             try {
-                const res = await fetch(`/api/supervisor-analytics/compare?from=${start}&to=${end}`);
+                const res = await fetch(`/api/analytics/compare?from=${start}&to=${end}`);
                 const data = await res.json();
                 
                 const tbody = document.getElementById('leaderboard-body');
@@ -1026,7 +1026,7 @@
         // Load insights
         async function loadInsights(start, end) {
             try {
-                const res = await fetch(`/api/supervisor-analytics/insights?from=${start}&to=${end}`);
+                const res = await fetch(`/api/analytics/insights?from=${start}&to=${end}`);
                 const data = await res.json();
                 
                 const container = document.getElementById('insights-body');
