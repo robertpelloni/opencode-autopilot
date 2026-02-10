@@ -570,6 +570,7 @@
             <div class="tab" onclick="switchTab('templates')">Templates</div>
             <div class="tab" onclick="switchTab('models')">Fine-Tuning</div>
             <div class="tab" onclick="switchTab('usage')">Usage & Limits</div>
+            <div class="tab" onclick="switchTab('integrations')">Integrations & Automation</div>
         </div>
 
         <main>
@@ -1018,6 +1019,113 @@
                 </div>
             </div>
 
+            <!-- Integrations & Automation Tab -->
+            <div id="tab-integrations" class="tab-content">
+                <div class="dashboard-layout">
+                    <div class="main-column">
+                        <!-- Smart Pilot -->
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128640;</span> Smart Pilot Automation
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="toggleSmartPilot()" id="smart-pilot-toggle-btn">
+                                        Loading...
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="saveSmartPilotConfig()">Save Config</button>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                    <div class="form-group">
+                                        <label class="form-label">Auto-Approve Threshold (%)</label>
+                                        <input type="number" id="sp-threshold" class="form-control" min="50" max="100" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Max Auto-Approvals per Session</label>
+                                        <input type="number" id="sp-max-approvals" class="form-control" min="1">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="sp-unanimous"> Require Unanimous Consensus for Auto-Approval
+                                    </label>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" onclick="resetSmartPilotApprovals()">Reset Approval Counts</button>
+                            </div>
+                        </div>
+
+                        <!-- Webhooks -->
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128279;</span> Webhooks
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="openRegisterHookModal()">+ Register Hook</button>
+                            </div>
+                            <div class="section-body">
+                                <div class="table-container">
+                                    <table class="table" id="hooks-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Phase</th>
+                                                <th>Priority</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar">
+                        <!-- Environment -->
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#127757;</span> Global Environment
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="form-group">
+                                    <label class="form-label">Add Global Override</label>
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" id="env-key" class="form-control" placeholder="KEY">
+                                        <input type="text" id="env-val" class="form-control" placeholder="VALUE">
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="addGlobalEnv()">Set Override</button>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Add Global Secret</label>
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" id="secret-key" class="form-control" placeholder="SECRET_KEY">
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="addGlobalSecret()">Mark as Secret</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom CLI Tools -->
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span>&#128736;</span> Custom CLI Tools
+                                </div>
+                                <button class="btn btn-primary btn-xs" onclick="openRegisterToolModal()">+ Add</button>
+                            </div>
+                            <div class="section-body" id="custom-tools-list">
+                                <!-- Loaded dynamically -->
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -1054,6 +1162,72 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Hook Modal -->
+    <div class="modal-overlay" id="register-hook-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Register Webhook</div>
+                <button class="modal-close" onclick="closeRegisterHookModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Phase</label>
+                    <select class="form-control" id="hook-phase">
+                        <option value="pre-debate">Pre-Debate</option>
+                        <option value="post-debate">Post-Debate</option>
+                        <option value="pre-guidance">Pre-Guidance</option>
+                        <option value="post-guidance">Post-Guidance</option>
+                        <option value="on-error">On-Error</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Webhook URL</label>
+                    <input type="url" class="form-control" id="hook-url" placeholder="http://localhost:8080/hook">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority (0-100)</label>
+                    <input type="number" class="form-control" id="hook-priority" value="10" min="0" max="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRegisterHookModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="registerHook()">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Tool Modal -->
+    <div class="modal-overlay" id="register-tool-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Register Custom CLI Tool</div>
+                <button class="modal-close" onclick="closeRegisterToolModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Tool Name</label>
+                    <input type="text" class="form-control" id="tool-name" placeholder="my-tool">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Command</label>
+                    <input type="text" class="form-control" id="tool-command" placeholder="npx my-tool">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Default Arguments (comma separated)</label>
+                    <input type="text" class="form-control" id="tool-args" placeholder="--json, --port={port}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Health Endpoint</label>
+                    <input type="text" class="form-control" id="tool-health" value="/health" placeholder="/health">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRegisterToolModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="registerTool()">Register</button>
             </div>
         </div>
     </div>
@@ -1517,7 +1691,7 @@
             
             const tabs = document.querySelectorAll('.tab');
             // Mapping index to tab ID manually based on order
-            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator', 'templates', 'models', 'usage'];
+            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator', 'templates', 'models', 'usage', 'integrations'];
             const idx = tabOrder.indexOf(tabId);
             if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
 
@@ -1533,6 +1707,7 @@
             if(tabId === 'templates') fetchTemplates();
             if(tabId === 'models') fetchFineTuningData();
             if(tabId === 'usage') fetchUsageStats();
+            if(tabId === 'integrations') fetchIntegrationsData();
         }
 
         // --- Data Fetching ---
@@ -1979,6 +2154,203 @@
                 await fetch('/api/quota/reset-all', { method: 'POST' });
                 showToast('All usage reset', 'success');
                 fetchUsageStats();
+            }
+        }
+
+        // --- Integrations & Automation ---
+        async function fetchIntegrationsData() {
+            await Promise.all([
+                fetchSmartPilotConfig(),
+                fetchHooks(),
+                fetchCustomTools()
+            ]);
+        }
+
+        // Smart Pilot
+        async function fetchSmartPilotConfig() {
+            try {
+                const res = await fetch('/api/smart-pilot/status');
+                const data = await res.json();
+                const config = data.config || {};
+
+                const btn = document.getElementById('smart-pilot-toggle-btn');
+                btn.textContent = data.enabled ? 'Disable Smart Pilot' : 'Enable Smart Pilot';
+                btn.className = data.enabled ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+
+                document.getElementById('sp-threshold').value = (config.autoApproveThreshold || 0.8) * 100;
+                document.getElementById('sp-max-approvals').value = config.maxAutoApprovals || 10;
+                document.getElementById('sp-unanimous').checked = !!config.requireUnanimous;
+            } catch(e) { console.error(e); }
+        }
+
+        async function toggleSmartPilot() {
+            await fetch('/api/smart-pilot/toggle', { method: 'POST' });
+            fetchSmartPilotConfig();
+            showToast('Smart Pilot status updated', 'success');
+        }
+
+        async function saveSmartPilotConfig() {
+            const threshold = parseInt(document.getElementById('sp-threshold').value) / 100;
+            const maxApprovals = parseInt(document.getElementById('sp-max-approvals').value);
+            const requireUnanimous = document.getElementById('sp-unanimous').checked;
+
+            try {
+                await fetch('/api/smart-pilot/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        autoApproveThreshold: threshold,
+                        maxAutoApprovals: maxApprovals,
+                        requireUnanimous
+                    })
+                });
+                showToast('Config saved', 'success');
+            } catch(e) { showToast('Failed to save config', 'error'); }
+        }
+
+        async function resetSmartPilotApprovals() {
+            await fetch('/api/smart-pilot/reset-approvals', { method: 'POST' });
+            showToast('Approvals reset', 'success');
+        }
+
+        // Webhooks
+        async function fetchHooks() {
+            try {
+                const res = await fetch('/api/hooks');
+                const data = await res.json();
+                const hooks = data.hooks || [];
+                const tbody = document.querySelector('#hooks-table tbody');
+
+                if(hooks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No webhooks registered</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = hooks.map(h => `
+                    <tr>
+                        <td><span style="font-family: monospace; font-size: 0.75rem;">${h.id.substring(0,8)}</span></td>
+                        <td>${h.phase}</td>
+                        <td>${h.priority}</td>
+                        <td><button class="btn btn-danger btn-xs" onclick="deleteHook('${h.id}')">Delete</button></td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        function openRegisterHookModal() { document.getElementById('register-hook-modal').classList.add('show'); }
+        function closeRegisterHookModal() { document.getElementById('register-hook-modal').classList.remove('show'); }
+
+        async function registerHook() {
+            const phase = document.getElementById('hook-phase').value;
+            const webhookUrl = document.getElementById('hook-url').value;
+            const priority = parseInt(document.getElementById('hook-priority').value);
+
+            try {
+                await fetch('/api/hooks/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phase, webhookUrl, priority })
+                });
+                closeRegisterHookModal();
+                showToast('Webhook registered', 'success');
+                fetchHooks();
+            } catch(e) { showToast('Failed to register hook', 'error'); }
+        }
+
+        async function deleteHook(id) {
+            if(confirm('Delete webhook?')) {
+                await fetch(`/api/hooks/${id}`, { method: 'DELETE' });
+                fetchHooks();
+            }
+        }
+
+        // Environment
+        async function addGlobalEnv() {
+            const key = document.getElementById('env-key').value;
+            const value = document.getElementById('env-val').value;
+            if(!key) return;
+
+            try {
+                await fetch('/api/env/global', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key, value })
+                });
+                document.getElementById('env-key').value = '';
+                document.getElementById('env-val').value = '';
+                showToast('Global override set', 'success');
+            } catch(e) { showToast('Failed to set override', 'error'); }
+        }
+
+        async function addGlobalSecret() {
+            const key = document.getElementById('secret-key').value;
+            if(!key) return;
+            try {
+                await fetch('/api/env/secrets', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key })
+                });
+                document.getElementById('secret-key').value = '';
+                showToast('Secret added', 'success');
+            } catch(e) { showToast('Failed to add secret', 'error'); }
+        }
+
+        // Custom Tools
+        async function fetchCustomTools() {
+            try {
+                const res = await fetch('/api/cli/tools/available');
+                const data = await res.json();
+                const allTools = data.data || [];
+                const customTools = allTools.filter(t => t.type === 'custom');
+
+                const list = document.getElementById('custom-tools-list');
+                if(customTools.length === 0) {
+                    list.innerHTML = '<div style="color: var(--text-muted); padding: 0.5rem;">No custom tools</div>';
+                    return;
+                }
+
+                list.innerHTML = customTools.map(t => `
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 500;">${t.name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">${t.command}</div>
+                        </div>
+                        <button class="btn btn-danger btn-xs" onclick="deleteCustomTool('${t.name}')">&times;</button>
+                    </div>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        function openRegisterToolModal() { document.getElementById('register-tool-modal').classList.add('show'); }
+        function closeRegisterToolModal() { document.getElementById('register-tool-modal').classList.remove('show'); }
+
+        async function registerTool() {
+            const name = document.getElementById('tool-name').value;
+            const command = document.getElementById('tool-command').value;
+            const argsStr = document.getElementById('tool-args').value;
+            const healthEndpoint = document.getElementById('tool-health').value;
+
+            const args = argsStr ? argsStr.split(',').map(a => a.trim()) : [];
+
+            try {
+                await fetch('/api/cli/tools/custom', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, command, args, healthEndpoint })
+                });
+                closeRegisterToolModal();
+                showToast('Tool registered', 'success');
+                fetchCustomTools();
+                refreshCLITools(); // Refresh dashboard list too
+            } catch(e) { showToast('Failed to register tool', 'error'); }
+        }
+
+        async function deleteCustomTool(name) {
+            if(confirm(`Delete custom tool ${name}?`)) {
+                await fetch(`/api/cli/tools/custom/${name}`, { method: 'DELETE' });
+                fetchCustomTools();
+                refreshCLITools();
             }
         }
 
