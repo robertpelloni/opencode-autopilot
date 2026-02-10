@@ -22,6 +22,7 @@ import workspaceRoutes from './routes/workspace.js';
 import templateRoutes from './routes/templates.js';
 import fineTunedModelsRoutes from './routes/fine-tuned-models.js';
 import collaborativeDebatesRoutes from './routes/collaborative-debates.js';
+import systemRoutes from './routes/system.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -253,6 +254,7 @@ app.route('/api/workspaces', workspaceRoutes);
 app.route('/api/templates', templateRoutes);
 app.route('/api/fine-tuned-models', fineTunedModelsRoutes);
 app.route('/api/collaborative-debates', collaborativeDebatesRoutes);
+app.route('/api/system', systemRoutes);
 app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));

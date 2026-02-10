@@ -927,6 +927,112 @@
         </div>
     </div>
 
+    <!-- Run Simulation Modal -->
+    <div class="modal-overlay" id="run-simulation-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Run Debate Simulation</div>
+                <button class="modal-close" onclick="closeRunSimulationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Topic / Task</label>
+                    <textarea class="form-control" id="sim-topic" rows="2" placeholder="Describe a task to simulate..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Consensus Mode</label>
+                    <select class="form-control" id="sim-mode">
+                        <option value="simple-majority">Simple Majority</option>
+                        <option value="supermajority">Supermajority</option>
+                        <option value="unanimous">Unanimous</option>
+                        <option value="weighted">Weighted</option>
+                        <option value="ceo-override">CEO Override</option>
+                        <option value="ceo-veto">CEO Veto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Supervisors (Comma separated names)</label>
+                    <input type="text" class="form-control" id="sim-supervisors" placeholder="gpt-4, claude-3-opus, gemini-pro">
+                    <small style="color: var(--text-muted);">Leave empty to use all available</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                            <input type="checkbox" id="sim-use-mock"> Use Mock Responses (Fast)
+                        </label>
+                    </div>
+                </div>
+                <div id="sim-result" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                    <h4 style="margin-bottom: 0.5rem;">Result</h4>
+                    <div>Outcome: <span id="sim-res-outcome" style="font-weight: bold;">-</span></div>
+                    <div>Duration: <span id="sim-res-duration">-</span></div>
+                    <div>Reasoning: <div id="sim-res-reasoning" style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--text-secondary);"></div></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRunSimulationModal()">Close</button>
+                <button class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collaborative Debate Detail Modal -->
+    <div class="modal-overlay" id="debate-detail-modal">
+        <div class="modal" style="width: 95%; max-width: 1000px; height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title" id="debate-detail-title">Debate Title</div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span id="debate-detail-status" class="status-badge">STATUS</span>
+                    <button class="modal-close" onclick="closeDebateDetailModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 0; display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+                <div style="display: grid; grid-template-columns: 300px 1fr; height: 100%;">
+                    <!-- Sidebar: Info & Voting -->
+                    <div style="border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: var(--bg-tertiary);">
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); overflow-y: auto; flex: 1;">
+                            <h4 style="margin-bottom: 0.5rem;">Description</h4>
+                            <p id="debate-detail-desc" style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">...</p>
+
+                            <h4 style="margin-bottom: 0.5rem;">Participants</h4>
+                            <div id="debate-detail-participants" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                                <!-- Participants injected here -->
+                            </div>
+
+                            <div id="debate-voting-section">
+                                <h4 style="margin-bottom: 0.5rem;">Cast Your Vote</h4>
+                                <div class="form-group">
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <button class="btn btn-success" style="flex: 1;" onclick="setVote(true)">Approve</button>
+                                        <button class="btn btn-danger" style="flex: 1;" onclick="setVote(false)">Reject</button>
+                                    </div>
+                                    <input type="range" id="vote-confidence" min="0" max="100" value="70" style="width: 100%; margin-bottom: 0.5rem;">
+                                    <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">Confidence: <span id="vote-confidence-val">70%</span></div>
+                                    <textarea id="vote-reasoning" class="form-control" rows="2" placeholder="Reasoning..." style="font-size: 0.75rem;"></textarea>
+                                    <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="submitVote()">Submit Vote</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main: Chat -->
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                        <div id="debate-chat-history" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Messages injected here -->
+                        </div>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-secondary);">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <textarea id="debate-chat-input" class="form-control" rows="2" placeholder="Type a message..."></textarea>
+                                <button class="btn btn-primary btn-icon" onclick="sendDebateMessage()">&#10148;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Help Modal -->
     <div class="modal-overlay" id="help-modal">
         <div class="modal">
@@ -1212,38 +1318,37 @@
 
         async function fetchSystemInfo() {
             try {
-                const res = await fetch('/');
-                const data = await res.json();
-                document.getElementById('system-version').textContent = data.version || 'Unknown';
+                const [infoRes, submodulesRes] = await Promise.all([
+                    fetch('/'),
+                    fetch('/api/system/submodules')
+                ]);
+                const data = await infoRes.json();
+                const submodulesData = await submodulesRes.json();
+                const submodules = submodulesData.success ? submodulesData.data : [];
 
-                // Hardcoded submodules list for now as requested, ideally fetched from backend
-                const submodules = [
-                    'memory/projects/claude-mem',
-                    'superai-cli/cli-tools/claude-code',
-                    'superai-cli/cli-tools/lynkr',
-                    'superai-cli/routers/claude-code-router',
-                    'superai-cli/cli-tools/cc-switch',
-                    'superai-cli/cli-tools/ccs',
-                    'superai-cli/cli-tools/emdash',
-                    'superai-cli/cli-tools/claude-squad',
-                    'superai-cli/cli-tools/code-assistant-manager',
-                    'superai-cli/cli-tools/code-nomad',
-                    'superai-cli/proxies/openai-gemini',
-                    'superai-cli/cli-tools/madappgang-claude-code',
-                    'superai-cli/proxies/gemini-openai-proxy-zhu'
-                ];
+                document.getElementById('system-version').textContent = data.version || 'Unknown';
 
                 document.getElementById('system-dependencies').innerHTML = `
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/server: ${data.version}</div>
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/cli: ${data.version}</div>
                     <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">@opencode-autopilot/shared: ${data.version}</div>
 
-                    <h4 style="margin-bottom:0.5rem; color: var(--text-secondary);">Submodules (Initialized)</h4>
-                    ${submodules.map(sub => `
-                        <div style="font-size: 0.75rem; color: var(--text-muted); padding: 0.25rem 0.5rem; border-left: 2px solid var(--accent-blue); margin-bottom: 0.25rem; background: rgba(255,255,255,0.02);">
-                            ${sub}
-                        </div>
-                    `).join('')}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="color: var(--text-secondary);">Submodules (${submodules.length})</h4>
+                        <button class="btn btn-secondary btn-xs" onclick="fetchSystemInfo()">Refresh</button>
+                    </div>
+
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${submodules.map(sub => `
+                            <div style="font-size: 0.75rem; padding: 0.5rem; border-left: 2px solid ${sub.status === 'clean' ? 'var(--accent-green)' : 'var(--accent-yellow)'}; margin-bottom: 0.25rem; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 500; color: var(--text-primary);">${sub.path}</div>
+                                    <div style="color: var(--text-muted); font-family: monospace;">${sub.commit.substring(0, 7)} ${sub.version ? `(${sub.version})` : ''}</div>
+                                </div>
+                                <span class="status-badge ${sub.status === 'clean' ? 'status-running' : 'status-starting'}">${sub.status}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
             } catch (e) { console.error(e); }
         }
@@ -1325,7 +1430,7 @@
                         <td>${d.taskType}</td>
                         <td>${Object.keys(d.participants).length}</td>
                         <td>${new Date(d.createdAt).toLocaleDateString()}</td>
-                        <td><button class="btn btn-secondary btn-xs">View</button></td>
+                        <td><button class="btn btn-secondary btn-xs" onclick="openDebateDetail('${d.id}')">View</button></td>
                     </tr>
                 `).join('');
             } catch (e) { console.error(e); }
@@ -1515,8 +1620,182 @@
             } catch(e) { showToast('Failed to create debate', 'error'); }
         }
 
+        // --- Collaborative Detail ---
+        let currentDebateId = null;
+        let currentVote = null;
+
+        async function openDebateDetail(id) {
+            currentDebateId = id;
+            document.getElementById('debate-detail-modal').classList.add('show');
+            await refreshDebateDetail();
+            // Poll for updates every 3s while open
+            if(window.debatePollInterval) clearInterval(window.debatePollInterval);
+            window.debatePollInterval = setInterval(() => {
+                if(document.getElementById('debate-detail-modal').classList.contains('show')) refreshDebateDetail();
+            }, 3000);
+        }
+
+        function closeDebateDetailModal() {
+            document.getElementById('debate-detail-modal').classList.remove('show');
+            if(window.debatePollInterval) clearInterval(window.debatePollInterval);
+            currentDebateId = null;
+        }
+
+        async function refreshDebateDetail() {
+            if(!currentDebateId) return;
+            try {
+                const [debateRes, msgsRes] = await Promise.all([
+                    fetch(`/api/collaborative-debates/${currentDebateId}`),
+                    fetch(`/api/collaborative-debates/${currentDebateId}/messages`)
+                ]);
+                const debateData = await debateRes.json();
+                const msgsData = await msgsRes.json();
+
+                if(debateData.success) renderDebateInfo(debateData.data);
+                if(msgsData.success) renderDebateMessages(msgsData.data);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderDebateInfo(debate) {
+            document.getElementById('debate-detail-title').textContent = debate.title;
+            document.getElementById('debate-detail-desc').textContent = debate.description || 'No description';
+            document.getElementById('debate-detail-status').textContent = debate.status;
+
+            const participantsDiv = document.getElementById('debate-detail-participants');
+            participantsDiv.innerHTML = Object.values(debate.participants).map(p => `
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                    <span>${p.name}</span>
+                    <span style="color: var(--text-muted);">${p.role}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDebateMessages(messages) {
+            const historyDiv = document.getElementById('debate-chat-history');
+            const wasAtBottom = historyDiv.scrollHeight - historyDiv.scrollTop === historyDiv.clientHeight;
+
+            historyDiv.innerHTML = messages.map(m => `
+                <div style="display: flex; flex-direction: column; align-items: ${m.participantId === 'current-user' ? 'flex-end' : 'flex-start'};">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                        ${m.participantId} <span style="opacity: 0.5;">${new Date(m.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div style="background: ${m.participantId === 'current-user' ? 'var(--accent-purple)' : 'var(--bg-tertiary)'}; padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 80%;">
+                        ${m.content}
+                    </div>
+                </div>
+            `).join('');
+
+            if(wasAtBottom) historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+        async function sendDebateMessage() {
+            const input = document.getElementById('debate-chat-input');
+            const content = input.value.trim();
+            if(!content || !currentDebateId) return;
+
+            try {
+                await fetch(`/api/collaborative-debates/${currentDebateId}/messages`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        participantId: 'current-user', // Mock user
+                        content
+                    })
+                });
+                input.value = '';
+                refreshDebateDetail();
+            } catch(e) { showToast('Failed to send message', 'error'); }
+        }
+
+        function setVote(approved) {
+            currentVote = approved;
+            document.querySelectorAll('#debate-voting-section .btn').forEach(b => b.style.opacity = '0.5');
+            event.target.style.opacity = '1';
+        }
+
+        async function submitVote() {
+            if(currentVote === null) { showToast('Please select Approve or Reject', 'error'); return; }
+            const confidence = parseInt(document.getElementById('vote-confidence').value) / 100;
+            const reasoning = document.getElementById('vote-reasoning').value;
+
+            try {
+                await fetch(`/api/collaborative-debates/${currentDebateId}/votes`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        participantId: 'current-user',
+                        approved: currentVote,
+                        confidence,
+                        reasoning
+                    })
+                });
+                showToast('Vote submitted', 'success');
+            } catch(e) { showToast('Failed to submit vote', 'error'); }
+        }
+
+        document.getElementById('vote-confidence').addEventListener('input', (e) => {
+            document.getElementById('vote-confidence-val').textContent = e.target.value + '%';
+        });
+
+        // --- Simulator ---
         function openRunSimulationModal() {
-            showToast('Simulation modal coming soon', 'info');
+            document.getElementById('run-simulation-modal').classList.add('show');
+            document.getElementById('sim-result').style.display = 'none';
+        }
+
+        function closeRunSimulationModal() {
+            document.getElementById('run-simulation-modal').classList.remove('show');
+        }
+
+        async function runSimulation() {
+            const topic = document.getElementById('sim-topic').value;
+            const mode = document.getElementById('sim-mode').value;
+            const supervisorsStr = document.getElementById('sim-supervisors').value;
+            const useMock = document.getElementById('sim-use-mock').checked;
+
+            if(!topic) { showToast('Topic is required', 'error'); return; }
+
+            const supervisors = supervisorsStr ? supervisorsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Running...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/simulator/simulate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic,
+                        config: {
+                            consensusMode: mode,
+                            supervisors: supervisors.length ? supervisors : undefined
+                        },
+                        useMock
+                    })
+                });
+
+                const data = await res.json();
+
+                if(data.success === false) throw new Error(data.error);
+
+                document.getElementById('sim-result').style.display = 'block';
+                const outcomeSpan = document.getElementById('sim-res-outcome');
+                outcomeSpan.textContent = data.outcome;
+                outcomeSpan.style.color = data.outcome === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)';
+
+                document.getElementById('sim-res-duration').textContent = data.durationMs + 'ms';
+                document.getElementById('sim-res-reasoning').textContent = data.reasoning;
+
+                showToast('Simulation complete', 'success');
+                fetchSimulations(); // Refresh list
+            } catch(e) {
+                showToast('Simulation failed: ' + e.message, 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
 
         function openCreateTemplateModal() { document.getElementById('create-template-modal').classList.add('show'); }

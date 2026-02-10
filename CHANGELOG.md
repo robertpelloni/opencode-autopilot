@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2026-02-08
+
+### Added
+- **Collaborative Debate Detail View**: Full UI for participating in debates.
+  - Real-time chat with message history.
+  - Interactive voting interface with confidence slider and reasoning.
+  - Live participant status and role display.
+- **Debate Simulator Runner UI**:
+  - Modal interface to configure and run simulations.
+  - Support for selecting consensus mode, supervisors, and mock mode.
+  - Instant result visualization (outcome, duration, reasoning).
+- **System Submodules Management**:
+  - Dynamic listing of git submodules with status indicators (clean/dirty).
+  - Version tracking display.
+
 ## [1.0.10] - 2026-02-08
 
 ### Added
