@@ -536,6 +536,16 @@
                     <span class="status-dot" id="ws-status"></span>
                     <span id="ws-status-text">Connecting...</span>
                 </div>
+                <select id="workspace-select" class="btn btn-secondary btn-sm" style="background: var(--bg-tertiary); border-color: var(--border-color); color: var(--text-primary); cursor: pointer;" onchange="switchWorkspace(this.value)">
+                    <option value="">Default Workspace</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" onclick="openManageWorkspacesModal()">
+                    <span>&#128450;</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" style="position: relative;" onclick="openNotificationsModal()">
+                    <span>&#128276;</span>
+                    <span id="notification-badge" style="display: none; position: absolute; top: -4px; right: -4px; background: var(--accent-red); color: white; font-size: 0.625rem; padding: 0.125rem 0.375rem; border-radius: 10px;">0</span>
+                </button>
                 <a href="/analytics" class="btn btn-secondary btn-sm" target="_blank" style="text-decoration: none;">
                     <span>&#128202;</span> Analytics
                 </a>
@@ -558,6 +568,8 @@
             <div class="tab" onclick="switchTab('collaborative')">Collaborative</div>
             <div class="tab" onclick="switchTab('simulator')">Simulator</div>
             <div class="tab" onclick="switchTab('templates')">Templates</div>
+            <div class="tab" onclick="switchTab('models')">Fine-Tuning</div>
+            <div class="tab" onclick="switchTab('usage')">Usage & Limits</div>
         </div>
 
         <main>
@@ -887,6 +899,125 @@
                 </div>
             </div>
 
+            <!-- Fine-Tuning Tab -->
+            <div id="tab-models" class="tab-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Datasets</div>
+                            <button class="btn btn-primary btn-sm" onclick="openUploadDatasetModal()">+ Upload</button>
+                        </div>
+                        <div class="section-body">
+                            <div class="table-container">
+                                <table class="table" id="datasets-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Format</th>
+                                            <th>Count</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Training Jobs</div>
+                            <button class="btn btn-primary btn-sm" onclick="openCreateJobModal()">+ New Job</button>
+                        </div>
+                        <div class="section-body">
+                            <div class="table-container">
+                                <table class="table" id="jobs-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Base Model</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Deployed Models</div>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table class="table" id="models-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Provider</th>
+                                        <th>Base Model</th>
+                                        <th>Status</th>
+                                        <th>Performance</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage & Limits Tab -->
+            <div id="tab-usage" class="tab-content">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="usage-daily-cost">$0.00</div>
+                        <div class="stat-label">Daily Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="usage-budget-util">0%</div>
+                        <div class="stat-label">Budget Utilization</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="usage-providers-count">0</div>
+                        <div class="stat-label">Active Providers</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Quota Configuration</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                             <button class="btn btn-secondary btn-sm" onclick="resetAllUsage()">Reset All Usage</button>
+                             <button class="btn btn-secondary btn-sm" onclick="fetchUsageStats()">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table class="table" id="usage-table">
+                                <thead>
+                                    <tr>
+                                        <th>Provider</th>
+                                        <th>Requests (Min/Hr)</th>
+                                        <th>Tokens (Min/Day)</th>
+                                        <th>Cost (Today)</th>
+                                        <th>Limits (RPM/TPM)</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="6">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -923,6 +1054,154 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Limits Modal -->
+    <div class="modal-overlay" id="edit-limits-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Edit Limits for <span id="edit-limits-provider"></span></div>
+                <button class="modal-close" onclick="closeEditLimitsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Requests per Minute</label>
+                    <input type="number" class="form-control" id="limit-rpm">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Requests per Hour</label>
+                    <input type="number" class="form-control" id="limit-rph">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tokens per Minute</label>
+                    <input type="number" class="form-control" id="limit-tpm">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tokens per Day</label>
+                    <input type="number" class="form-control" id="limit-tpd">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Concurrent</label>
+                    <input type="number" class="form-control" id="limit-concurrent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditLimitsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveLimits()">Save Limits</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications / Pending Decisions Modal -->
+    <div class="modal-overlay" id="notifications-modal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title">Pending Decisions</div>
+                <button class="modal-close" onclick="closeNotificationsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="pending-decisions-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    Loading...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNotificationsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Dataset Modal -->
+    <div class="modal-overlay" id="upload-dataset-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Upload Dataset</div>
+                <button class="modal-close" onclick="closeUploadDatasetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="dataset-name" placeholder="e.g., security-audit-v1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" id="dataset-desc" placeholder="Dataset description">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">JSONL Content (Paste here for now)</label>
+                    <textarea class="form-control" id="dataset-content" rows="5" placeholder='{"messages": [...]}'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeUploadDatasetModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitUploadDataset()">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Job Modal -->
+    <div class="modal-overlay" id="create-job-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Start Fine-Tuning Job</div>
+                <button class="modal-close" onclick="closeCreateJobModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Base Model</label>
+                    <select class="form-control" id="job-base-model">
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dataset</label>
+                    <select class="form-control" id="job-dataset">
+                        <option value="">Select Dataset...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Provider</label>
+                    <select class="form-control" id="job-provider">
+                        <option value="openai">OpenAI</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateJobModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitCreateJob()">Start Job</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Workspaces Modal -->
+    <div class="modal-overlay" id="manage-workspaces-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Manage Workspaces</div>
+                <button class="modal-close" onclick="closeManageWorkspacesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="new-workspace-name" class="form-control" placeholder="New Workspace Name">
+                    <button class="btn btn-primary" onclick="createWorkspace()">Create</button>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="workspaces-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="3">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeManageWorkspacesModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1056,6 +1335,11 @@
                 <p><strong>Collaborative Debates:</strong> Create invites for human team members to join debates alongside AI supervisors.</p>
                 <p><strong>Debate Simulator:</strong> Replay past debates or run simulations to test different team compositions and consensus modes.</p>
                 <p><strong>Analytics:</strong> View detailed performance metrics and visual trends in the Analytics Dashboard.</p>
+                <p><strong>Veto & Notifications:</strong> Review and approve sensitive decisions made by the council. Use the bell icon to manage pending veto requests.</p>
+                <p><strong>Usage & Limits:</strong> Monitor API usage, costs, and set specific rate limits for each provider to control budget.</p>
+                <p><strong>Workspaces:</strong> Create and switch between isolated workspaces to manage different projects or contexts.</p>
+                <p><strong>Debate Templates:</strong> Use predefined or custom templates to quickly start new debates with specific configurations.</p>
+                <p><strong>Fine-Tuning:</strong> Upload datasets and launch fine-tuning jobs to improve model performance on specific tasks.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeHelpModal()">Close</button>
@@ -1213,6 +1497,9 @@
                     } else if (msg.type === 'council_decision') {
                         showToast(`Decision: ${msg.payload.approved ? 'Approved' : 'Rejected'}`, msg.payload.approved ? 'success' : 'error');
                         fetchDebateHistory(); // Refresh history on new decision
+                    } else if (msg.type === 'decision_pending') {
+                        showToast('New decision requires your approval', 'info');
+                        fetchPendingDecisions();
                     }
                 } catch(e) { console.error('WS Error', e); }
             };
@@ -1230,7 +1517,7 @@
             
             const tabs = document.querySelectorAll('.tab');
             // Mapping index to tab ID manually based on order
-            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator', 'templates'];
+            const tabOrder = ['dashboard', 'debate-history', 'supervisors', 'system', 'dynamic', 'plugins', 'collaborative', 'simulator', 'templates', 'models', 'usage'];
             const idx = tabOrder.indexOf(tabId);
             if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
 
@@ -1244,6 +1531,8 @@
             if(tabId === 'collaborative') fetchCollaborativeDebates();
             if(tabId === 'simulator') fetchSimulations();
             if(tabId === 'templates') fetchTemplates();
+            if(tabId === 'models') fetchFineTuningData();
+            if(tabId === 'usage') fetchUsageStats();
         }
 
         // --- Data Fetching ---
@@ -1492,6 +1781,286 @@
                 const select = document.getElementById('new-session-template');
                 select.innerHTML = '<option value="">None</option>' + templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
             } catch (e) { console.error('Failed to fetch templates', e); }
+        }
+
+        // --- Fine-Tuning ---
+        async function fetchFineTuningData() {
+            await Promise.all([
+                fetchDatasets(),
+                fetchJobs(),
+                fetchModels()
+            ]);
+        }
+
+        async function fetchDatasets() {
+            try {
+                const res = await fetch('/api/fine-tuned-models/datasets');
+                const data = await res.json();
+                const datasets = data.data || [];
+                const tbody = document.querySelector('#datasets-table tbody');
+
+                // Update dropdown for job creation
+                const jobSelect = document.getElementById('job-dataset');
+                jobSelect.innerHTML = '<option value="">Select Dataset...</option>' +
+                    datasets.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+                if (datasets.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No datasets</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = datasets.map(d => `
+                    <tr>
+                        <td>${d.name}</td>
+                        <td>${d.format}</td>
+                        <td>${d.exampleCount || 0}</td>
+                        <td><button class="btn btn-danger btn-xs" onclick="deleteDataset('${d.id}')">Delete</button></td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchJobs() {
+            try {
+                const res = await fetch('/api/fine-tuned-models/jobs');
+                const data = await res.json();
+                const jobs = data.data || [];
+                const tbody = document.querySelector('#jobs-table tbody');
+
+                if (jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No jobs</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = jobs.map(j => `
+                    <tr>
+                        <td><span style="font-family: monospace; font-size: 0.75rem;">${j.id.substring(0,8)}</span></td>
+                        <td>${j.baseModel}</td>
+                        <td><span class="status-badge status-${j.status === 'completed' ? 'running' : j.status === 'failed' ? 'error' : 'starting'}">${j.status}</span></td>
+                        <td>
+                            ${j.status === 'pending' ? `<button class="btn btn-success btn-xs" onclick="startJob('${j.id}')">Start</button>` : ''}
+                            ${['running', 'pending'].includes(j.status) ? `<button class="btn btn-danger btn-xs" onclick="cancelJob('${j.id}')">Cancel</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchModels() {
+            try {
+                const res = await fetch('/api/fine-tuned-models/models');
+                const data = await res.json();
+                const models = data.data || [];
+                const tbody = document.querySelector('#models-table tbody');
+
+                if (models.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No deployed models</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = models.map(m => `
+                    <tr>
+                        <td>${m.name}</td>
+                        <td>${m.provider}</td>
+                        <td>${m.baseModel}</td>
+                        <td><span class="status-badge status-${m.status === 'active' ? 'running' : 'stopped'}">${m.status}</span></td>
+                        <td>${m.performance?.approvalRate ? (m.performance.approvalRate * 100).toFixed(0) + '%' : '-'}</td>
+                        <td><button class="btn btn-secondary btn-xs">Register</button></td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        // --- Usage & Limits ---
+        async function fetchUsageStats() {
+            try {
+                const res = await fetch('/api/quota/stats');
+                const data = await res.json();
+                const providers = data.providers || [];
+                const global = data.global || {};
+
+                document.getElementById('usage-daily-cost').textContent = '$' + (global.dailyCostTotal || 0).toFixed(4);
+                document.getElementById('usage-budget-util').textContent = (global.budgetUtilizationPercent || 0).toFixed(1) + '%';
+                document.getElementById('usage-providers-count').textContent = providers.length;
+
+                const tbody = document.querySelector('#usage-table tbody');
+                if (providers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No usage data</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = providers.map(p => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">${p.provider}</div>
+                            ${p.health.isThrottled ? '<span class="status-badge status-error">Throttled</span>' : ''}
+                        </td>
+                        <td>
+                            <div>Min: ${p.usage.requestsThisMinute} / ${p.limits.requestsPerMinute}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Hr: ${p.usage.requestsThisHour} / ${p.limits.requestsPerHour}</div>
+                        </td>
+                        <td>
+                            <div>Min: ${(p.usage.tokensThisMinute/1000).toFixed(1)}k / ${(p.limits.tokensPerMinute/1000).toFixed(0)}k</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Day: ${(p.usage.tokensToday/1000).toFixed(1)}k / ${(p.limits.tokensPerDay/1000).toFixed(0)}k</div>
+                        </td>
+                        <td>$${(p.usage.totalCost || 0).toFixed(4)}</td>
+                        <td>
+                            <div>${p.limits.requestsPerMinute} RPM</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${(p.limits.tokensPerMinute/1000).toFixed(0)}k TPM</div>
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary btn-xs" onclick="openEditLimitsModal('${p.provider}')">Edit Limits</button>
+                            <button class="btn btn-danger btn-xs" onclick="resetProviderUsage('${p.provider}')">Reset</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Store limits for editing
+                window.providerLimits = {};
+                providers.forEach(p => { window.providerLimits[p.provider] = p.limits; });
+
+            } catch(e) { console.error('Failed to fetch usage stats', e); }
+        }
+
+        let currentEditingProvider = null;
+
+        function openEditLimitsModal(provider) {
+            currentEditingProvider = provider;
+            const limits = window.providerLimits[provider] || {};
+
+            document.getElementById('edit-limits-provider').textContent = provider;
+            document.getElementById('limit-rpm').value = limits.requestsPerMinute || 0;
+            document.getElementById('limit-rph').value = limits.requestsPerHour || 0;
+            document.getElementById('limit-tpm').value = limits.tokensPerMinute || 0;
+            document.getElementById('limit-tpd').value = limits.tokensPerDay || 0;
+            document.getElementById('limit-concurrent').value = limits.maxConcurrent || 0;
+
+            document.getElementById('edit-limits-modal').classList.add('show');
+        }
+
+        function closeEditLimitsModal() {
+            document.getElementById('edit-limits-modal').classList.remove('show');
+            currentEditingProvider = null;
+        }
+
+        async function saveLimits() {
+            if(!currentEditingProvider) return;
+
+            const limits = {
+                requestsPerMinute: parseInt(document.getElementById('limit-rpm').value),
+                requestsPerHour: parseInt(document.getElementById('limit-rph').value),
+                tokensPerMinute: parseInt(document.getElementById('limit-tpm').value),
+                tokensPerDay: parseInt(document.getElementById('limit-tpd').value),
+                maxConcurrent: parseInt(document.getElementById('limit-concurrent').value)
+            };
+
+            try {
+                await fetch(`/api/quota/limits/${currentEditingProvider}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(limits)
+                });
+                showToast('Limits updated', 'success');
+                closeEditLimitsModal();
+                fetchUsageStats();
+            } catch(e) { showToast('Failed to update limits', 'error'); }
+        }
+
+        async function resetProviderUsage(provider) {
+            if(confirm(`Reset usage stats for ${provider}?`)) {
+                await fetch(`/api/quota/reset/${provider}`, { method: 'POST' });
+                showToast('Usage reset', 'success');
+                fetchUsageStats();
+            }
+        }
+
+        async function resetAllUsage() {
+            if(confirm('Reset ALL usage statistics? This cannot be undone.')) {
+                await fetch('/api/quota/reset-all', { method: 'POST' });
+                showToast('All usage reset', 'success');
+                fetchUsageStats();
+            }
+        }
+
+        function openUploadDatasetModal() { document.getElementById('upload-dataset-modal').classList.add('show'); }
+        function closeUploadDatasetModal() { document.getElementById('upload-dataset-modal').classList.remove('show'); }
+
+        async function submitUploadDataset() {
+            const name = document.getElementById('dataset-name').value;
+            const content = document.getElementById('dataset-content').value;
+
+            try {
+                // Parse lines as individual JSON objects if newline delimited
+                const examples = content.split('\n').filter(line => line.trim()).map(JSON.parse);
+
+                // 1. Create Dataset
+                const createRes = await fetch('/api/fine-tuned-models/datasets', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, format: 'jsonl' })
+                });
+                const createData = await createRes.json();
+                if(!createData.success) throw new Error(createData.error);
+
+                const datasetId = createData.data.id;
+
+                // 2. Validate & Update (Mocking file upload by validating directly)
+                await fetch('/api/fine-tuned-models/datasets/validate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ examples })
+                });
+
+                // Update count
+                await fetch(`/api/fine-tuned-models/datasets/${datasetId}/example-count`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ count: examples.length })
+                });
+
+                closeUploadDatasetModal();
+                showToast('Dataset created', 'success');
+                fetchDatasets();
+            } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+        }
+
+        async function deleteDataset(id) {
+            if(confirm('Delete dataset?')) {
+                await fetch(`/api/fine-tuned-models/datasets/${id}`, { method: 'DELETE' });
+                fetchDatasets();
+            }
+        }
+
+        function openCreateJobModal() { document.getElementById('create-job-modal').classList.add('show'); }
+        function closeCreateJobModal() { document.getElementById('create-job-modal').classList.remove('show'); }
+
+        async function submitCreateJob() {
+            const baseModel = document.getElementById('job-base-model').value;
+            const datasetId = document.getElementById('job-dataset').value;
+            const provider = document.getElementById('job-provider').value;
+
+            try {
+                await fetch('/api/fine-tuned-models/jobs', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ baseModel, datasetId, provider })
+                });
+                closeCreateJobModal();
+                showToast('Job created', 'success');
+                fetchJobs();
+            } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+        }
+
+        async function startJob(id) {
+            await fetch(`/api/fine-tuned-models/jobs/${id}/start`, { method: 'POST' });
+            fetchJobs();
+            showToast('Job started', 'success');
+        }
+
+        async function cancelJob(id) {
+            await fetch(`/api/fine-tuned-models/jobs/${id}/cancel`, { method: 'POST' });
+            fetchJobs();
+            showToast('Job cancelled', 'info');
         }
 
         // --- Actions ---
@@ -1942,8 +2511,139 @@
             setTimeout(() => t.remove(), 3000);
         }
 
+        // --- Workspaces ---
+        async function fetchWorkspaces() {
+            try {
+                const res = await fetch('/api/workspaces');
+                const data = await res.json();
+                const workspaces = Array.isArray(data) ? data : (data.data || []); // API might return array directly or wrapped
+
+                const select = document.getElementById('workspace-select');
+                const currentVal = select.value;
+                select.innerHTML = workspaces.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+                if(currentVal) select.value = currentVal;
+
+                // Update management table
+                const tbody = document.querySelector('#workspaces-table tbody');
+                if (workspaces.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No workspaces</td></tr>';
+                } else {
+                    tbody.innerHTML = workspaces.map(w => `
+                        <tr>
+                            <td>${w.name} ${w.status === 'active' ? '<span class="status-badge status-running">Active</span>' : ''}</td>
+                            <td>${w.status}</td>
+                            <td>
+                                <button class="btn btn-danger btn-xs" onclick="deleteWorkspace('${w.id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch(e) { console.error('Failed to fetch workspaces', e); }
+        }
+
+        async function switchWorkspace(id) {
+            try {
+                await fetch(`/api/workspaces/active/${id}`, { method: 'POST' });
+                showToast('Switched workspace', 'success');
+                // Reload data
+                fetchInitialData();
+            } catch(e) { showToast('Failed to switch workspace', 'error'); }
+        }
+
+        function openManageWorkspacesModal() {
+            document.getElementById('manage-workspaces-modal').classList.add('show');
+            fetchWorkspaces();
+        }
+        function closeManageWorkspacesModal() { document.getElementById('manage-workspaces-modal').classList.remove('show'); }
+
+        async function createWorkspace() {
+            const name = document.getElementById('new-workspace-name').value;
+            if(!name) return;
+            try {
+                await fetch('/api/workspaces', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, path: `./workspaces/${name}` })
+                });
+                document.getElementById('new-workspace-name').value = '';
+                showToast('Workspace created', 'success');
+                fetchWorkspaces();
+            } catch(e) { showToast('Failed to create workspace', 'error'); }
+        }
+
+        async function deleteWorkspace(id) {
+            if(confirm('Delete workspace?')) {
+                await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
+                fetchWorkspaces();
+            }
+        }
+
+        // --- Notifications / Veto ---
+        async function fetchPendingDecisions() {
+            try {
+                const res = await fetch('/api/veto/pending');
+                const data = await res.json();
+                const pending = data.pending || [];
+
+                // Update badge
+                const badge = document.getElementById('notification-badge');
+                if (pending.length > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = pending.length;
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                // Render List
+                const list = document.getElementById('pending-decisions-list');
+                if (pending.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No pending decisions</div>';
+                    return;
+                }
+
+                list.innerHTML = pending.map(d => `
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <div style="font-weight: 600;">${d.id}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(d.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div style="margin-bottom: 1rem; font-size: 0.875rem;">
+                            ${d.councilDecision.reasoning.split('\n')[0]}...
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-success btn-sm" onclick="processVeto('${d.id}', 'approve')">Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="processVeto('${d.id}', 'reject')">Reject</button>
+                            <button class="btn btn-secondary btn-sm" onclick="processVeto('${d.id}', 'redebate')">Redebate</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch(e) { console.error('Failed to fetch pending decisions', e); }
+        }
+
+        async function processVeto(id, action) {
+            try {
+                const reason = action === 'reject' || action === 'redebate' ? prompt('Reason (optional):') : undefined;
+                await fetch(`/api/veto/pending/${id}/${action}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ reason })
+                });
+                showToast(`Decision ${action}ed`, 'success');
+                fetchPendingDecisions();
+            } catch(e) { showToast('Failed to process decision', 'error'); }
+        }
+
+        function openNotificationsModal() {
+            document.getElementById('notifications-modal').classList.add('show');
+            fetchPendingDecisions();
+        }
+        function closeNotificationsModal() { document.getElementById('notifications-modal').classList.remove('show'); }
+
         // --- Init ---
         connectWebSocket();
+        fetchWorkspaces(); // Initial load
+        fetchPendingDecisions(); // Initial load of notifications
         document.getElementById('settings-threshold').addEventListener('input', (e) => {
             document.getElementById('settings-threshold-val').textContent = e.target.value + '%';
         });
