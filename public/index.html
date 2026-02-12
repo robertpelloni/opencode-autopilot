@@ -675,7 +675,11 @@
                 <div class="section">
                     <div class="section-header">
                         <div class="section-title">Debate History</div>
-                        <button class="btn btn-secondary btn-sm" onclick="fetchDebateHistory()">Refresh</button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="exportDebateHistory('json')">Export JSON</button>
+                            <button class="btn btn-secondary btn-sm" onclick="exportDebateHistory('csv')">Export CSV</button>
+                            <button class="btn btn-secondary btn-sm" onclick="fetchDebateHistory()">Refresh</button>
+                        </div>
                     </div>
                     <div class="section-body">
                         <div class="table-container">
@@ -1137,6 +1141,7 @@
                 <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
             </div>
             <div class="modal-body">
+                <h4 style="margin-bottom: 1rem;">Council Configuration</h4>
                 <div class="form-group">
                     <label class="form-label" data-tooltip="Determines how the council reaches a decision">Consensus Mode <span class="tooltip-trigger" data-tooltip="?">(?)</span></label>
                     <select class="form-control" id="settings-consensus-mode">
@@ -1157,6 +1162,16 @@
                 <div class="form-group">
                     <label class="form-label">Debate Rounds</label>
                     <input type="number" id="settings-rounds" class="form-control" min="1" max="5" value="2">
+                </div>
+
+                <h4 style="margin-bottom: 1rem; margin-top: 1.5rem;">Log Rotation</h4>
+                <div class="form-group">
+                    <label class="form-label">Max Logs Per Session</label>
+                    <input type="number" id="settings-max-logs" class="form-control" value="1000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Retention (Hours)</label>
+                    <input type="number" id="settings-log-retention" class="form-control" value="24">
                 </div>
             </div>
             <div class="modal-footer">
@@ -1314,6 +1329,25 @@
         </div>
     </div>
 
+    <!-- Test Model Modal -->
+    <div class="modal-overlay" id="test-model-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Test Model: <span id="test-model-name"></span></div>
+                <button class="modal-close" onclick="closeTestModelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="test-chat-history" style="height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: var(--bg-tertiary);">
+                    <div style="color: var(--text-muted); text-align: center;">Start a conversation...</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <textarea id="test-chat-input" class="form-control" rows="2" placeholder="Message..."></textarea>
+                    <button class="btn btn-primary" onclick="sendTestMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Create Job Modal -->
     <div class="modal-overlay" id="create-job-modal">
         <div class="modal">
@@ -1360,6 +1394,8 @@
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                     <input type="text" id="new-workspace-name" class="form-control" placeholder="New Workspace Name">
                     <button class="btn btn-primary" onclick="createWorkspace()">Create</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('import-workspace-file').click()">Import</button>
+                    <input type="file" id="import-workspace-file" style="display: none;" onchange="importWorkspace(this)">
                 </div>
                 <div class="table-container">
                     <table class="table" id="workspaces-table">
@@ -1741,9 +1777,15 @@
 
         async function fetchCouncilStatus() {
             try {
-                const res = await fetch('/api/council/status');
-                const data = await res.json();
-                councilStatus = data.data || {};
+                const [councilRes, logsRes] = await Promise.all([
+                    fetch('/api/council/status'),
+                    fetch('/api/logs/config')
+                ]);
+
+                const councilData = await councilRes.json();
+                const logsData = await logsRes.json();
+
+                councilStatus = councilData.data || {};
                 renderSupervisors();
 
                 if(councilStatus.config) {
@@ -1752,6 +1794,12 @@
                     document.getElementById('settings-threshold').value = (councilStatus.config.consensusThreshold || 0.7) * 100;
                     document.getElementById('settings-threshold-val').textContent = Math.round((councilStatus.config.consensusThreshold || 0.7) * 100) + '%';
                 }
+
+                if (logsData.success && logsData.data) {
+                    document.getElementById('settings-max-logs').value = logsData.data.maxLogsPerSession || 1000;
+                    document.getElementById('settings-log-retention').value = (logsData.data.maxLogAgeMs / 3600000) || 24;
+                }
+
             } catch (e) { console.error(e); }
         }
 
@@ -2040,7 +2088,9 @@
                         <td>${m.baseModel}</td>
                         <td><span class="status-badge status-${m.status === 'active' ? 'running' : 'stopped'}">${m.status}</span></td>
                         <td>${m.performance?.approvalRate ? (m.performance.approvalRate * 100).toFixed(0) + '%' : '-'}</td>
-                        <td><button class="btn btn-secondary btn-xs">Register</button></td>
+                        <td>
+                            <button class="btn btn-primary btn-xs" onclick="openTestModelModal('${m.id}', '${m.name}')" ${m.status !== 'active' ? 'disabled' : ''}>Test</button>
+                        </td>
                     </tr>
                 `).join('');
             } catch(e) { console.error(e); }
@@ -2506,7 +2556,11 @@
             const rounds = parseInt(document.getElementById('settings-rounds').value);
             const threshold = parseInt(document.getElementById('settings-threshold').value) / 100;
 
+            const maxLogs = parseInt(document.getElementById('settings-max-logs').value);
+            const retention = parseInt(document.getElementById('settings-log-retention').value);
+
             try {
+                // Save Council Config
                 await fetch('/api/council/config', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -2516,6 +2570,17 @@
                         consensusThreshold: threshold
                     })
                 });
+
+                // Save Log Config
+                await fetch('/api/logs/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        maxLogsPerSession: maxLogs,
+                        maxLogAgeMs: retention * 60 * 60 * 1000
+                    })
+                });
+
                 closeSettingsModal();
                 showToast('Settings saved', 'success');
                 fetchCouncilStatus();
@@ -2905,6 +2970,7 @@
                             <td>${w.name} ${w.status === 'active' ? '<span class="status-badge status-running">Active</span>' : ''}</td>
                             <td>${w.status}</td>
                             <td>
+                                <button class="btn btn-secondary btn-xs" onclick="exportWorkspace('${w.id}')">Export</button>
                                 <button class="btn btn-danger btn-xs" onclick="deleteWorkspace('${w.id}')">Delete</button>
                             </td>
                         </tr>
@@ -2948,6 +3014,92 @@
                 await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
                 fetchWorkspaces();
             }
+        }
+
+        async function exportWorkspace(id) {
+            window.open(`/api/workspaces/${id}/export`, '_blank');
+        }
+
+        async function importWorkspace(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    await fetch('/api/workspaces/import', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    showToast('Workspace imported', 'success');
+                    fetchWorkspaces();
+                } catch(err) {
+                    showToast('Import failed: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            input.value = ''; // Reset
+        }
+
+        // --- Debate History Export ---
+        function exportDebateHistory(format) {
+            window.open(`/api/debate-history/export/${format}`, '_blank');
+        }
+
+        // --- Test Model Chat ---
+        let currentTestModelId = null;
+
+        function openTestModelModal(id, name) {
+            currentTestModelId = id;
+            document.getElementById('test-model-name').textContent = name;
+            document.getElementById('test-chat-history').innerHTML = '<div style="color: var(--text-muted); text-align: center;">Start a conversation...</div>';
+            document.getElementById('test-model-modal').classList.add('show');
+        }
+
+        function closeTestModelModal() {
+            document.getElementById('test-model-modal').classList.remove('show');
+            currentTestModelId = null;
+        }
+
+        async function sendTestMessage() {
+            const input = document.getElementById('test-chat-input');
+            const content = input.value.trim();
+            if (!content || !currentTestModelId) return;
+
+            const historyDiv = document.getElementById('test-chat-history');
+            if (historyDiv.children[0]?.textContent === 'Start a conversation...') historyDiv.innerHTML = '';
+
+            // User msg
+            historyDiv.innerHTML += `
+                <div style="margin-bottom: 0.5rem; text-align: right;">
+                    <span style="background: var(--accent-blue); padding: 0.25rem 0.5rem; border-radius: 4px; display: inline-block;">${content}</span>
+                </div>`;
+            input.value = '';
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            try {
+                const res = await fetch(`/api/fine-tuned-models/models/${currentTestModelId}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ messages: [{ role: 'user', content }] })
+                });
+                const data = await res.json();
+
+                // AI Response
+                if (data.success) {
+                    historyDiv.innerHTML += `
+                        <div style="margin-bottom: 0.5rem; text-align: left;">
+                            <span style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; display: inline-block; white-space: pre-wrap;">${data.data.response}</span>
+                        </div>`;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch(e) {
+                historyDiv.innerHTML += `<div style="color: var(--accent-red); font-size: 0.75rem;">Error: ${e.message}</div>`;
+            }
+            historyDiv.scrollTop = historyDiv.scrollHeight;
         }
 
         // --- Notifications / Veto ---

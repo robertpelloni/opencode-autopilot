@@ -249,6 +249,31 @@ app.post('/models/compare', async (c) => {
 
 // ============ Supervisor Routes ============
 
+app.post('/models/:id/chat', async (c) => {
+  try {
+    const body = await c.req.json();
+    const modelId = c.req.param('id');
+    let supervisor = fineTunedModelManager.getSupervisor(modelId);
+
+    if (!supervisor) {
+      // Try to auto-create if model is active
+      const model = fineTunedModelManager.getModel(modelId);
+      if (model && model.deploymentStatus === 'active') {
+        supervisor = fineTunedModelManager.createSupervisorFromModel(modelId);
+      } else {
+        return c.json({ success: false, error: 'Supervisor not found or model not active' }, 404);
+      }
+    }
+
+    const messages = body.messages || [];
+    const response = await supervisor.chat(messages);
+
+    return c.json({ success: true, data: { response } });
+  } catch (error) {
+    return c.json({ success: false, error: (error as Error).message }, 400);
+  }
+});
+
 app.post('/models/:id/supervisor', async (c) => {
   try {
     const body = await c.req.json();

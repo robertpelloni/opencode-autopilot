@@ -20,6 +20,10 @@ class LogRotationService {
     this.config = { ...this.config, ...config };
   }
 
+  getConfig(): LogRotationConfig {
+    return { ...this.config };
+  }
+
   registerSession(sessionId: string): void {
     if (!this.sessionLogs.has(sessionId)) {
       this.sessionLogs.set(sessionId, {
