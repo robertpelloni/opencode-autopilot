@@ -29,7 +29,8 @@ describe('DebateHistoryService', () => {
 
   beforeEach(() => {
     service = new DebateHistoryService();
-    service.updateConfig({ enabled: false, autoSave: false });
+    service.updateConfig({ enabled: true, autoSave: true });
+    service.clearAll();
   });
 
   describe('saveDebate', () => {

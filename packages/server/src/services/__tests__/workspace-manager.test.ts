@@ -7,6 +7,7 @@ describe('WorkspaceManagerService', () => {
 
   beforeEach(() => {
     manager = new WorkspaceManagerService();
+    manager.clearAllWorkspaces();
   });
 
   describe('workspace CRUD', () => {
