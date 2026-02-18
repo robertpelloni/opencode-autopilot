@@ -66,6 +66,14 @@ class SmartPilot {
     return { ...this.config };
   }
 
+  async triggerTask(sessionId: string, task: DevelopmentTask): Promise<void> {
+    const session = sessionManager.getSession(sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    // Process immediately without polling
+    await this.runDebateAndRespond(session, task);
+  }
+
   start(): void {
     if (this.pollTimer) return;
     if (!this.config.enabled) return;

@@ -24,6 +24,7 @@ import fineTunedModelsRoutes from './routes/fine-tuned-models.js';
 import collaborativeDebatesRoutes from './routes/collaborative-debates.js';
 import systemRoutes from './routes/system.js';
 import logsRoutes from './routes/logs.js';
+import ideRoutes from './routes/ide.js';
 import { loadConfig } from './services/config.js';
 import { council } from './services/council.js';
 import { createSupervisors } from './supervisors/index.js';
@@ -257,6 +258,7 @@ app.route('/api/fine-tuned-models', fineTunedModelsRoutes);
 app.route('/api/collaborative-debates', collaborativeDebatesRoutes);
 app.route('/api/system', systemRoutes);
 app.route('/api/logs', logsRoutes);
+app.route('/api/ide', ideRoutes);
 app.route('/ws', wsRoutes);
 
 app.use('/dashboard/*', serveStatic({ root: '../../public' }));
