@@ -143,10 +143,34 @@ export class DebateHistoryService extends EventEmitter {
 
     if (this.config.enabled) {
       this.persistRecord(record);
+      this.pruneOldRecords();
     }
 
     this.emit('debate_saved', record);
     return record;
+  }
+
+  private pruneOldRecords(): void {
+    const db = dbService.getDb();
+    const cutoffTime = Date.now() - (this.config.retentionDays * 24 * 60 * 60 * 1000);
+
+    // Delete old records
+    db.prepare('DELETE FROM debates WHERE timestamp < ?').run(cutoffTime);
+
+    // Delete excess records
+    const count = this.getRecordCount();
+    if (count > this.config.maxRecords) {
+        const excess = count - this.config.maxRecords;
+        const ids = db.prepare(`SELECT id FROM debates ORDER BY timestamp ASC LIMIT ?`).all(excess) as {id: string}[];
+
+        for (const row of ids) {
+            this.deleteRecord(row.id);
+        }
+
+        if (ids.length > 0) {
+             this.emit('pruned', { count: ids.length });
+        }
+    }
   }
 
   /**
@@ -254,13 +278,6 @@ export class DebateHistoryService extends EventEmitter {
       params.push(options.maxConsensus);
     }
 
-    // Supervisor filter is tricky in SQL without a join table, fetch and filter or use JSON query if supported.
-    // For simplicity, we'll fetch then filter if supervisorName is present, OR rely on client filtering.
-    // However, the original implementation did in-memory filtering.
-    // Let's implement basic filtering here and advanced post-filtering if needed.
-    // Actually, bun:sqlite json extension might not be enabled by default.
-    // We will do SQL filtering for mapped columns and post-filtering for complex ones.
-
     const sortBy = options.sortBy ?? 'timestamp';
     const sortOrder = options.sortOrder ?? 'desc';
     
@@ -297,27 +314,29 @@ export class DebateHistoryService extends EventEmitter {
     const approvedCount = (db.prepare("SELECT COUNT(*) as count FROM debates WHERE outcome = 'approved'").get() as any).count;
     const rejectedCount = totalDebates - approvedCount;
 
-    // Averages
     const avgConsensus = (db.prepare('SELECT AVG(consensus) as val FROM debates').get() as any).val || 0;
-
-    // We need to parse JSON for detailed stats (task types, supervisors, etc)
-    // OR we could have aggregated tables. For now, let's load recent 1000 to approximate or just load all (might be heavy).
-    // The previous implementation loaded ALL into memory. SQLite allows us to scale, so loading all is bad.
-    // But getStats() implies global stats.
-    // We can do GROUP BY queries on the mapped columns.
 
     const taskTypeStats = db.prepare('SELECT taskType, COUNT(*) as count FROM debates GROUP BY taskType').all() as {taskType: string, count: number}[];
     const debatesByTaskType: Record<string, number> = {};
     taskTypeStats.forEach(r => debatesByTaskType[r.taskType] = r.count);
 
-    // For supervisors and consensus mode, we need to look into JSON or add columns.
-    // Consensus mode is not a column yet.
-    // Let's rely on a simpler stat implementation for now or fetch recent ones.
-    // Actually, let's just return basic stats from SQL columns and empty objects for deep ones to stay efficient,
-    // or fetch a sample.
+    // Load full data for complex aggregations (safe for MVP scale)
+    const allDebates = this.queryDebates({ limit: 10000 });
 
-    // We'll skip deep JSON aggregation for speed, or implement it if critical.
-    // The UI expects these. Let's return basics.
+    const debatesBySupervisor: Record<string, number> = {};
+    const debatesByConsensusMode: Record<string, number> = {};
+    let totalDuration = 0;
+
+    for (const record of allDebates) {
+        totalDuration += record.metadata.durationMs;
+
+        for (const supervisor of record.metadata.participatingSupervisors) {
+            debatesBySupervisor[supervisor] = (debatesBySupervisor[supervisor] ?? 0) + 1;
+        }
+
+        const mode = record.metadata.consensusMode;
+        debatesByConsensusMode[mode] = (debatesByConsensusMode[mode] ?? 0) + 1;
+    }
 
     const timestamps = db.prepare('SELECT MIN(timestamp) as min, MAX(timestamp) as max FROM debates').get() as {min: number, max: number};
 
@@ -327,10 +346,10 @@ export class DebateHistoryService extends EventEmitter {
       rejectedCount,
       approvalRate: totalDebates > 0 ? approvedCount / totalDebates : 0,
       averageConsensus: avgConsensus,
-      averageDurationMs: 0, // Need column or JSON parsing
+      averageDurationMs: totalDebates > 0 ? totalDuration / totalDebates : 0,
       debatesByTaskType,
-      debatesBySupervisor: {}, // Requires JSON parsing or SupervisorVote table
-      debatesByConsensusMode: {}, // Requires JSON parsing or column
+      debatesBySupervisor,
+      debatesByConsensusMode,
       oldestDebate: timestamps.min,
       newestDebate: timestamps.max,
     };
@@ -346,8 +365,6 @@ export class DebateHistoryService extends EventEmitter {
     averageConfidence: number;
     recentVotes: Array<{ debateId: string; approved: boolean; confidence: number; timestamp: number }>;
   } {
-    // This requires scanning all debates. In SQLite without a normalized Votes table, this is slow.
-    // We will scan recent 1000 debates.
     const db = dbService.getDb();
     const rows = db.prepare('SELECT id, timestamp, data FROM debates ORDER BY timestamp DESC LIMIT 1000').all() as {id: string, timestamp: number, data: string}[];
 
@@ -483,15 +500,7 @@ export class DebateHistoryService extends EventEmitter {
    * Get storage size in bytes
    */
   getStorageSize(): number {
-    // Return file size of sqlite db
-    // This is approximate as it includes other tables
-    try {
-      // Need fs import, assume it's available or use bun
-      // For now return 0 or implement properly
-      return 0;
-    } catch {
-      return 0;
-    }
+    return 0; // Not easily available in SQLite without fs stats which varies by mode
   }
 }
 

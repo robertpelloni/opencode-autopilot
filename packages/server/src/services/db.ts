@@ -35,6 +35,7 @@ class DatabaseService {
         id TEXT PRIMARY KEY,
         title TEXT,
         sessionId TEXT,
+        workspaceId TEXT,
         taskType TEXT,
         status TEXT,
         consensus REAL,

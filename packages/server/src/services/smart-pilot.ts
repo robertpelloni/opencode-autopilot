@@ -70,7 +70,52 @@ class SmartPilot {
     const session = sessionManager.getSession(sessionId);
     if (!session) throw new Error(`Session ${sessionId} not found`);
 
-    // Process immediately without polling
+    // Check if task needs decomposition (simple heuristic: description length or keyword)
+    const isComplex = task.description.length > 50 ||
+                      task.description.toLowerCase().includes('implement') ||
+                      task.description.toLowerCase().includes('create');
+
+    if (isComplex) {
+      wsManager.notifyLog(sessionId, {
+        timestamp: Date.now(),
+        level: 'info',
+        message: `[SmartPilot] Analyzing task complexity... initiating Swarm decomposition.`,
+        source: 'smart-pilot-swarm',
+      });
+
+      try {
+        const plan = await council.planTask(task);
+
+        wsManager.notifyLog(sessionId, {
+          timestamp: Date.now(),
+          level: 'success',
+          message: `[SmartPilot] Swarm Plan Generated: ${plan.subtasks.length} subtasks. Reasoning: ${plan.reasoning}`,
+          source: 'smart-pilot-swarm',
+        });
+
+        for (const subtask of plan.subtasks) {
+          wsManager.notifyLog(sessionId, {
+            timestamp: Date.now(),
+            level: 'info',
+            message: `[SmartPilot] Swarm executing subtask: ${subtask.title} (${subtask.description})`,
+            source: 'smart-pilot-swarm',
+          });
+
+          await this.runDebateAndRespond(session, {
+            id: subtask.id,
+            description: subtask.description,
+            context: task.context,
+            files: task.files, // Inherit parent files
+          });
+        }
+
+        return; // Finished swarm execution
+      } catch (e) {
+        console.error('Swarm decomposition failed, falling back to standard execution', e);
+      }
+    }
+
+    // Process immediately without polling (or fallback)
     await this.runDebateAndRespond(session, task);
   }
 

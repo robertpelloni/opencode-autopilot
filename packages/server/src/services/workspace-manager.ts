@@ -188,6 +188,17 @@ export class WorkspaceManagerService extends EventEmitter {
     return rows.map(r => this.mapRowToWorkspace(r));
   }
 
+  getWorkspacesByStatus(status: WorkspaceStatus): Workspace[] {
+    const db = dbService.getDb();
+    const rows = db.prepare('SELECT * FROM workspaces WHERE status = ?').all(status) as any[];
+    return rows.map(r => this.mapRowToWorkspace(r));
+  }
+
+  getWorkspacesByTag(tag: string): Workspace[] {
+    // SQLite JSON query would be better, but for compatibility/simplicity, filtering in memory after fetch active/all
+    return this.getAllWorkspaces().filter(w => w.config.tags && w.config.tags.includes(tag));
+  }
+
   private mapRowToWorkspace(row: any): Workspace {
     const data = JSON.parse(row.config);
     return {
@@ -295,16 +306,40 @@ export class WorkspaceManagerService extends EventEmitter {
     const workspace = this.getWorkspace(workspaceId);
     if (!workspace) return undefined;
 
-    // TODO: Concurrent check needs querying debates table.
-    // Assuming concurrent limit is high or checked elsewhere for MVP migration.
+    const db = dbService.getDb();
+
+    // Check concurrent limit
+    const activeCount = (db.prepare("SELECT COUNT(*) as count FROM debates WHERE workspaceId = ? AND status = 'in_progress'").get(workspaceId) as any).count;
+
+    if (activeCount >= workspace.config.maxConcurrentDebates) {
+      this.emit('workspace:debate:limit_reached', { workspaceId, limit: workspace.config.maxConcurrentDebates });
+      return undefined;
+    }
+
+    const debateId = this.generateId();
+    const startedAt = new Date();
 
     const debate: WorkspaceDebate = {
       workspaceId,
-      debateId: this.generateId(),
+      debateId,
       task,
-      startedAt: new Date(),
+      startedAt,
       status: 'in_progress',
     };
+
+    // Insert into debates table (using partial data since it's in progress)
+    db.prepare(`
+      INSERT INTO debates (id, title, workspaceId, taskType, status, timestamp, data)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      debateId,
+      task.description.substring(0, 255),
+      workspaceId,
+      'general',
+      'in_progress',
+      startedAt.getTime(),
+      JSON.stringify(debate)
+    );
 
     this.emit('workspace:debate:started', debate);
     return debate;
@@ -320,19 +355,41 @@ export class WorkspaceManagerService extends EventEmitter {
     const workspace = this.getWorkspace(workspaceId);
     if (!workspace) return undefined;
 
-    // Simulate completion
-    const debate: WorkspaceDebate = {
-      workspaceId,
-      debateId,
-      task: { id: 'unknown', description: 'unknown' }, // Lost context if not persisted fully in separate table
+    const db = dbService.getDb();
+    const row = db.prepare('SELECT data FROM debates WHERE id = ?').get(debateId) as { data: string };
+
+    if (!row) return undefined;
+
+    const existingDebate = JSON.parse(row.data) as WorkspaceDebate;
+    const completedAt = new Date();
+    const duration = completedAt.getTime() - new Date(existingDebate.startedAt).getTime();
+
+    const updatedDebate: WorkspaceDebate = {
+      ...existingDebate,
       decision,
-      startedAt: new Date(),
-      completedAt: new Date(),
+      completedAt,
       status: 'completed',
     };
 
+    // Update debate record
+    db.prepare(`
+      UPDATE debates
+      SET status = 'completed',
+          outcome = ?,
+          consensus = ?,
+          weightedConsensus = ?,
+          data = ?
+      WHERE id = ?
+    `).run(
+      decision.approved ? 'approved' : 'rejected',
+      decision.consensus,
+      decision.weightedConsensus,
+      JSON.stringify(updatedDebate),
+      debateId
+    );
+
+    // Update workspace metadata
     const totalDebates = workspace.metadata.totalDebates + 1;
-    const duration = 0; // Unknown without persistence of start time
     const previousTotalDuration = workspace.metadata.averageDebateDuration * workspace.metadata.totalDebates;
       
     this.updateWorkspace(workspaceId, {
@@ -343,39 +400,66 @@ export class WorkspaceManagerService extends EventEmitter {
           rejectedDebates: workspace.metadata.rejectedDebates + (decision.approved ? 0 : 1),
           totalTokensUsed: workspace.metadata.totalTokensUsed + tokensUsed,
           estimatedCost: workspace.metadata.estimatedCost + cost,
-          lastDebateAt: new Date(),
+          lastDebateAt: completedAt,
           averageDebateDuration: (previousTotalDuration + duration) / totalDebates,
         },
     });
 
-    this.emit('workspace:debate:completed', debate);
-    return debate;
+    this.emit('workspace:debate:completed', updatedDebate);
+    return updatedDebate;
   }
 
   failDebate(workspaceId: string, debateId: string, error: string): WorkspaceDebate | undefined {
-    const debate: WorkspaceDebate = {
-        workspaceId,
-        debateId,
-        task: { id: 'unknown', description: 'unknown' },
-        startedAt: new Date(),
-        completedAt: new Date(),
-        status: 'failed',
+    const db = dbService.getDb();
+    const row = db.prepare('SELECT data FROM debates WHERE id = ?').get(debateId) as { data: string };
+    if (!row) return undefined;
+
+    const existingDebate = JSON.parse(row.data) as WorkspaceDebate;
+    const updatedDebate: WorkspaceDebate = {
+      ...existingDebate,
+      completedAt: new Date(),
+      status: 'failed',
     };
-    this.emit('workspace:debate:failed', { debate, error });
-    return debate;
+
+    db.prepare("UPDATE debates SET status = 'failed', data = ? WHERE id = ?").run(
+      JSON.stringify(updatedDebate),
+      debateId
+    );
+
+    this.emit('workspace:debate:failed', { debate: updatedDebate, error });
+    return updatedDebate;
   }
 
-  // Simplified stubs for non-critical listing functions that relied on in-memory array
-  getWorkspaceDebates(workspaceId: string, limit?: number): WorkspaceDebate[] {
-    return [];
+  getWorkspaceDebates(workspaceId: string, limit: number = 50): WorkspaceDebate[] {
+    const db = dbService.getDb();
+    const rows = db.prepare(`
+      SELECT data FROM debates
+      WHERE workspaceId = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(workspaceId, limit) as { data: string }[];
+
+    return rows.map(r => JSON.parse(r.data));
   }
 
   getActiveDebates(workspaceId: string): WorkspaceDebate[] {
-    return [];
+    const db = dbService.getDb();
+    const rows = db.prepare(`
+      SELECT data FROM debates
+      WHERE workspaceId = ? AND status = 'in_progress'
+    `).all(workspaceId) as { data: string }[];
+
+    return rows.map(r => JSON.parse(r.data));
   }
 
   getAllActiveDebates(): WorkspaceDebate[] {
-    return [];
+    const db = dbService.getDb();
+    const rows = db.prepare(`
+      SELECT data FROM debates
+      WHERE status = 'in_progress'
+    `).all() as { data: string }[];
+
+    return rows.map(r => JSON.parse(r.data));
   }
 
   // ============ Statistics & Analytics ============
@@ -415,11 +499,30 @@ export class WorkspaceManagerService extends EventEmitter {
   }
 
   compareWorkspaces(workspaceIds: string[]): WorkspaceComparison {
-    // Basic implementation
+    const metrics = workspaceIds.map(id => {
+      const stats = this.getWorkspaceStats(id);
+      const workspace = this.getWorkspace(id);
+      if (!stats || !workspace) return null;
+
+      return {
+        workspaceId: id,
+        name: workspace.name,
+        debates: stats.debates.total,
+        approvalRate: stats.debates.total > 0 ? stats.debates.approved / stats.debates.total : 0,
+        avgConsensus: stats.performance.avgConsensus,
+        avgDuration: stats.performance.avgDurationMs,
+        totalCost: stats.cost.total,
+      };
+    }).filter((m): m is NonNullable<typeof m> => m !== null);
+
+    const byApprovalRate = [...metrics].sort((a, b) => b.approvalRate - a.approvalRate).map(m => m.workspaceId);
+    const byConsensus = [...metrics].sort((a, b) => b.avgConsensus - a.avgConsensus).map(m => m.workspaceId);
+    const byEfficiency = [...metrics].sort((a, b) => a.totalCost - b.totalCost).map(m => m.workspaceId); // Lower cost is better
+
     return {
         workspaces: workspaceIds,
-        metrics: [],
-        ranking: { byApprovalRate: [], byConsensus: [], byEfficiency: [] }
+        metrics,
+        ranking: { byApprovalRate, byConsensus, byEfficiency }
     };
   }
 
@@ -462,9 +565,11 @@ export class WorkspaceManagerService extends EventEmitter {
     const workspace = this.getWorkspace(id);
     if (!workspace) return undefined;
 
+    const debates = this.getWorkspaceDebates(id, 1000);
+
     return {
       workspace,
-      debates: [], // Not fetching deep debates for now
+      debates,
     };
   }
 
@@ -505,6 +610,8 @@ export class WorkspaceManagerService extends EventEmitter {
 
   clearAllWorkspaces(): void {
     const db = dbService.getDb();
+    // Also clear debates associated with workspaces
+    db.prepare('DELETE FROM debates WHERE workspaceId IS NOT NULL').run();
     db.prepare('DELETE FROM workspaces').run();
     this.activeWorkspaceId = null;
     this.emit('workspaces:cleared');
