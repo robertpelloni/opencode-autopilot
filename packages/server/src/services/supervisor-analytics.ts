@@ -326,7 +326,7 @@ class SupervisorAnalyticsService extends EventEmitter {
 
     const byOutcome: Record<string, number> = { approved: 0, rejected: 0, deadlock: 0 };
     const byConsensusMode: Record<string, number> = {};
-    const participationBySupervsor: Record<string, number> = {};
+    const participationBySupervisor: Record<string, number> = {};
 
     let totalRounds = 0;
     let totalDuration = 0;
@@ -338,7 +338,7 @@ class SupervisorAnalyticsService extends EventEmitter {
       totalDuration += debate.durationMs;
 
       for (const supervisor of debate.participatingSupervisors) {
-        participationBySupervsor[supervisor] = (participationBySupervsor[supervisor] || 0) + 1;
+        participationBySupervisor[supervisor] = (participationBySupervisor[supervisor] || 0) + 1;
       }
     }
 
@@ -348,7 +348,7 @@ class SupervisorAnalyticsService extends EventEmitter {
       byConsensusMode,
       avgRounds: debates.length > 0 ? totalRounds / debates.length : 0,
       avgDurationMs: debates.length > 0 ? totalDuration / debates.length : 0,
-      participationBySupervsor,
+      participationBySupervisor,
     };
   }
 

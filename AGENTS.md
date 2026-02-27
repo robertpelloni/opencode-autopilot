@@ -1,9 +1,22 @@
-# AI Agent Guidelines
+# Agent Instructions
 
-Please refer to `LLM_INSTRUCTIONS.md` for the core operating procedures and directives for this project.
+**Primary Reference:** Please consult `LLM_INSTRUCTIONS.md` for the comprehensive, universal developer guidelines, workflow protocols, and architectural standards for this project.
 
-## Additional Notes for Agents
+**Deep Analysis:** See `HANDOVER.md` for a detailed architectural breakdown, technical debt assessment, and strategic next steps.
 
-*   **Context**: You are working in a Bun + Hono + React (Ink) environment.
-*   **State Management**: Be careful with global state in the server; ensure services are singletons where appropriate.
-*   **UI**: The web dashboard is a single HTML file (`public/index.html`) serving as a SPA. Keep it lightweight but functional.
+## Project Specifics
+
+*   **Repo Root:** `/home/jules/packages/server` is the main backend. `/home/jules/public` is the frontend.
+*   **Running Tests:** `cd packages/server && bun test`
+*   **Running Server:** `cd packages/server && bun run dev` (Port 3000 or 3847)
+*   **Frontend Verification:** Always use Playwright scripts for UI changes.
+
+## Model-Specific Instructions
+
+See individual files if you are:
+*   **Claude:** `CLAUDE.md`
+*   **Gemini:** `GEMINI.md`
+*   **GPT:** `GPT.md`
+*   **Copilot:** `copilot-instructions.md`
+
+**Goal:** Complete implementation of OpenCode Autopilot with 100% feature coverage, robust testing, and comprehensive UI.

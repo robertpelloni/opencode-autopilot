@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from 'fs';
-import { join } from 'path';
+import { dbService } from './db.js';
 import type { CouncilDecision, DevelopmentTask, Vote, ConsensusMode, TaskType } from '@opencode-autopilot/shared';
 
 /**
@@ -90,7 +89,6 @@ export class DebateHistoryService extends EventEmitter {
     retentionDays: 90,
   };
 
-  private records: Map<string, DebateRecord> = new Map();
   private initialized = false;
 
   constructor() {
@@ -102,76 +100,8 @@ export class DebateHistoryService extends EventEmitter {
    */
   initialize(): void {
     if (this.initialized) return;
-
-    if (this.config.enabled) {
-      this.ensureStorageDir();
-      this.loadAllRecords();
-      this.pruneOldRecords();
-    }
-
     this.initialized = true;
-    this.emit('initialized', { recordCount: this.records.size });
-  }
-
-  /**
-   * Ensure storage directory exists
-   */
-  private ensureStorageDir(): void {
-    if (!existsSync(this.config.storageDir)) {
-      mkdirSync(this.config.storageDir, { recursive: true });
-    }
-  }
-
-  /**
-   * Load all records from storage
-   */
-  private loadAllRecords(): void {
-    try {
-      const files = readdirSync(this.config.storageDir).filter(f => f.endsWith('.json'));
-      
-      for (const file of files) {
-        try {
-          const filePath = join(this.config.storageDir, file);
-          const content = readFileSync(filePath, 'utf-8');
-          const record: DebateRecord = JSON.parse(content);
-          this.records.set(record.id, record);
-        } catch {
-        }
-      }
-    } catch {
-    }
-  }
-
-  /**
-   * Prune records older than retention period
-   */
-  private pruneOldRecords(): void {
-    const cutoffTime = Date.now() - (this.config.retentionDays * 24 * 60 * 60 * 1000);
-    const toDelete: string[] = [];
-
-    for (const [id, record] of this.records) {
-      if (record.timestamp < cutoffTime) {
-        toDelete.push(id);
-      }
-    }
-
-    for (const id of toDelete) {
-      this.deleteRecord(id);
-    }
-
-    if (this.records.size > this.config.maxRecords) {
-      const sorted = Array.from(this.records.values())
-        .sort((a, b) => a.timestamp - b.timestamp);
-      
-      const excess = sorted.slice(0, this.records.size - this.config.maxRecords);
-      for (const record of excess) {
-        this.deleteRecord(record.id);
-      }
-    }
-
-    if (toDelete.length > 0) {
-      this.emit('pruned', { count: toDelete.length });
-    }
+    this.emit('initialized', { recordCount: this.getRecordCount() });
   }
 
   /**
@@ -192,10 +122,11 @@ export class DebateHistoryService extends EventEmitter {
     metadata: Partial<DebateMetadata>
   ): DebateRecord {
     const id = this.generateId();
+    const timestamp = Date.now();
     
     const record: DebateRecord = {
       id,
-      timestamp: Date.now(),
+      timestamp,
       task,
       decision,
       metadata: {
@@ -210,192 +141,217 @@ export class DebateHistoryService extends EventEmitter {
       },
     };
 
-    this.records.set(id, record);
-
-    if (this.config.autoSave && this.config.enabled) {
+    if (this.config.enabled) {
       this.persistRecord(record);
-    }
-
-    this.emit('debate_saved', record);
-    
-    if (this.records.size > this.config.maxRecords) {
       this.pruneOldRecords();
     }
 
+    this.emit('debate_saved', record);
     return record;
   }
 
+  private pruneOldRecords(): void {
+    const db = dbService.getDb();
+    const cutoffTime = Date.now() - (this.config.retentionDays * 24 * 60 * 60 * 1000);
+
+    // Delete old records
+    db.prepare('DELETE FROM debates WHERE timestamp < ?').run(cutoffTime);
+
+    // Delete excess records
+    const count = this.getRecordCount();
+    if (count > this.config.maxRecords) {
+        const excess = count - this.config.maxRecords;
+        const ids = db.prepare(`SELECT id FROM debates ORDER BY timestamp ASC LIMIT ?`).all(excess) as {id: string}[];
+
+        for (const row of ids) {
+            this.deleteRecord(row.id);
+        }
+
+        if (ids.length > 0) {
+             this.emit('pruned', { count: ids.length });
+        }
+    }
+  }
+
   /**
-   * Persist a single record to disk
+   * Persist a single record to SQLite
    */
   private persistRecord(record: DebateRecord): void {
     try {
-      this.ensureStorageDir();
-      const filePath = join(this.config.storageDir, `${record.id}.json`);
-      writeFileSync(filePath, JSON.stringify(record, null, 2));
+      const db = dbService.getDb();
+      const stmt = db.prepare(`
+        INSERT INTO debates (
+          id, title, sessionId, taskType, status, consensus, weightedConsensus, outcome, rounds, timestamp, data
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        record.id,
+        record.task.description.substring(0, 255), // Use description as title
+        record.metadata.sessionId || null,
+        record.metadata.dynamicSelection?.taskType || 'general',
+        'completed',
+        record.decision.consensus,
+        record.decision.weightedConsensus || record.decision.consensus,
+        record.decision.approved ? 'approved' : 'rejected',
+        record.metadata.debateRounds,
+        record.timestamp,
+        JSON.stringify(record)
+      );
     } catch (error) {
       this.emit('error', { action: 'persist', recordId: record.id, error });
     }
   }
 
   /**
-   * Delete a record from memory and disk
+   * Delete a record from SQLite
    */
   deleteRecord(id: string): boolean {
-    const existed = this.records.delete(id);
+    if (!this.config.enabled) return false;
     
-    if (existed && this.config.enabled) {
-      try {
-        const filePath = join(this.config.storageDir, `${id}.json`);
-        if (existsSync(filePath)) {
-          unlinkSync(filePath);
-        }
-      } catch {
-      }
-    }
+    const db = dbService.getDb();
+    const stmt = db.prepare('DELETE FROM debates WHERE id = ?');
+    const info = stmt.run(id);
 
-    if (existed) {
+    const deleted = info.changes > 0;
+    if (deleted) {
       this.emit('debate_deleted', { id });
     }
 
-    return existed;
+    return deleted;
   }
 
   /**
    * Get a single debate record by ID
    */
   getDebate(id: string): DebateRecord | undefined {
-    return this.records.get(id);
+    const db = dbService.getDb();
+    const stmt = db.prepare('SELECT data FROM debates WHERE id = ?');
+    const row = stmt.get(id) as { data: string } | undefined;
+
+    if (row) {
+      return JSON.parse(row.data);
+    }
+    return undefined;
   }
 
   /**
    * Query debate records with filters
    */
   queryDebates(options: DebateQueryOptions = {}): DebateRecord[] {
-    let results = Array.from(this.records.values());
+    const db = dbService.getDb();
+    let query = 'SELECT data FROM debates WHERE 1=1';
+    const params: any[] = [];
 
     if (options.sessionId) {
-      results = results.filter(r => r.metadata.sessionId === options.sessionId);
+      query += ' AND sessionId = ?';
+      params.push(options.sessionId);
     }
 
     if (options.taskType) {
-      results = results.filter(r => r.metadata.dynamicSelection?.taskType === options.taskType);
+      query += ' AND taskType = ?';
+      params.push(options.taskType);
     }
 
     if (options.approved !== undefined) {
-      results = results.filter(r => r.decision.approved === options.approved);
-    }
-
-    if (options.supervisorName) {
-      results = results.filter(r => 
-        r.metadata.participatingSupervisors.includes(options.supervisorName!)
-      );
+      query += ' AND outcome = ?';
+      params.push(options.approved ? 'approved' : 'rejected');
     }
 
     if (options.fromTimestamp) {
-      results = results.filter(r => r.timestamp >= options.fromTimestamp!);
+      query += ' AND timestamp >= ?';
+      params.push(options.fromTimestamp);
     }
 
     if (options.toTimestamp) {
-      results = results.filter(r => r.timestamp <= options.toTimestamp!);
+      query += ' AND timestamp <= ?';
+      params.push(options.toTimestamp);
     }
 
     if (options.minConsensus !== undefined) {
-      results = results.filter(r => r.decision.consensus >= options.minConsensus!);
+      query += ' AND consensus >= ?';
+      params.push(options.minConsensus);
     }
 
     if (options.maxConsensus !== undefined) {
-      results = results.filter(r => r.decision.consensus <= options.maxConsensus!);
+      query += ' AND consensus <= ?';
+      params.push(options.maxConsensus);
     }
 
     const sortBy = options.sortBy ?? 'timestamp';
     const sortOrder = options.sortOrder ?? 'desc';
     
-    results.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'timestamp':
-          comparison = a.timestamp - b.timestamp;
-          break;
-        case 'consensus':
-          comparison = a.decision.consensus - b.decision.consensus;
-          break;
-        case 'duration':
-          comparison = a.metadata.durationMs - b.metadata.durationMs;
-          break;
-      }
+    query += ` ORDER BY ${sortBy} ${sortOrder.toUpperCase()}`;
 
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    const offset = options.offset ?? 0;
+    // Pagination
     const limit = options.limit ?? 50;
+    const offset = options.offset ?? 0;
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const stmt = db.prepare(query);
+    const rows = stmt.all(...params) as { data: string }[];
     
-    return results.slice(offset, offset + limit);
+    let results = rows.map(r => JSON.parse(r.data) as DebateRecord);
+
+    // Post-filter for supervisor name as it's inside the JSON/metadata
+    if (options.supervisorName) {
+      results = results.filter(r =>
+        r.metadata.participatingSupervisors.includes(options.supervisorName!)
+      );
+    }
+
+    return results;
   }
 
   /**
    * Get statistics about debate history
    */
   getStats(): DebateStats {
-    const records = Array.from(this.records.values());
+    const db = dbService.getDb();
     
-    if (records.length === 0) {
-      return {
-        totalDebates: 0,
-        approvedCount: 0,
-        rejectedCount: 0,
-        approvalRate: 0,
-        averageConsensus: 0,
-        averageDurationMs: 0,
-        debatesByTaskType: {},
-        debatesBySupervisor: {},
-        debatesByConsensusMode: {},
-      };
-    }
+    const totalDebates = (db.prepare('SELECT COUNT(*) as count FROM debates').get() as any).count;
+    const approvedCount = (db.prepare("SELECT COUNT(*) as count FROM debates WHERE outcome = 'approved'").get() as any).count;
+    const rejectedCount = totalDebates - approvedCount;
 
-    const approvedCount = records.filter(r => r.decision.approved).length;
-    const rejectedCount = records.length - approvedCount;
+    const avgConsensus = (db.prepare('SELECT AVG(consensus) as val FROM debates').get() as any).val || 0;
 
-    const totalConsensus = records.reduce((sum, r) => sum + r.decision.consensus, 0);
-    const totalDuration = records.reduce((sum, r) => sum + r.metadata.durationMs, 0);
-
+    const taskTypeStats = db.prepare('SELECT taskType, COUNT(*) as count FROM debates GROUP BY taskType').all() as {taskType: string, count: number}[];
     const debatesByTaskType: Record<string, number> = {};
-    for (const record of records) {
-      const taskType = record.metadata.dynamicSelection?.taskType ?? 'general';
-      debatesByTaskType[taskType] = (debatesByTaskType[taskType] ?? 0) + 1;
-    }
+    taskTypeStats.forEach(r => debatesByTaskType[r.taskType] = r.count);
+
+    // Load full data for complex aggregations (safe for MVP scale)
+    const allDebates = this.queryDebates({ limit: 10000 });
 
     const debatesBySupervisor: Record<string, number> = {};
-    for (const record of records) {
-      for (const supervisor of record.metadata.participatingSupervisors) {
-        debatesBySupervisor[supervisor] = (debatesBySupervisor[supervisor] ?? 0) + 1;
-      }
-    }
-
     const debatesByConsensusMode: Record<string, number> = {};
-    for (const record of records) {
-      const mode = record.metadata.consensusMode;
-      debatesByConsensusMode[mode] = (debatesByConsensusMode[mode] ?? 0) + 1;
+    let totalDuration = 0;
+
+    for (const record of allDebates) {
+        totalDuration += record.metadata.durationMs;
+
+        for (const supervisor of record.metadata.participatingSupervisors) {
+            debatesBySupervisor[supervisor] = (debatesBySupervisor[supervisor] ?? 0) + 1;
+        }
+
+        const mode = record.metadata.consensusMode;
+        debatesByConsensusMode[mode] = (debatesByConsensusMode[mode] ?? 0) + 1;
     }
 
-    const timestamps = records.map(r => r.timestamp);
-    const oldestDebate = Math.min(...timestamps);
-    const newestDebate = Math.max(...timestamps);
+    const timestamps = db.prepare('SELECT MIN(timestamp) as min, MAX(timestamp) as max FROM debates').get() as {min: number, max: number};
 
     return {
-      totalDebates: records.length,
+      totalDebates,
       approvedCount,
       rejectedCount,
-      approvalRate: approvedCount / records.length,
-      averageConsensus: totalConsensus / records.length,
-      averageDurationMs: totalDuration / records.length,
+      approvalRate: totalDebates > 0 ? approvedCount / totalDebates : 0,
+      averageConsensus: avgConsensus,
+      averageDurationMs: totalDebates > 0 ? totalDuration / totalDebates : 0,
       debatesByTaskType,
       debatesBySupervisor,
       debatesByConsensusMode,
-      oldestDebate,
-      newestDebate,
+      oldestDebate: timestamps.min,
+      newestDebate: timestamps.max,
     };
   }
 
@@ -409,9 +365,13 @@ export class DebateHistoryService extends EventEmitter {
     averageConfidence: number;
     recentVotes: Array<{ debateId: string; approved: boolean; confidence: number; timestamp: number }>;
   } {
+    const db = dbService.getDb();
+    const rows = db.prepare('SELECT id, timestamp, data FROM debates ORDER BY timestamp DESC LIMIT 1000').all() as {id: string, timestamp: number, data: string}[];
+
     const votes: Array<{ debateId: string; vote: Vote; timestamp: number }> = [];
 
-    for (const record of this.records.values()) {
+    for (const row of rows) {
+      const record = JSON.parse(row.data) as DebateRecord;
       const vote = record.decision.votes.find(v => v.supervisor === supervisorName);
       if (vote) {
         votes.push({ debateId: record.id, vote, timestamp: record.timestamp });
@@ -431,20 +391,17 @@ export class DebateHistoryService extends EventEmitter {
     const approvals = votes.filter(v => v.vote.approved).length;
     const totalConfidence = votes.reduce((sum, v) => sum + v.vote.confidence, 0);
 
-    votes.sort((a, b) => b.timestamp - a.timestamp);
-    const recentVotes = votes.slice(0, 10).map(v => ({
-      debateId: v.debateId,
-      approved: v.vote.approved,
-      confidence: v.vote.confidence,
-      timestamp: v.timestamp,
-    }));
-
     return {
       totalVotes: votes.length,
       approvals,
       rejections: votes.length - approvals,
       averageConfidence: totalConfidence / votes.length,
-      recentVotes,
+      recentVotes: votes.slice(0, 10).map(v => ({
+        debateId: v.debateId,
+        approved: v.vote.approved,
+        confidence: v.vote.confidence,
+        timestamp: v.timestamp,
+      })),
     };
   }
 
@@ -501,24 +458,10 @@ export class DebateHistoryService extends EventEmitter {
    * Clear all debate history
    */
   clearAll(): number {
-    const count = this.records.size;
-    
-    if (this.config.enabled) {
-      try {
-        const files = readdirSync(this.config.storageDir).filter(f => f.endsWith('.json'));
-        for (const file of files) {
-          try {
-            unlinkSync(join(this.config.storageDir, file));
-          } catch {
-          }
-        }
-      } catch {
-      }
-    }
-
-    this.records.clear();
+    const db = dbService.getDb();
+    const info = db.prepare('DELETE FROM debates').run();
+    const count = info.changes;
     this.emit('cleared', { count });
-    
     return count;
   }
 
@@ -534,11 +477,6 @@ export class DebateHistoryService extends EventEmitter {
    */
   updateConfig(updates: Partial<DebateHistoryConfig>): DebateHistoryConfig {
     this.config = { ...this.config, ...updates };
-    
-    if (this.config.enabled && !this.initialized) {
-      this.initialize();
-    }
-
     this.emit('config_updated', this.config);
     return this.getConfig();
   }
@@ -554,31 +492,15 @@ export class DebateHistoryService extends EventEmitter {
    * Get total record count
    */
   getRecordCount(): number {
-    return this.records.size;
+    const db = dbService.getDb();
+    return (db.prepare('SELECT COUNT(*) as count FROM debates').get() as any).count;
   }
 
   /**
    * Get storage size in bytes
    */
   getStorageSize(): number {
-    if (!this.config.enabled) return 0;
-
-    try {
-      const files = readdirSync(this.config.storageDir).filter(f => f.endsWith('.json'));
-      let totalSize = 0;
-      
-      for (const file of files) {
-        try {
-          const stat = statSync(join(this.config.storageDir, file));
-          totalSize += stat.size;
-        } catch {
-        }
-      }
-      
-      return totalSize;
-    } catch {
-      return 0;
-    }
+    return 0; // Not easily available in SQLite without fs stats which varies by mode
   }
 }
 

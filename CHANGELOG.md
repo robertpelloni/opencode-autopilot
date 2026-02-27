@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2026-02-08
+
+### Added
+- **Collaborative Debate Detail View**: Full UI for participating in debates.
+  - Real-time chat with message history.
+  - Interactive voting interface with confidence slider and reasoning.
+  - Live participant status and role display.
+- **Debate Simulator Runner UI**:
+  - Modal interface to configure and run simulations.
+  - Support for selecting consensus mode, supervisors, and mock mode.
+  - Instant result visualization (outcome, duration, reasoning).
+- **System Submodules Management**:
+  - Dynamic listing of git submodules with status indicators (clean/dirty).
+  - Version tracking display.
+
+## [1.0.10] - 2026-02-08
+
+### Added
+- **Debate Templates UI**: Full management interface in Web Dashboard.
+  - Create new templates with JSON configuration editor.
+  - Clone existing templates.
+  - Delete custom templates.
+  - View built-in vs custom templates.
+- **Analytics Integration**:
+  - Connected Council debates to Supervisor Analytics service.
+  - Real-time vote recording and outcome tracking.
+  - Fixed route mounting for `/api/analytics` endpoints.
+  - Added "Analytics" button to main dashboard header.
+
+### Fixed
+- **Analytics Dashboard**: Updated API calls to match server routes.
+- **Supervisor Analytics**: Fixed typo in `participationBySupervisor` field.
+- **Vote Recording**: Added response time tracking to vote records.
+
+## [1.0.9] - 2026-02-08
+
+### Added
+- **Collaborative Debates UI**:
+  - New dashboard tab for managing multi-participant debates.
+  - Creation modal for new collaborative sessions.
+  - Status tracking and list view.
+- **Debate Simulator UI**:
+  - New dashboard tab for viewing and running simulations.
+  - Integration with simulator service APIs.
+
+## [1.0.8] - 2026-02-08
+
+### Added
+- **Enhanced Web Dashboard**:
+  - New "System" tab showing project version and structure.
+  - New "Dynamic Selection" tab for managing supervisor profiles.
+  - New "Plugins" tab for enabling/disabling plugins.
+  - Debate History view with detailed voting records.
+  - Supervisor Configuration view for weight/status management.
+  - Settings Modal for consensus configuration.
+  - Help Modal with documentation.
+- **Documentation Overhaul**:
+  - Created `LLM_INSTRUCTIONS.md` as universal agent guidelines.
+  - Updated `AGENTS.md`, `CLAUDE.md`, `GPT.md`, `GEMINI.md`.
+  - Updated `VISION.md` and `ROADMAP.md`.
+- **CI/CD Improvements**:
+  - Fixed lint workflow to build shared packages before typechecking.
+  - Updated test scripts to correctly handle monorepo structure.
+  - Fixed TypeScript errors in `FineTunedSupervisor`.
+- **CLI Updates**:
+  - Added support for 40+ new CLI tools (Adrenaline, Amazon Q, etc.).
+  - Updated `environment-manager` to handle new CLI configurations.
+
 ## [1.0.0] - 2025-12-31
 
 ### Added
@@ -56,29 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment variable based API key management
 - Configurable debate parameters
 - Rich console output with emojis and formatting
-
-## [1.0.8] - 2026-02-08
-
-### Added
-- **Enhanced Web Dashboard**:
-  - New "System" tab showing project version and structure.
-  - New "Dynamic Selection" tab for managing supervisor profiles.
-  - New "Plugins" tab for enabling/disabling plugins.
-  - Debate History view with detailed voting records.
-  - Supervisor Configuration view for weight/status management.
-  - Settings Modal for consensus configuration.
-  - Help Modal with documentation.
-- **Documentation Overhaul**:
-  - Created `LLM_INSTRUCTIONS.md` as universal agent guidelines.
-  - Updated `AGENTS.md`, `CLAUDE.md`, `GPT.md`, `GEMINI.md`.
-  - Updated `VISION.md` and `ROADMAP.md`.
-- **CI/CD Improvements**:
-  - Fixed lint workflow to build shared packages before typechecking.
-  - Updated test scripts to correctly handle monorepo structure.
-  - Fixed TypeScript errors in `FineTunedSupervisor`.
-- **CLI Updates**:
-  - Added support for 40+ new CLI tools (Adrenaline, Amazon Q, etc.).
-  - Updated `environment-manager` to handle new CLI configurations.
 
 ## [Unreleased]
 
@@ -295,12 +340,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Consensus rate over time (line chart)
     - Vote distribution (doughnut chart)
     - Response time by supervisor (horizontal bar chart)
-  - Supervisor performance leaderboard with rankings (gold/silver/bronze badges)
-  - Metrics: consensus agreement, confidence, response time, vote count, streaks
-  - AI-generated insights section (warnings, recommendations, info)
-  - Top performers highlight
-  - Configurable time range filter (24h, 7d, 30d, 90d)
-  - Auto-refresh every 30 seconds
+    - Supervisor performance leaderboard with rankings (gold/silver/bronze badges)
+    - Metrics: consensus agreement, confidence, response time, vote count, streaks
+    - AI-generated insights section (warnings, recommendations, info)
+    - Top performers highlight
+    - Configurable time range filter (24h, 7d, 30d, 90d)
+    - Auto-refresh every 30 seconds
   - Dark theme UI consistent with main dashboard
   - Dashboard URL: `/analytics`
   - Dashboard file: `public/analytics.html`

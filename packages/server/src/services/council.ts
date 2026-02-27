@@ -2,6 +2,8 @@ import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Messa
 import { metrics } from './metrics.js';
 import { dynamicSupervisorSelection } from './dynamic-supervisor-selection.js';
 import { debateHistory } from './debate-history.js';
+import { supervisorAnalytics } from './supervisor-analytics.js';
+import type { TaskPlan, SubTask } from '@opencode-autopilot/shared';
 
 interface ConsensusModeHandler {
   (votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string };
@@ -230,6 +232,7 @@ export class SupervisorCouncil {
 
     const voteResults = await Promise.all(
       available.map(async (supervisor) => {
+        const voteStartTime = Date.now();
         try {
           const votePrompt: Message = {
             role: 'user',
@@ -242,6 +245,7 @@ export class SupervisorCouncil {
           };
           
           const response = await supervisor.chat([votePrompt]);
+          const responseTimeMs = Date.now() - voteStartTime;
           const approved = this.parseVote(response);
           const confidence = this.parseConfidence(response);
           const weight = this.getSupervisorWeight(supervisor.name);
@@ -252,6 +256,7 @@ export class SupervisorCouncil {
             confidence,
             weight,
             comment: response,
+            responseTimeMs,
           };
         } catch {
           return {
@@ -260,6 +265,7 @@ export class SupervisorCouncil {
             confidence: 0.5,
             weight: this.getSupervisorWeight(supervisor.name),
             comment: 'Failed to vote',
+            responseTimeMs: Date.now() - voteStartTime,
           };
         }
       })
@@ -288,6 +294,34 @@ export class SupervisorCouncil {
 
     metrics.recordDebate(Date.now() - startTime, rounds, approved);
 
+    // Record to analytics
+    const durationMs = Date.now() - startTime;
+    supervisorAnalytics.recordDebateOutcome(
+      task.id,
+      task.description.substring(0, 100),
+      mode,
+      approved ? 'approved' : 'rejected',
+      available.map(s => s.name),
+      rounds,
+      durationMs
+    );
+
+    for (const vote of votes) {
+      // Find the response time from the augmented vote results
+      const result = voteResults.find(v => v.supervisor === vote.supervisor);
+      const responseTimeMs = (result as any).responseTimeMs || 0;
+
+      supervisorAnalytics.recordVote(
+        vote.supervisor,
+        task.id,
+        vote.approved ? 'approve' : 'reject',
+        vote.confidence,
+        responseTimeMs,
+        0, // tokensUsed not tracked yet
+        approved ? 'approve' : 'reject'
+      );
+    }
+
     const decision: CouncilDecision = {
       approved,
       consensus,
@@ -303,7 +337,7 @@ export class SupervisorCouncil {
         consensusMode: mode,
         leadSupervisor: leadSupervisorToUse,
         dynamicSelection: dynamicSelectionData,
-        durationMs: Date.now() - startTime,
+        durationMs,
       });
     }
 
@@ -621,6 +655,74 @@ Be thorough but concise in your analysis.
       this.config.consensusMode = 'simple-majority';
     } else if (enabled && currentMode === 'simple-majority') {
       this.config.consensusMode = 'weighted';
+    }
+  }
+
+  async planTask(task: DevelopmentTask): Promise<TaskPlan> {
+    const available = await this.getAvailableSupervisors();
+    if (available.length === 0) throw new Error('No supervisors available for planning');
+
+    // Use lead supervisor or best available for planning
+    const planner = this.config.leadSupervisor
+      ? available.find(s => s.name === this.config.leadSupervisor) || available[0]
+      : available[0];
+
+    const planningPrompt: Message = {
+      role: 'user',
+      content: `
+# Task Decomposition
+
+**Goal**: Break down the following high-level task into smaller, executable subtasks.
+
+**Task Description**: ${task.description}
+**Context**: ${task.context || 'No additional context'}
+
+**Instructions**:
+1. Analyze the task requirements.
+2. Identify independent components or sequential steps.
+3. Generate a JSON list of subtasks. Each subtask must have:
+   - id: string (unique)
+   - title: string
+   - description: string (detailed instructions)
+   - dependencies: string[] (ids of tasks that must finish first)
+
+**Output Format**:
+You MUST return ONLY a JSON object with this structure:
+{
+  "reasoning": "Brief explanation of the plan...",
+  "subtasks": [
+    { "id": "1", "title": "...", "description": "...", "dependencies": [] }
+  ]
+}
+`
+    };
+
+    try {
+      const response = await planner.chat([planningPrompt]);
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found in planning response');
+
+      const plan = JSON.parse(jsonMatch[0]);
+      return {
+        originalTaskId: task.id,
+        subtasks: plan.subtasks.map((t: any) => ({ ...t, status: 'pending' })),
+        reasoning: plan.reasoning
+      };
+    } catch (error) {
+      console.error('Planning failed:', error);
+      // Fallback: Return original task as single subtask
+      return {
+        originalTaskId: task.id,
+        reasoning: 'Automatic decomposition failed, treating as single task.',
+        subtasks: [{
+          id: `${task.id}-1`,
+          title: 'Execute Task',
+          description: task.description,
+          dependencies: [],
+          status: 'pending'
+        }]
+      };
     }
   }
 

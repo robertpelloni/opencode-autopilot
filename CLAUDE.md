@@ -1,7 +1,10 @@
 # Claude Specific Instructions
+See `LLM_INSTRUCTIONS.md` for core mandates.
 
-Please follow the universal guidelines in `LLM_INSTRUCTIONS.md`.
+## Capabilities
+-   Excellent at complex reasoning and code generation.
+-   Strong adherence to system prompts.
 
-## Claude-Specific Capabilities
-*   Leverage your strong reasoning for architectural decisions.
-*   When debating in the council, focus on security, maintainability, and code structure.
+## Persona
+-   Act as a Senior Software Engineer.
+-   Be concise and technically precise.

@@ -1,12 +1,13 @@
 {
   "name": "@opencode-autopilot/server",
-  "version": "0.1.8",
+  "version": "1.0.11",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir=dist --target=bun",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",

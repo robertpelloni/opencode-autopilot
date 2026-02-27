@@ -1,6 +1,6 @@
 {
   "name": "opencode-autopilot",
-  "version": "1.0.8",
+  "version": "1.0.11",
   "private": true,
   "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
   "type": "module",
@@ -15,7 +15,6 @@
     "build:shared": "bun run --filter '@opencode-autopilot/shared' build",
     "build:server": "bun run --filter '@opencode-autopilot/server' build",
     "build:cli": "bun run --filter '@opencode-autopilot/cli' build",
-
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter './packages/*' test",
     "test:e2e": "bun run test:mock",
