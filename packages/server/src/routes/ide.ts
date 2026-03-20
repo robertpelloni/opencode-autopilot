@@ -37,7 +37,7 @@ ideRoutes.post('/task', zValidator('json', taskSchema), async (c) => {
 
   if (!session) {
     // Auto-create session for IDE if none exists
-    session = await sessionManager.startSession({
+    session = await sessionManager.startSession(undefined, {
         cliType: 'opencode', // Default for now
         tags: ['ide-generated']
     });
@@ -51,7 +51,7 @@ ideRoutes.post('/task', zValidator('json', taskSchema), async (c) => {
   const task = {
     id: `ide-${Date.now()}`,
     description,
-    context: fileContext ? JSON.stringify(fileContext) : undefined,
+    context: fileContext ? JSON.stringify(fileContext) : '',
     files: fileContext ? [fileContext.path] : [],
   };
 

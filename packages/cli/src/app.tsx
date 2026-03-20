@@ -6,8 +6,8 @@ import { useWebSocket } from './hooks/useWebSocket.js';
 
 export function App() {
   const { exit } = useApp();
-  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help'>('dashboard');
-  const { sessions, council, smartPilot, refresh, toggleCouncil, toggleSmartPilot } = useApi();
+  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve'>('dashboard');
+  const { sessions, council, smartPilot, activePlans, refresh, toggleCouncil, toggleSmartPilot, evolveSystem, optimizeWeights } = useApi();
   const ws = useWebSocket({ autoReconnect: true });
 
   useInput((input, key) => {
@@ -20,9 +20,14 @@ export function App() {
     if (input === '4') setView('pilot');
     if (input === '5') setView('settings');
     if (input === '6') setView('help');
+    if (input === '7') setView('evolve');
     if (input === 'r') refresh();
     if (input === 't') toggleCouncil();
     if (input === 'p') toggleSmartPilot();
+    if (view === 'evolve' && input === 'o') optimizeWeights();
+    if (view === 'evolve' && input === 'e') {
+      evolveSystem('Self-improve: write a new test for the SelfEvolutionService to ensure it loads correctly');
+    }
   });
 
   useEffect(() => {
@@ -50,6 +55,8 @@ export function App() {
         <Text color={view === 'settings' ? 'green' : 'gray'}>[5] Settings</Text>
         <Text> </Text>
         <Text color={view === 'help' ? 'green' : 'gray'}>[6] Help</Text>
+        <Text> </Text>
+        <Text color={view === 'evolve' ? 'magenta' : 'gray'}>[7] Evolve</Text>
         <Text> │ </Text>
         <Text color="gray">[r] Refresh [t] Toggle Council [p] Toggle Pilot [q] Quit</Text>
         <Text> │ </Text>
@@ -63,6 +70,7 @@ export function App() {
         sessions={sessions} 
         council={council}
         smartPilot={smartPilot}
+        activePlans={activePlans}
         view={view}
         wsLogs={ws.logs}
         wsDecisions={ws.decisions}

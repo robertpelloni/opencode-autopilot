@@ -14,6 +14,14 @@ smartPilotRoutes.get('/status', apiRateLimit(), (c) => {
   });
 });
 
+smartPilotRoutes.get('/active-plans', apiRateLimit(), (c) => {
+  const plans = smartPilot.getActivePlans();
+  return c.json({
+    success: true,
+    plans: Object.fromEntries(plans),
+  });
+});
+
 smartPilotRoutes.post('/enable', apiRateLimit(), apiKeyAuth, (c) => {
   smartPilot.setEnabled(true);
   return c.json({ success: true, enabled: true });

@@ -84,6 +84,7 @@ export interface DevelopmentTask {
   context: string;
   files: string[];
   timestamp?: number;
+  cliType?: CLIType;
 }
 
 export interface CouncilDecision {
@@ -203,6 +204,8 @@ export interface CLITool {
   available?: boolean;
   version?: string;
   capabilities?: string[];
+  interactive?: boolean;
+  promptRegex?: string;
 }
 
 export interface LogRotationConfig {

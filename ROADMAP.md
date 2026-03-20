@@ -54,10 +54,10 @@
 *   [ ] Parallel execution of sub-tasks
 *   [ ] Hierarchical Council structure (Regional councils -> Supreme council)
 
-### Phase 7: Self-Evolution 🧬
-*   [ ] Meta-programming capability (Council can modify its own source code)
-*   [ ] Automated PR creation and self-merging (with strict tests)
-*   [ ] Continuous learning from debate outcomes
+### Phase 7: Self-Evolution 🧬 ✅
+*   [x] Meta-programming capability (Council can modify its own source code)
+*   [x] Continuous learning from debate outcomes (Auto-weighting)
+*   [x] Automated PR creation and self-merging (with strict tests)
 
 ### Phase 8: Visual Architecture 🗺️
 *   [ ] Whiteboard integration (Excalidraw/Miro)

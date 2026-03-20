@@ -1,6 +1,6 @@
 {
   "name": "@opencode-autopilot/server",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
@@ -13,6 +13,7 @@
     "@hono/zod-validator": "^0.7.6",
     "@opencode-autopilot/shared": "workspace:*",
     "hono": "^4.0.0",
+    "node-pty": "^1.1.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

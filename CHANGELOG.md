@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.13] - 2026-03-20
+
+### Added
+- **Self-Evolution (Phase 7)**:
+  - Created `SelfEvolutionService` to enable the Council to modify its own source code.
+  - Implemented continuous learning: `optimizeWeights()` automatically adjusts supervisor trust weights based on historical consensus performance.
+  - Implemented `evolveSystem()` to generate multi-step tasks that instruct the system to branch, code, test (`bun run build`, `bun run typecheck`), and self-merge.
+  - Added CLI UI support for Phase 7: The "Evolve" tab now allows humans to trigger optimization and codebase evolution.
+  - Added new routes in `/api/system` to trigger evolution and optimization via REST.
+
+## [1.0.12] - 2026-03-20
+
+### Added
+- **Universal PTY Harness (Phase 6)**:
+  - Deep `node-pty` integration into `SessionManager` replacing the legacy HTTP-pipe assumption.
+  - The framework can now orchestrate purely interactive, terminal-based AI tools natively (`gemini-cli` and `github-copilot-cli`) exactly like a human typing into an xterm.
+- **Dependency-Aware Swarm Executor**:
+  - `SmartPilot` now executes parallel swarm plans across multiple instances of terminal CLIs.
+  - Implemented logic to map subtasks to the most appropriate tool (`opencode` for big edits, `gemini` for logic/multimodal, `copilot` for small tasks).
+  - Added `preferredCLI` mapping to Task Plans.
+
+### Fixed
+- Addressed 60+ strict TypeScript compilation errors across the monorepo.
+- Fixed a SQL binding bug in `WorkspaceManagerService` affecting `weightedConsensus` metrics.
+
 ## [1.0.11] - 2026-02-08
 
 ### Added

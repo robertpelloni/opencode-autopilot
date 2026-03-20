@@ -1,3 +1,5 @@
+import { CLIType } from './types.js';
+
 export interface SubTask {
   id: string;
   title: string;
@@ -5,6 +7,7 @@ export interface SubTask {
   dependencies: string[];
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   assignedSupervisor?: string;
+  preferredCLI?: CLIType;
   context?: string;
 }
 

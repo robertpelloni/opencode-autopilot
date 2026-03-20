@@ -37,6 +37,7 @@ import { healthMonitor } from './services/health-monitor.js';
 import { logRotation } from './services/log-rotation.js';
 import { debateHistory } from './services/debate-history.js';
 import { quotaManager } from './services/quota-manager.js';
+import { selfEvolution } from './services/self-evolution.js';
 
 const startTime = Date.now();
 const config = loadConfig();
@@ -278,6 +279,7 @@ sessionManager.startPolling();
 healthMonitor.start();
 logRotation.start();
 debateHistory.initialize();
+selfEvolution.start();
 
 if (config.council.smartPilot) {
   smartPilot.setEnabled(true);
@@ -288,6 +290,7 @@ process.on('SIGINT', async () => {
   smartPilot.cleanup();
   healthMonitor.stop();
   logRotation.stop();
+  selfEvolution.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });
@@ -297,6 +300,7 @@ process.on('SIGTERM', async () => {
   smartPilot.cleanup();
   healthMonitor.stop();
   logRotation.stop();
+  selfEvolution.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });

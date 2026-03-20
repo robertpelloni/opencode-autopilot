@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Session, CouncilConfig, ApiResponse } from '@opencode-autopilot/shared';
+import type { Session, CouncilConfig, ApiResponse, TaskPlan } from '@opencode-autopilot/shared';
 
 const API_BASE = process.env.AUTOPILOT_API || 'http://localhost:3847';
 
@@ -17,6 +17,7 @@ export function useApi() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [council, setCouncil] = useState<{ enabled: boolean; supervisorCount: number; availableCount?: number; config: CouncilConfig } | null>(null);
   const [smartPilot, setSmartPilot] = useState<SmartPilotStatus | null>(null);
+  const [activePlans, setActivePlans] = useState<Record<string, TaskPlan>>({});
   const [error, setError] = useState<string | null>(null);
 
   const fetchSessions = useCallback(async () => {
@@ -53,11 +54,24 @@ export function useApi() {
     }
   }, []);
 
+  const fetchActivePlans = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/smart-pilot/active-plans`);
+      const data = await res.json();
+      if (data.success) {
+        setActivePlans(data.plans);
+      }
+    } catch (e) {
+      setError('Failed to fetch active plans');
+    }
+  }, []);
+
   const refresh = useCallback(() => {
     fetchSessions();
     fetchCouncil();
     fetchSmartPilot();
-  }, [fetchSessions, fetchCouncil, fetchSmartPilot]);
+    fetchActivePlans();
+  }, [fetchSessions, fetchCouncil, fetchSmartPilot, fetchActivePlans]);
 
   const startSession = useCallback(async (id: string) => {
     const res = await fetch(`${API_BASE}/api/sessions/${id}/start`, { method: 'POST' });
@@ -94,10 +108,29 @@ export function useApi() {
     return data;
   }, [fetchSmartPilot]);
 
+  const evolveSystem = useCallback(async (description: string) => {
+    const res = await fetch(`${API_BASE}/api/system/evolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description })
+    });
+    const data = await res.json();
+    if (data.success) refresh();
+    return data;
+  }, [refresh]);
+
+  const optimizeWeights = useCallback(async () => {
+    const res = await fetch(`${API_BASE}/api/system/optimize-weights`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) fetchCouncil();
+    return data;
+  }, [fetchCouncil]);
+
   return {
     sessions,
     council,
     smartPilot,
+    activePlans,
     error,
     refresh,
     startSession,
@@ -105,5 +138,7 @@ export function useApi() {
     approveSession,
     toggleCouncil,
     toggleSmartPilot,
+    evolveSystem,
+    optimizeWeights,
   };
 }

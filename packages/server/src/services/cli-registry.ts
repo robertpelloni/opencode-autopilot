@@ -7,9 +7,11 @@ interface CLIDefinition {
   command: string;
   serveArgs: string[];
   versionArgs: string[];
-  healthEndpoint: string;
+  healthEndpoint?: string;
   detectCommands: string[];
   capabilities: string[];
+  interactive?: boolean;
+  promptRegex?: string;
 }
 
 const CLI_DEFINITIONS: CLIDefinition[] = [
@@ -77,11 +79,12 @@ const CLI_DEFINITIONS: CLIDefinition[] = [
     type: 'copilot',
     name: 'GitHub Copilot CLI',
     command: 'github-copilot-cli',
-    serveArgs: ['serve', '--port'],
+    serveArgs: [],
     versionArgs: ['--version'],
-    healthEndpoint: '/health',
     detectCommands: ['github-copilot-cli', 'gh copilot'],
-    capabilities: ['explain', 'suggest', 'chat'],
+    capabilities: ['explain', 'suggest', 'chat', 'terminal', 'shell'],
+    interactive: true,
+    promptRegex: '(?i)(?:\\?|>)\\s*$',
   },
   {
     type: 'adrenaline',
@@ -247,11 +250,12 @@ const CLI_DEFINITIONS: CLIDefinition[] = [
     type: 'gemini',
     name: 'Gemini CLI',
     command: 'gemini',
-    serveArgs: ['serve', '--port'],
+    serveArgs: [],
     versionArgs: ['--version'],
-    healthEndpoint: '/health',
     detectCommands: ['gemini'],
     capabilities: ['chat', 'code', 'multimodal'],
+    interactive: true,
+    promptRegex: '(?i)(?:>)\\s*$',
   },
   {
     type: 'goose',
@@ -477,6 +481,8 @@ class CLIRegistry {
             available: true,
             version: this.parseVersion(result.output),
             capabilities: def.capabilities,
+            interactive: def.interactive,
+            promptRegex: def.promptRegex,
           };
         }
       } catch {
@@ -492,6 +498,8 @@ class CLIRegistry {
       healthEndpoint: def.healthEndpoint,
       available: false,
       capabilities: def.capabilities,
+      interactive: def.interactive,
+      promptRegex: def.promptRegex,
     };
   }
 

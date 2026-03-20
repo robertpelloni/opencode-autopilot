@@ -1,4 +1,4 @@
-import type { Session, DevelopmentTask, Guidance, CouncilDecision } from '@opencode-autopilot/shared';
+import type { Session, DevelopmentTask, Guidance, CouncilDecision, TaskPlan } from '@opencode-autopilot/shared';
 import { sessionManager } from './session-manager.js';
 import { council } from './council.js';
 import { wsManager } from './ws-manager.js';
@@ -25,6 +25,7 @@ class SmartPilot {
   private checkpoints: Map<string, TaskCheckpoint> = new Map();
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private autoApprovalCount: Map<string, number> = new Map();
+  private activePlans: Map<string, TaskPlan> = new Map();
 
   constructor() {
     const appConfig = loadConfig();
@@ -73,7 +74,8 @@ class SmartPilot {
     // Check if task needs decomposition (simple heuristic: description length or keyword)
     const isComplex = task.description.length > 50 ||
                       task.description.toLowerCase().includes('implement') ||
-                      task.description.toLowerCase().includes('create');
+                      task.description.toLowerCase().includes('create') ||
+                      task.description.toLowerCase().includes('refactor');
 
     if (isComplex) {
       wsManager.notifyLog(sessionId, {
@@ -88,35 +90,116 @@ class SmartPilot {
 
         wsManager.notifyLog(sessionId, {
           timestamp: Date.now(),
-          level: 'success',
+          level: 'info',
           message: `[SmartPilot] Swarm Plan Generated: ${plan.subtasks.length} subtasks. Reasoning: ${plan.reasoning}`,
           source: 'smart-pilot-swarm',
         });
 
-        for (const subtask of plan.subtasks) {
-          wsManager.notifyLog(sessionId, {
-            timestamp: Date.now(),
-            level: 'info',
-            message: `[SmartPilot] Swarm executing subtask: ${subtask.title} (${subtask.description})`,
-            source: 'smart-pilot-swarm',
-          });
-
-          await this.runDebateAndRespond(session, {
-            id: subtask.id,
-            description: subtask.description,
-            context: task.context,
-            files: task.files, // Inherit parent files
-          });
-        }
-
-        return; // Finished swarm execution
+        this.activePlans.set(sessionId, plan);
+        await this.executeSwarmPlan(sessionId, task, plan);
+        this.activePlans.delete(sessionId);
+        return;
       } catch (e) {
+        this.activePlans.delete(sessionId);
         console.error('Swarm decomposition failed, falling back to standard execution', e);
       }
     }
 
     // Process immediately without polling (or fallback)
     await this.runDebateAndRespond(session, task);
+  }
+
+  getActivePlans(): Map<string, TaskPlan> {
+    return new Map(this.activePlans);
+  }
+
+  private async executeSwarmPlan(originalSessionId: string, originalTask: DevelopmentTask, plan: TaskPlan): Promise<void> {
+    const completedTasks = new Set<string>();
+    const inProgressTasks = new Set<string>();
+    const subtasks = [...plan.subtasks];
+    
+    // Map to store tool-specific sessions to avoid over-spawning
+    const toolSessions = new Map<string, string>();
+    toolSessions.set(sessionManager.getSessionCLIType(originalSessionId) || 'opencode', originalSessionId);
+
+    while (completedTasks.size < subtasks.length) {
+      const readyTasks = subtasks.filter(t => 
+        t.status === 'pending' && 
+        !inProgressTasks.has(t.id) &&
+        t.dependencies.every(depId => completedTasks.has(depId))
+      );
+
+      if (readyTasks.length === 0 && inProgressTasks.size === 0) {
+        throw new Error('Deadlock detected in swarm plan dependencies');
+      }
+
+      if (readyTasks.length === 0) {
+        // Wait for some tasks to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      // Execute ready tasks in parallel
+      await Promise.all(readyTasks.map(async (subtask) => {
+        inProgressTasks.add(subtask.id);
+        subtask.status = 'in_progress';
+
+        const cliType = subtask.preferredCLI || 'opencode';
+        let targetSessionId = toolSessions.get(cliType);
+
+        if (!targetSessionId) {
+          wsManager.notifyLog(originalSessionId, {
+            timestamp: Date.now(),
+            level: 'info',
+            message: `[SmartPilot] Spawning new ${cliType} session for subtask: ${subtask.title}`,
+            source: 'smart-pilot-swarm',
+          });
+
+          const newSession = await sessionManager.startSession(undefined, {
+            cliType,
+            tags: ['swarm-worker', `parent:${originalSessionId}`],
+            workingDirectory: originalTask.files.length > 0 ? undefined : process.cwd(),
+          });
+          targetSessionId = newSession.id;
+          toolSessions.set(cliType, targetSessionId);
+        }
+
+        const session = sessionManager.getSession(targetSessionId)!;
+
+        wsManager.notifyLog(originalSessionId, {
+          timestamp: Date.now(),
+          level: 'info',
+          message: `[SmartPilot] Swarm executing subtask: ${subtask.title} on ${cliType} (${targetSessionId})`,
+          source: 'smart-pilot-swarm',
+        });
+
+        try {
+          await this.runDebateAndRespond(session, {
+            id: subtask.id,
+            description: subtask.description,
+            context: `Parent Task: ${originalTask.description}\n\nSubtask Context: ${subtask.context || ''}`,
+            files: originalTask.files,
+            cliType,
+          });
+          subtask.status = 'completed';
+          completedTasks.add(subtask.id);
+        } catch (error) {
+          console.error(`Subtask ${subtask.id} failed:`, error);
+          subtask.status = 'failed';
+          // For now, we'll stop the whole plan if a subtask fails
+          throw error;
+        } finally {
+          inProgressTasks.delete(subtask.id);
+        }
+      }));
+    }
+
+    wsManager.notifyLog(originalSessionId, {
+      timestamp: Date.now(),
+      level: 'info',
+      message: `[SmartPilot] Swarm Plan Successfully Completed: ${subtasks.length} tasks finished.`,
+      source: 'smart-pilot-swarm',
+    });
   }
 
   start(): void {

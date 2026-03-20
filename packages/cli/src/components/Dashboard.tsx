@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { Session, CouncilConfig, CouncilDecision, LogEntry } from '@opencode-autopilot/shared';
+import type { Session, CouncilConfig, CouncilDecision, LogEntry, TaskPlan } from '@opencode-autopilot/shared';
 
 interface SmartPilotStatus {
   enabled: boolean;
@@ -16,12 +16,46 @@ interface DashboardProps {
   sessions: Session[];
   council: { enabled: boolean; supervisorCount: number; availableCount?: number; config: CouncilConfig } | null;
   smartPilot: SmartPilotStatus | null;
-  view: 'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help';
+  activePlans?: Record<string, TaskPlan>;
+  view: 'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve';
   wsLogs?: LogEntry[];
   wsDecisions?: CouncilDecision[];
 }
 
-export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], wsDecisions = [] }: DashboardProps) {
+export function Dashboard({ sessions, council, smartPilot, activePlans = {}, view, wsLogs = [], wsDecisions = [] }: DashboardProps) {
+  if (view === 'evolve') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline color="magenta">Phase 7: Self-Evolution Console</Text>
+        </Box>
+        <Text>The system can analyze its own performance metrics and re-weight supervisor</Text>
+        <Text>trust scores dynamically, or spawn meta-sessions to rewrite its own source code.</Text>
+
+        <Box marginTop={1} flexDirection="column">
+          <Text bold color="yellow">Controls:</Text>
+          <Text> [o] Optimize Weights - Read analytics and adjust supervisor weightings.</Text>
+          <Text> [e] Evolve Codebase  - Launch an autonomous session to self-improve code.</Text>
+        </Box>
+
+        <Box marginTop={1} flexDirection="column">
+          <Text bold underline>Active Meta Sessions</Text>
+          {sessions.filter(s => s.tags?.includes('self-evolution')).length === 0 ? (
+            <Text color="gray">No active meta-sessions modifying codebase.</Text>
+          ) : (
+            sessions.filter(s => s.tags?.includes('self-evolution')).map((s) => (
+              <Box key={s.id} gap={2}>
+                <Text color="magenta">⚙</Text>
+                <Text bold>{s.id}</Text>
+                <Text color="gray">{s.currentTask}</Text>
+              </Box>
+            ))
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
   if (view === 'dashboard') {
     return (
       <Box flexDirection="column">
@@ -32,12 +66,29 @@ export function Dashboard({ sessions, council, smartPilot, view, wsLogs = [], ws
           <Text color="gray">No active sessions</Text>
         ) : (
           sessions.map((s) => (
-            <Box key={s.id} gap={2}>
-              <Text color={s.status === 'running' ? 'green' : 'yellow'}>●</Text>
-              <Text>{s.id}</Text>
-              <Text color="gray">{s.status}</Text>
-              <Text color="gray">{s.currentTask || 'idle'}</Text>
-              {s.templateName && <Text color="blue">[{s.templateName}]</Text>}
+            <Box key={s.id} flexDirection="column" marginBottom={1}>
+              <Box gap={2}>
+                <Text color={s.status === 'running' ? 'green' : 'yellow'}>●</Text>
+                <Text bold>{s.id}</Text>
+                <Text color="gray">[{s.status}]</Text>
+                <Text color="gray">{s.currentTask || 'idle'}</Text>
+                {s.templateName && <Text color="blue">({s.templateName})</Text>}
+              </Box>
+              
+              {activePlans[s.id] && (
+                <Box flexDirection="column" marginLeft={2} marginTop={1}>
+                  <Text color="cyan" bold>Swarm Progress:</Text>
+                  {activePlans[s.id].subtasks.map((t, i) => (
+                    <Box key={i} gap={1}>
+                      <Text color={t.status === 'completed' ? 'green' : t.status === 'in_progress' ? 'yellow' : 'gray'}>
+                        {t.status === 'completed' ? '✓' : t.status === 'in_progress' ? '▶' : '○'}
+                      </Text>
+                      <Text color={t.status === 'in_progress' ? 'white' : 'gray'}>{t.title}</Text>
+                      {t.preferredCLI && <Text color="blue">[{t.preferredCLI}]</Text>}
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
           ))
         )}

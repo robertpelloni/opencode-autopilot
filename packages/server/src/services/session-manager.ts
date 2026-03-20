@@ -1,4 +1,6 @@
-import type { Session, LogEntry, DevelopmentTask, Guidance, CLIType, SessionHealth } from '@opencode-autopilot/shared';
+import type { Session, LogEntry, DevelopmentTask, Guidance, CLIType, SessionHealth, CLITool } from '@opencode-autopilot/shared';
+import * as pty from 'node-pty';
+import os from 'os';
 import { loadConfig } from './config.js';
 import { wsManager } from './ws-manager.js';
 import { sessionPersistence } from './session-persistence.js';
@@ -10,6 +12,8 @@ import { environmentManager } from './environment-manager.js';
 interface ManagedSession {
   session: Session;
   process: { pid: number; kill: () => void; exited: Promise<number> } | null;
+  ptyProcess?: pty.IPty;
+  interactive?: boolean;
   port: number;
   cliType: CLIType;
   restartCount: number;
@@ -65,36 +69,70 @@ class SessionManager {
         ]);
       }
 
+      const tool = cliRegistry.getTool(managed.cliType);
       const serveCmd = cliRegistry.getServeCommand(managed.cliType, managed.port);
-      if (!serveCmd) {
+      if (!serveCmd || !tool) {
         this.log(sessionId, 'error', `CLI ${managed.cliType} not available for restart`);
         return false;
       }
 
       const env = environmentManager.getSessionEnvironment(sessionId) || {};
 
-      const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-        env,
-        cwd: managed.session.workingDirectory,
-      });
+      if (managed.interactive && tool.interactive) {
+        const ptyProc = pty.spawn(serveCmd.command, serveCmd.args, {
+          name: 'xterm-color',
+          cols: 80,
+          rows: 30,
+          cwd: managed.session.workingDirectory,
+          env: env as Record<string, string>,
+        });
 
-      managed.process = {
-        pid: proc.pid,
-        kill: () => proc.kill(),
-        exited: proc.exited,
-      };
+        managed.ptyProcess = ptyProc;
+        managed.process = {
+          pid: ptyProc.pid,
+          kill: () => ptyProc.kill(),
+          exited: new Promise(resolve => ptyProc.onExit(({ exitCode }) => resolve(exitCode))),
+        };
+
+        let outputBuffer = '';
+        ptyProc.onData(data => {
+          outputBuffer += data;
+          const lines = data.split(/\r?\n/);
+          for (let i = 0; i < lines.length - 1; i++) {
+             if (lines[i].trim()) this.log(sessionId, 'info', lines[i].trim());
+          }
+          const lastLine = lines[lines.length - 1];
+          if (lastLine.trim()) this.log(sessionId, 'info', lastLine);
+        });
+
+        this.setupProcessHandlers(sessionId, managed.process);
+
+        await this.waitForPtyReady(sessionId, tool, ptyProc, 15000);
+      } else {
+        const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
+          stdout: 'pipe',
+          stderr: 'pipe',
+          env,
+          cwd: managed.session.workingDirectory,
+        });
+
+        managed.process = {
+          pid: proc.pid,
+          kill: () => proc.kill(),
+          exited: proc.exited,
+        };
+
+        this.streamOutput(sessionId, proc.stdout, 'info');
+        this.streamOutput(sessionId, proc.stderr, 'warn');
+
+        this.setupProcessHandlers(sessionId, managed.process);
+
+        await this.waitForReady(managed.port, 15000, managed.cliType);
+      }
 
       managed.restartCount++;
       managed.lastRestartAt = Date.now();
 
-      this.streamOutput(sessionId, proc.stdout, 'info');
-      this.streamOutput(sessionId, proc.stderr, 'warn');
-
-      this.setupProcessHandlers(sessionId, proc);
-
-      await this.waitForReady(managed.port, 15000, managed.cliType);
       managed.session.status = 'running';
       healthMonitor.resetHealth(sessionId);
       
@@ -181,34 +219,72 @@ class SessionManager {
     wsManager.notifySessionUpdate(session);
 
     try {
+      const tool = cliRegistry.getTool(cliType);
       const serveCmd = cliRegistry.getServeCommand(cliType, port);
-      if (!serveCmd) {
+      if (!tool || !serveCmd) {
         throw new Error(`CLI tool "${cliType}" is not available. Run CLI detection first.`);
       }
 
-      const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-        env,
-        cwd: session.workingDirectory,
-      });
+      managed.interactive = tool.interactive;
 
-      managed.process = {
-        pid: proc.pid,
-        kill: () => proc.kill(),
-        exited: proc.exited,
-      };
+      if (tool.interactive) {
+        const ptyProc = pty.spawn(serveCmd.command, serveCmd.args, {
+          name: 'xterm-color',
+          cols: 80,
+          rows: 30,
+          cwd: session.workingDirectory,
+          env: env as Record<string, string>,
+        });
 
-      this.streamOutput(id, proc.stdout, 'info');
-      this.streamOutput(id, proc.stderr, 'warn');
+        managed.ptyProcess = ptyProc;
+        managed.process = {
+          pid: ptyProc.pid,
+          kill: () => ptyProc.kill(),
+          exited: new Promise(resolve => ptyProc.onExit(({ exitCode }) => resolve(exitCode))),
+        };
 
-      this.setupProcessHandlers(id, proc);
+        let outputBuffer = '';
+        ptyProc.onData(data => {
+          outputBuffer += data;
+          const lines = data.split(/\r?\n/);
+          for (let i = 0; i < lines.length - 1; i++) {
+             if (lines[i].trim()) this.log(id, 'info', lines[i].trim());
+          }
+          const lastLine = lines[lines.length - 1];
+          if (lastLine.trim()) this.log(id, 'info', lastLine);
+        });
 
-      await this.waitForReady(port, 15000, cliType);
+        this.setupProcessHandlers(id, managed.process);
+
+        await this.waitForPtyReady(id, tool, ptyProc, 15000);
+      } else {
+        const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
+          stdout: 'pipe',
+          stderr: 'pipe',
+          env,
+          cwd: session.workingDirectory,
+        });
+
+        managed.process = {
+          pid: proc.pid,
+          kill: () => proc.kill(),
+          exited: proc.exited,
+        };
+
+        this.streamOutput(id, proc.stdout, 'info');
+        this.streamOutput(id, proc.stderr, 'warn');
+
+        this.setupProcessHandlers(id, managed.process);
+
+        await this.waitForReady(port, 15000, cliType);
+      }
+
       session.status = 'running';
       
-      const healthEndpoint = cliRegistry.getHealthEndpoint(cliType);
-      healthMonitor.registerSession(id, port, healthEndpoint);
+      if (!tool.interactive) {
+        const healthEndpoint = cliRegistry.getHealthEndpoint(cliType);
+        healthMonitor.registerSession(id, port, healthEndpoint);
+      }
       
       this.log(id, 'info', 'Session ready');
       wsManager.notifySessionUpdate(session);
@@ -267,6 +343,29 @@ class SessionManager {
     } catch {
       // Stream ended
     }
+  }
+
+  private async waitForPtyReady(sessionId: string, tool: CLITool, ptyProc: pty.IPty, timeout: number): Promise<void> {
+    if (!tool.promptRegex) return;
+    
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+      const regex = new RegExp(tool.promptRegex!);
+      
+      const timer = setTimeout(() => {
+        disposable.dispose();
+        reject(new Error(`Timeout waiting for PTY prompt for ${tool.name}`));
+      }, timeout);
+
+      const disposable = ptyProc.onData((data) => {
+        buffer += data;
+        if (regex.test(buffer)) {
+          clearTimeout(timer);
+          disposable.dispose();
+          resolve();
+        }
+      });
+    });
   }
 
   private async waitForReady(port: number, timeout: number, cliType: CLIType): Promise<void> {
@@ -340,36 +439,73 @@ class SessionManager {
     this.log(id, 'info', `Resuming ${cliType} session on port ${port}`);
 
     try {
+      const tool = cliRegistry.getTool(cliType);
       const serveCmd = cliRegistry.getServeCommand(cliType, port);
-      if (!serveCmd) {
+      if (!serveCmd || !tool) {
         throw new Error(`CLI tool "${cliType}" is not available`);
       }
 
+      managed.interactive = tool.interactive;
       const env = environmentManager.getSessionEnvironment(id) || {};
 
-      const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-        env,
-        cwd: session.workingDirectory,
-      });
+      if (tool.interactive) {
+        const ptyProc = pty.spawn(serveCmd.command, serveCmd.args, {
+          name: 'xterm-color',
+          cols: 80,
+          rows: 30,
+          cwd: session.workingDirectory,
+          env: env as Record<string, string>,
+        });
 
-      managed.process = {
-        pid: proc.pid,
-        kill: () => proc.kill(),
-        exited: proc.exited,
-      };
+        managed.ptyProcess = ptyProc;
+        managed.process = {
+          pid: ptyProc.pid,
+          kill: () => ptyProc.kill(),
+          exited: new Promise(resolve => ptyProc.onExit(({ exitCode }) => resolve(exitCode))),
+        };
 
-      this.streamOutput(id, proc.stdout, 'info');
-      this.streamOutput(id, proc.stderr, 'warn');
+        let outputBuffer = '';
+        ptyProc.onData(data => {
+          outputBuffer += data;
+          const lines = data.split(/\r?\n/);
+          for (let i = 0; i < lines.length - 1; i++) {
+             if (lines[i].trim()) this.log(id, 'info', lines[i].trim());
+          }
+          const lastLine = lines[lines.length - 1];
+          if (lastLine.trim()) this.log(id, 'info', lastLine);
+        });
 
-      this.setupProcessHandlers(id, proc);
+        this.setupProcessHandlers(id, managed.process);
 
-      await this.waitForReady(port, 15000, cliType);
+        await this.waitForPtyReady(id, tool, ptyProc, 15000);
+      } else {
+        const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
+          stdout: 'pipe',
+          stderr: 'pipe',
+          env,
+          cwd: session.workingDirectory,
+        });
+
+        managed.process = {
+          pid: proc.pid,
+          kill: () => proc.kill(),
+          exited: proc.exited,
+        };
+
+        this.streamOutput(id, proc.stdout, 'info');
+        this.streamOutput(id, proc.stderr, 'warn');
+
+        this.setupProcessHandlers(id, managed.process);
+
+        await this.waitForReady(port, 15000, cliType);
+      }
+
       session.status = 'running';
       
-      const healthEndpoint = cliRegistry.getHealthEndpoint(cliType);
-      healthMonitor.registerSession(id, port, healthEndpoint);
+      if (!tool.interactive) {
+        const healthEndpoint = cliRegistry.getHealthEndpoint(cliType);
+        healthMonitor.registerSession(id, port, healthEndpoint);
+      }
       
       sessionPersistence.updateSessionStatus(id, 'running', Date.now());
       this.log(id, 'info', 'Session resumed successfully');
@@ -540,6 +676,18 @@ class SessionManager {
     }
 
     this.log(id, 'info', `Sending guidance: ${guidance.approved ? 'APPROVED' : 'REJECTED'}`);
+
+    if (managed.interactive && managed.ptyProcess) {
+      try {
+        const text = `Council Decision: ${guidance.approved ? 'APPROVED' : 'REJECTED'}\nFeedback: ${guidance.feedback}\nNext Steps:\n${guidance.suggestedNextSteps.join('\n')}\n`;
+        managed.ptyProcess.write(text);
+        return;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        this.log(id, 'error', `Failed to send guidance to PTY: ${msg}`);
+        throw err;
+      }
+    }
 
     try {
       await fetch(`http://localhost:${managed.port}/guidance`, {

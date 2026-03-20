@@ -680,18 +680,23 @@ Be thorough but concise in your analysis.
 **Instructions**:
 1. Analyze the task requirements.
 2. Identify independent components or sequential steps.
-3. Generate a JSON list of subtasks. Each subtask must have:
+3. Assign each subtask to the most suitable AI CLI tool if applicable:
+   - 'opencode': Best for multi-file editing and workspace management.
+   - 'gemini': Best for research, complex reasoning, and multimodal tasks.
+   - 'copilot': Best for quick code suggestions, shell commands, and explaining existing logic.
+4. Generate a JSON list of subtasks. Each subtask must have:
    - id: string (unique)
    - title: string
    - description: string (detailed instructions)
    - dependencies: string[] (ids of tasks that must finish first)
+   - preferredCLI: 'opencode' | 'gemini' | 'copilot' | null (optional)
 
 **Output Format**:
 You MUST return ONLY a JSON object with this structure:
 {
   "reasoning": "Brief explanation of the plan...",
   "subtasks": [
-    { "id": "1", "title": "...", "description": "...", "dependencies": [] }
+    { "id": "1", "title": "...", "description": "...", "dependencies": [], "preferredCLI": "opencode" }
   ]
 }
 `

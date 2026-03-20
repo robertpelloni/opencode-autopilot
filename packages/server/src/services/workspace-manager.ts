@@ -383,7 +383,7 @@ export class WorkspaceManagerService extends EventEmitter {
     `).run(
       decision.approved ? 'approved' : 'rejected',
       decision.consensus,
-      decision.weightedConsensus,
+      decision.weightedConsensus ?? null,
       JSON.stringify(updatedDebate),
       debateId
     );

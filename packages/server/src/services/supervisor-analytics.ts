@@ -320,7 +320,7 @@ class SupervisorAnalyticsService extends EventEmitter {
     byConsensusMode: Record<string, number>;
     avgRounds: number;
     avgDurationMs: number;
-    participationBySupervsor: Record<string, number>;
+    participationBySupervisor: Record<string, number>;
   } {
     const debates = this.getFilteredDebates(timeRange);
 
