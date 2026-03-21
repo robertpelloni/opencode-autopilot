@@ -1,6 +1,6 @@
 # OpenCode Autopilot Roadmap
 
-## Current Status: Version 1.0.12 (Completed)
+## Current Status: Version 1.0.14 (Completed)
 
 ### Phase 1: Core Foundation ✅
 *   [x] Multi-model Supervisor Council (OpenAI, Anthropic, Gemini, etc.)
@@ -25,41 +25,39 @@
 
 ### Phase 4: Comprehensive UI (Web Dashboard) ✅
 *   [x] **Dashboard Tab**: Real-time session monitoring, log streaming.
-*   [x] **Debate History Tab**: Detailed transcripts, voting records, Export JSON/CSV.
-*   [x] **Supervisors Tab**: Weight configuration and status.
-*   [x] **System Tab**: Submodule tracking, version info, project structure.
-*   [x] **Dynamic Selection Tab**: Profile and template management.
-*   [x] **Plugins Tab**: Ecosystem management.
-*   [x] **Collaborative Tab**: Full chat, voting, and participant management.
-*   [x] **Simulator Tab**: Run simulations and view results.
-*   [x] **Templates Tab**: Create/Edit/Clone debate templates.
-*   [x] **Fine-Tuning Tab**: Datasets, Jobs, Model management, Test Chat.
-*   [x] **Usage & Limits Tab**: Cost tracking and rate limit configuration.
-*   [x] **Integrations Tab**: Smart Pilot, Webhooks, Environment, Custom Tools.
-*   [x] **Veto Center**: Notification bell, pending decision review.
 *   [x] **Analytics**: Chart.js based performance visualization.
-*   [x] **Settings**: Consensus config, Log Rotation config.
+*   [x] **Veto Center**: Notification bell, pending decision review.
+
+### Phase 5: Distributed Borg Architecture 🚀 ✅
+*   [x] **Terminal Sidecar**: Detached PTY processes for zero-downtime reliability.
+*   [x] **Process Re-attachment**: Orchestrator can restart and re-link to active terminals.
+*   [x] **Universal CLI Support**: 25+ tools integrated (Gemini, Copilot, Aider, etc.).
+*   [x] **Dynamic Env Injection**: Inject secrets into running sessions via control socket.
+
+### Phase 6: Swarm Intelligence 🐝 ✅
+*   [x] **Parallel Swarm Execution**: Dependency-aware subtask scheduling.
+*   [x] **Multi-Tool Orchestration**: Auto-routing tasks to the best CLI tool.
+*   [x] **Binary State Checkpointing**: Snapshotting terminal buffers for cold-boot recovery.
+
+### Phase 7: Self-Evolution 🧬 ✅
+*   [x] **Meta-programming**: Council can modify and build its own source code.
+*   [x] **Continuous Learning**: Auto-weighting supervisors based on performance.
+*   [x] **Autonomous Git Workflow**: Auto-branching, testing, and merging.
+
+### Phase 8: Visual Architecture 🗺️ ✅
+*   [x] **Visual Planning**: Mermaid generation for system topology and swarm plans.
+*   [x] **Diagram-to-Code**: Parsing Mermaid graphs into executable task plans.
+*   [x] **Multi-Terminal Grid**: Visual log layout in the CLI dashboard.
 
 ---
 
 ## Future Roadmap
 
-### Phase 5: Deep IDE Integration 🚧
+### Phase 9: Deep IDE Integration 🚧
 *   [ ] VS Code Extension
 *   [ ] JetBrains Plugin
 *   [ ] Direct "Fix this file" context menu integration
 
-### Phase 6: Swarm Intelligence 🔮
-*   [ ] Micro-agent architecture (hundreds of specialized mini-agents)
-*   [ ] Parallel execution of sub-tasks
-*   [ ] Hierarchical Council structure (Regional councils -> Supreme council)
-
-### Phase 7: Self-Evolution 🧬 ✅
-*   [x] Meta-programming capability (Council can modify its own source code)
-*   [x] Continuous learning from debate outcomes (Auto-weighting)
-*   [x] Automated PR creation and self-merging (with strict tests)
-
-### Phase 8: Visual Architecture 🗺️
-*   [ ] Whiteboard integration (Excalidraw/Miro)
-*   [ ] Visual planning of system architecture
-*   [ ] Diagram-to-Code generation
+### Phase 10: Hierarchical Councils 🏛️
+*   [ ] Hierarchical Council structure (Regional specialized councils -> Supreme council)
+*   [ ] Cross-org knowledge sharing

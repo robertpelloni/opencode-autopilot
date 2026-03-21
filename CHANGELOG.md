@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.14] - 2026-03-20
+
+### Added
+- **Visual Architecture (Phase 8)**:
+  - Created `DiagramService` for generating Mermaid diagrams of system topology and swarm plans.
+  - Implemented **Diagram-to-Plan** parsing: turn Mermaid graph code directly into executable task plans.
+  - Added new **Architecture** tab [8] to CLI dashboard.
+  - Added new **Multi-Terminal Grid** view [9] to visually monitor dozens of sessions simultaneously.
+- **Universal Multi-CLI Orchestration**:
+  - Expanded support to 25+ tools including Aider, Amazon Q, Claude Code, Gemini, Copilot, Warp, and Trae.
+  - Implemented `TerminalSidecar` for detached, zero-downtime process management.
+  - Added **Dynamic Environment Injection** to push secrets to live terminals via `BORG_CTRL` protocol.
+  - Added **State Checkpointing** for terminal buffer recovery on system restart.
+
 ## [1.0.13] - 2026-03-20
 
 ### Added

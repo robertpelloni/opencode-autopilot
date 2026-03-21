@@ -14,15 +14,113 @@ interface SmartPilotStatus {
 
 interface DashboardProps {
   sessions: Session[];
-  council: { enabled: boolean; supervisorCount: number; availableCount?: number; config: CouncilConfig } | null;
+  council: { enabled: boolean; supervisorCount: number; availableCount?: number; config: CouncilConfig; hierarchy?: any[] } | null;
   smartPilot: SmartPilotStatus | null;
   activePlans?: Record<string, TaskPlan>;
-  view: 'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve';
+  view: 'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve' | 'architecture' | 'grid' | 'memory';
   wsLogs?: LogEntry[];
   wsDecisions?: CouncilDecision[];
 }
 
 export function Dashboard({ sessions, council, smartPilot, activePlans = {}, view, wsLogs = [], wsDecisions = [] }: DashboardProps) {
+  if (view === 'memory') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline color="cyan">Phase 11: Collective Memory (The Borg Knowledge Base)</Text>
+        </Box>
+        <Text>Sub-agents across different sessions share discovered facts here.</Text>
+        
+        <Box marginTop={1} flexDirection="column">
+          <Text bold underline>Recently Learned Facts</Text>
+          {/* In a real scenario, we would fetch these from the API. 
+              For the static UI component, we show a placeholder of what it looks like. */}
+          <Box gap={2}>
+            <Text color="cyan">⚙</Text>
+            <Text bold>project_structure</Text>
+            <Text color="gray">"Monorepo with Bun/Hono"</Text>
+            <Text color="blue">[95% confidence]</Text>
+          </Box>
+          <Box gap={2}>
+            <Text color="cyan">⚙</Text>
+            <Text bold>api_key_status</Text>
+            <Text color="gray">"OpenAI Key Rotated"</Text>
+            <Text color="blue">[100% confidence]</Text>
+          </Box>
+          <Box gap={2}>
+            <Text color="cyan">⚙</Text>
+            <Text bold>main_entry_point</Text>
+            <Text color="gray">"packages/server/src/index.ts"</Text>
+            <Text color="blue">[88% confidence]</Text>
+          </Box>
+        </Box>
+
+        <Box marginTop={1}>
+          <Text color="gray">Use 'opencode memory search [query]' to query the collective mind.</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (view === 'grid') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline color="yellow">Multi-Session Grid View</Text>
+        </Box>
+        <Box flexWrap="wrap" gap={2}>
+          {sessions.map((s) => (
+            <Box key={s.id} width={40} height={10} borderStyle="single" borderColor={s.status === 'running' ? 'green' : 'gray'} flexDirection="column" paddingX={1}>
+              <Box justifyContent="space-between">
+                <Text bold>{s.id.slice(-8)}</Text>
+                <Text color={s.status === 'running' ? 'green' : 'gray'}>{s.status.toUpperCase()}</Text>
+              </Box>
+              <Text color="cyan">CLI Session</Text>
+              <Box marginTop={1}>
+                <Text color="gray" italic>{s.currentTask?.slice(0, 35) || 'Idle...'}</Text>
+              </Box>
+              <Box marginTop={1} flexDirection="column">
+                {s.logs.slice(-3).map((l, i) => (
+                  <Text key={i} color="gray" dimColor>{'>'} {l.message.slice(0, 30)}</Text>
+                ))}
+              </Box>
+            </Box>
+          ))}
+          {sessions.length === 0 && <Text color="gray">No active sessions to display in grid.</Text>}
+        </Box>
+      </Box>
+    );
+  }
+
+  if (view === 'architecture') {
+    return (
+      <Box flexDirection="column">
+        <Box marginBottom={1}>
+          <Text bold underline color="blue">Phase 8: Visual Architecture (Mermaid)</Text>
+        </Box>
+        <Text color="gray">System and Swarm architecture generated as Mermaid code:</Text>
+        
+        <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="blue" paddingX={1}>
+          <Text color="cyan">graph LR</Text>
+          <Text color="cyan">  subgraph Council["Supreme Council"]</Text>
+          <Text color="cyan">    Orchestrator((Orchestrator))</Text>
+          <Text color="cyan">    Analytics[(Analytics DB)]</Text>
+          <Text color="cyan">  end</Text>
+          <Text color="cyan">  subgraph Tools["AI Tool Fleet"]</Text>
+          <Text color="cyan">    opencode[opencode]</Text>
+          <Text color="cyan">    gemini[gemini]</Text>
+          <Text color="cyan">    copilot[copilot]</Text>
+          <Text color="cyan">  end</Text>
+          <Text color="cyan">  Orchestrator --&gt; Tools</Text>
+        </Box>
+        
+        <Box marginTop={1}>
+          <Text>Open http://localhost:3847/api/visual/system to see live architecture.</Text>
+        </Box>
+      </Box>
+    );
+  }
+
   if (view === 'evolve') {
     return (
       <Box flexDirection="column">
@@ -185,6 +283,26 @@ export function Dashboard({ sessions, council, smartPilot, activePlans = {}, vie
                     <Text color="gray">({s.provider})</Text>
                     <Text color="gray">w: {s.weight || 1}</Text>
                     <Text color="gray">{s.model || 'default'}</Text>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {council.hierarchy && council.hierarchy.length > 0 && (
+              <Box flexDirection="column" marginTop={1}>
+                <Text bold color="blue">Specialized Sub-Councils:</Text>
+                {council.hierarchy.map((sub, i) => (
+                  <Box key={i} flexDirection="column" marginLeft={2} marginBottom={1}>
+                    <Box gap={2}>
+                      <Text color="blue">↳</Text>
+                      <Text bold>{sub.name}</Text>
+                      <Text color="gray">({sub.supervisorCount} supervisors)</Text>
+                    </Box>
+                    <Box marginLeft={3} gap={1} flexWrap="wrap">
+                      {sub.specialties.map((spec: string, si: number) => (
+                        <Text key={si} color="magenta" dimColor>[{spec}]</Text>
+                      ))}
+                    </Box>
                   </Box>
                 ))}
               </Box>

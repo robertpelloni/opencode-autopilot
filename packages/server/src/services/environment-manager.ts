@@ -73,6 +73,8 @@ const CLI_SPECIFIC_VARS: Record<CLIType, string[]> = {
   'shell-pilot': ['SHELL_PILOT_*'],
   smithery: ['SMITHERY_*'],
   trae: ['TRAE_*'],
+  pi: ['PI_*'],
+  warp: ['WARP_*'],
 };
 
 class EnvironmentManager {
@@ -266,6 +268,8 @@ class EnvironmentManager {
       'shell-pilot': [],
       smithery: [],
       trae: [],
+      pi: [],
+      warp: [],
     };
 
     return required[cliType] || [];

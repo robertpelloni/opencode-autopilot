@@ -1,6 +1,9 @@
 import type { Session, LogEntry, DevelopmentTask, Guidance, CLIType, SessionHealth, CLITool } from '@opencode-autopilot/shared';
 import * as pty from 'node-pty';
 import os from 'os';
+import path from 'path';
+import { Socket, createConnection } from 'net';
+import { spawn as spawnChild } from 'child_process';
 import { loadConfig } from './config.js';
 import { wsManager } from './ws-manager.js';
 import { sessionPersistence } from './session-persistence.js';
@@ -8,13 +11,17 @@ import { cliRegistry } from './cli-registry.js';
 import { healthMonitor } from './health-monitor.js';
 import { logRotation } from './log-rotation.js';
 import { environmentManager } from './environment-manager.js';
+import { checkpointService } from './checkpoint-service.js';
 
 interface ManagedSession {
   session: Session;
   process: { pid: number; kill: () => void; exited: Promise<number> } | null;
-  ptyProcess?: pty.IPty;
+  sidecarProcess?: { pid: number; kill: () => void };
+  socket?: Socket;
+  ptyProcess?: pty.IPty; // Legacy for non-sidecar or internal
   interactive?: boolean;
   port: number;
+  sidecarPort?: number;
   cliType: CLIType;
   restartCount: number;
   lastRestartAt?: number;
@@ -172,6 +179,7 @@ class SessionManager {
   async startSession(task?: DevelopmentTask, options?: StartSessionOptions): Promise<Session> {
     const id = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const port = this.getNextPort();
+    const sidecarPort = port + 1000;
     const cliType = options?.cliType || this.defaultCLI;
 
     const session: Session = {
@@ -191,6 +199,7 @@ class SessionManager {
       session, 
       process: null, 
       port, 
+      sidecarPort,
       cliType,
       restartCount: 0,
     };
@@ -212,10 +221,10 @@ class SessionManager {
       workingDirectory: session.workingDirectory,
       templateName: session.templateName,
       tags: session.tags,
-      metadata: { cliType },
+      metadata: { cliType, sidecarPort },
     });
 
-    this.log(id, 'info', `Starting ${cliType} session on port ${port}`);
+    this.log(id, 'info', `Starting ${cliType} session on port ${port} (Sidecar: ${sidecarPort})`);
     wsManager.notifySessionUpdate(session);
 
     try {
@@ -228,35 +237,85 @@ class SessionManager {
       managed.interactive = tool.interactive;
 
       if (tool.interactive) {
-        const ptyProc = pty.spawn(serveCmd.command, serveCmd.args, {
-          name: 'xterm-color',
-          cols: 80,
-          rows: 30,
-          cwd: session.workingDirectory,
-          env: env as Record<string, string>,
+        // BORG ARCHITECTURE: Spawn a detached sidecar
+        this.log(id, 'debug', `Spawning sidecar for ${tool.command}`);
+        
+        const sidecarScript = os.platform() === 'win32' 
+          ? path.join(process.cwd(), 'src', 'terminal-sidecar.ts')
+          : './src/terminal-sidecar.ts';
+
+        const sidecar: any = spawnChild('bun', [
+          'run', sidecarScript,
+          serveCmd.command, 
+          JSON.stringify(serveCmd.args),
+          sidecarPort.toString(),
+          session.workingDirectory || process.cwd()
+        ], {
+          detached: true,
+          stdio: 'ignore',
+          env: { ...process.env, ...env }
         });
 
-        managed.ptyProcess = ptyProc;
+        sidecar.unref();
+        managed.sidecarProcess = { pid: sidecar.pid!, kill: () => sidecar.kill() };
+
+        // Connect to sidecar
+        await new Promise((resolve, reject) => {
+          let attempts = 0;
+          const tryConnect = () => {
+            attempts++;
+            const socket = createConnection({ port: sidecarPort, host: '127.0.0.1' }, () => {
+              this.log(id, 'debug', 'Connected to sidecar PTY');
+              managed.socket = socket;
+              resolve(true);
+            });
+
+            socket.on('data', (data) => {
+              const text = data.toString();
+              
+              if (text.startsWith('BORG_TELEMETRY:')) {
+                try {
+                  const tel = JSON.parse(text.substring(15));
+                  if (tel.type === 'HEARTBEAT') {
+                    managed.session.lastActivity = Date.now();
+                  }
+                  return;
+                } catch (e) {}
+              }
+
+              const lines = text.split(/\r?\n/);
+              for (const line of lines) {
+                if (line.trim()) this.log(id, 'info', line.trim());
+              }
+            });
+
+            socket.on('error', (err) => {
+              if (attempts < 10) {
+                setTimeout(tryConnect, 500);
+              } else {
+                reject(new Error(`Failed to connect to sidecar: ${err.message}`));
+              }
+            });
+          };
+          tryConnect();
+        });
+
         managed.process = {
-          pid: ptyProc.pid,
-          kill: () => ptyProc.kill(),
-          exited: new Promise(resolve => ptyProc.onExit(({ exitCode }) => resolve(exitCode))),
+          pid: sidecar.pid!,
+          kill: () => {
+            managed.socket?.destroy();
+            sidecar.kill();
+          },
+          exited: new Promise((resolve) => {
+            sidecar.on('exit', (code: number | null) => resolve(code || 0));
+          })
         };
 
-        let outputBuffer = '';
-        ptyProc.onData(data => {
-          outputBuffer += data;
-          const lines = data.split(/\r?\n/);
-          for (let i = 0; i < lines.length - 1; i++) {
-             if (lines[i].trim()) this.log(id, 'info', lines[i].trim());
-          }
-          const lastLine = lines[lines.length - 1];
-          if (lastLine.trim()) this.log(id, 'info', lastLine);
-        });
-
         this.setupProcessHandlers(id, managed.process);
-
-        await this.waitForPtyReady(id, tool, ptyProc, 15000);
+        
+        // Use regex detection over the socket stream if needed, 
+        // but for now we consider it ready once connected.
+        await new Promise(r => setTimeout(r, 2000));
       } else {
         const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
           stdout: 'pipe',
@@ -439,6 +498,11 @@ class SessionManager {
     this.log(id, 'info', `Resuming ${cliType} session on port ${port}`);
 
     try {
+      const checkpointContext = await checkpointService.restoreSessionContext(id);
+      if (checkpointContext) {
+        this.log(id, 'info', 'Restoring state from latest checkpoint...');
+      }
+
       const tool = cliRegistry.getTool(cliType);
       const serveCmd = cliRegistry.getServeCommand(cliType, port);
       if (!serveCmd || !tool) {
@@ -449,35 +513,87 @@ class SessionManager {
       const env = environmentManager.getSessionEnvironment(id) || {};
 
       if (tool.interactive) {
-        const ptyProc = pty.spawn(serveCmd.command, serveCmd.args, {
-          name: 'xterm-color',
-          cols: 80,
-          rows: 30,
-          cwd: session.workingDirectory,
-          env: env as Record<string, string>,
+        // BORG RE-ATTACHMENT LOGIC
+        const sidecarPort = persisted.metadata?.sidecarPort as number || (port + 1000);
+        managed.sidecarPort = sidecarPort;
+
+        this.log(id, 'debug', `Attempting to re-attach to sidecar on port ${sidecarPort}`);
+
+        const connected = await new Promise((resolve) => {
+          const socket = createConnection({ port: sidecarPort, host: '127.0.0.1' }, () => {
+            this.log(id, 'info', 'Successfully re-attached to existing sidecar PTY');
+            managed.socket = socket;
+            
+            if (checkpointContext) {
+              // Inject checkpoint context into the interactive terminal as a comment or hint
+              const text = `\n# --- BORG RECOVERY ---\n# ${checkpointContext.replace(/\n/g, '\n# ')}\n`;
+              socket.write(text);
+            }
+            
+            resolve(true);
+          });
+
+          socket.on('data', (data) => {
+            const lines = data.toString().split(/\r?\n/);
+            for (const line of lines) {
+              if (line.trim()) this.log(id, 'info', line.trim());
+            }
+          });
+
+          socket.on('error', () => resolve(false));
         });
 
-        managed.ptyProcess = ptyProc;
+        if (!connected) {
+          this.log(id, 'warn', 'Existing sidecar not found, spawning fresh one');
+          const sidecarScript = os.platform() === 'win32' 
+            ? path.join(process.cwd(), 'src', 'terminal-sidecar.ts')
+            : './src/terminal-sidecar.ts';
+
+          const sidecar: any = spawnChild('bun', [
+            'run', sidecarScript,
+            serveCmd.command, 
+            JSON.stringify(serveCmd.args),
+            sidecarPort.toString(),
+            session.workingDirectory || process.cwd()
+          ], {
+            detached: true,
+            stdio: 'ignore',
+            env: { ...process.env, ...env }
+          });
+
+          sidecar.unref();
+          managed.sidecarProcess = { pid: sidecar.pid!, kill: () => sidecar.kill() };
+
+          await new Promise((resolve, reject) => {
+            let attempts = 0;
+            const tryConnect = () => {
+              attempts++;
+              const socket = createConnection({ port: sidecarPort, host: '127.0.0.1' }, () => {
+                managed.socket = socket;
+                resolve(true);
+              });
+              socket.on('data', (data) => {
+                const lines = data.toString().split(/\r?\n/);
+                for (const line of lines) if (line.trim()) this.log(id, 'info', line.trim());
+              });
+              socket.on('error', () => {
+                if (attempts < 10) setTimeout(tryConnect, 500);
+                else reject(new Error('Failed to spawn/connect to new sidecar'));
+              });
+            };
+            tryConnect();
+          });
+        }
+
         managed.process = {
-          pid: ptyProc.pid,
-          kill: () => ptyProc.kill(),
-          exited: new Promise(resolve => ptyProc.onExit(({ exitCode }) => resolve(exitCode))),
+          pid: managed.sidecarProcess?.pid || 0,
+          kill: () => {
+            managed.socket?.destroy();
+            if (managed.sidecarProcess) spawnChild('taskkill', ['/F', '/T', '/PID', managed.sidecarProcess.pid.toString()]);
+          },
+          exited: new Promise(() => {}) // We don't track sidecar exit easily yet
         };
 
-        let outputBuffer = '';
-        ptyProc.onData(data => {
-          outputBuffer += data;
-          const lines = data.split(/\r?\n/);
-          for (let i = 0; i < lines.length - 1; i++) {
-             if (lines[i].trim()) this.log(id, 'info', lines[i].trim());
-          }
-          const lastLine = lines[lines.length - 1];
-          if (lastLine.trim()) this.log(id, 'info', lastLine);
-        });
-
-        this.setupProcessHandlers(id, managed.process);
-
-        await this.waitForPtyReady(id, tool, ptyProc, 15000);
       } else {
         const proc = Bun.spawn([serveCmd.command, ...serveCmd.args], {
           stdout: 'pipe',
@@ -667,6 +783,24 @@ class SessionManager {
 
   getSessionCLIType(id: string): CLIType | undefined {
     return this.sessions.get(id)?.cliType;
+  }
+
+  async injectEnvironmentVariable(id: string, key: string, value: string): Promise<void> {
+    const managed = this.sessions.get(id);
+    if (!managed) throw new Error(`Session ${id} not found`);
+
+    environmentManager.updateSessionVariable(id, key, value);
+
+    if (managed.socket) {
+      this.log(id, 'info', `Injecting dynamic environment variable: ${key}`);
+      const ctrl = { type: 'SET_ENV', key, value };
+      managed.socket.write(`BORG_CTRL:${JSON.stringify(ctrl)}`);
+    } else if (managed.ptyProcess) {
+      // Legacy/Internal fallback
+      const isWin = os.platform() === 'win32';
+      const cmd = isWin ? `$env:${key} = '${value}';` : `export ${key}='${value}';`;
+      managed.ptyProcess.write(`${cmd}\n`);
+    }
   }
 
   async sendGuidance(id: string, guidance: Guidance): Promise<void> {

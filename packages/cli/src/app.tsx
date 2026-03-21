@@ -6,7 +6,7 @@ import { useWebSocket } from './hooks/useWebSocket.js';
 
 export function App() {
   const { exit } = useApp();
-  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'logs' | 'council' | 'pilot' | 'settings' | 'help' | 'evolve' | 'architecture' | 'grid' | 'memory'>('dashboard');
   const { sessions, council, smartPilot, activePlans, refresh, toggleCouncil, toggleSmartPilot, evolveSystem, optimizeWeights } = useApi();
   const ws = useWebSocket({ autoReconnect: true });
 
@@ -21,6 +21,9 @@ export function App() {
     if (input === '5') setView('settings');
     if (input === '6') setView('help');
     if (input === '7') setView('evolve');
+    if (input === '8') setView('architecture');
+    if (input === '9') setView('grid');
+    if (input === '0') setView('memory');
     if (input === 'r') refresh();
     if (input === 't') toggleCouncil();
     if (input === 'p') toggleSmartPilot();
@@ -57,6 +60,12 @@ export function App() {
         <Text color={view === 'help' ? 'green' : 'gray'}>[6] Help</Text>
         <Text> </Text>
         <Text color={view === 'evolve' ? 'magenta' : 'gray'}>[7] Evolve</Text>
+        <Text> </Text>
+        <Text color={view === 'architecture' ? 'blue' : 'gray'}>[8] Architecture</Text>
+        <Text> </Text>
+        <Text color={view === 'grid' ? 'yellow' : 'gray'}>[9] Grid</Text>
+        <Text> </Text>
+        <Text color={view === 'memory' ? 'cyan' : 'gray'}>[0] Memory</Text>
         <Text> │ </Text>
         <Text color="gray">[r] Refresh [t] Toggle Council [p] Toggle Pilot [q] Quit</Text>
         <Text> │ </Text>

@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig, ConsensusMode } from '@opencode-autopilot/shared';
+import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig, ConsensusMode, TaskType, SpecializedCouncilConfig } from '@opencode-autopilot/shared';
 import { SupervisorCouncil } from '../services/council.js';
+import { councilHierarchy } from '../services/council-hierarchy.js';
 import { createSupervisor, createSupervisors, createMockSupervisor } from '../supervisors/index.js';
 import { wsManager } from '../services/ws-manager.js';
 import { debateRateLimit, apiRateLimit } from '../middleware/rate-limit.js';
@@ -51,6 +52,14 @@ const configSchema = z.object({
   fallbackSupervisors: z.array(z.string()).optional(),
 });
 
+const specializedCouncilSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  specialties: z.array(z.string()),
+  config: configSchema,
+});
+
 const supervisorsBodySchema = z.object({
   supervisors: z.array(supervisorConfigSchema),
 });
@@ -58,16 +67,38 @@ const supervisorsBodySchema = z.object({
 council.get('/status', apiRateLimit(), async (c) => {
   const instance = getOrCreateCouncil();
   const available = await instance.getAvailableSupervisors();
+  const hierarchy = councilHierarchy.getAllSpecializedCouncils().map(s => ({
+    id: s.id,
+    name: s.name,
+    specialties: s.specialties,
+    supervisorCount: s.council.getSupervisors().length
+  }));
   
-  return c.json<ApiResponse<{ enabled: boolean; supervisorCount: number; availableCount: number; config: CouncilConfig }>>({
+  return c.json<ApiResponse<{ enabled: boolean; supervisorCount: number; availableCount: number; config: CouncilConfig, hierarchy: any[] }>>({
     success: true,
     data: {
       enabled: config.enabled ?? true,
       supervisorCount: config.supervisors.length,
       availableCount: available.length,
       config,
+      hierarchy,
     },
   });
+});
+
+council.post('/specialized', apiRateLimit(), apiKeyAuth, zValidator('json', specializedCouncilSchema), async (c) => {
+  const body = c.req.valid('json');
+  
+  councilHierarchy.registerSpecializedCouncil({
+    ...body.config,
+    id: body.id,
+    name: body.name,
+    description: body.description,
+    specialties: body.specialties as TaskType[],
+    supervisors: body.config.supervisors || [],
+  });
+
+  return c.json({ success: true, message: `Specialized council '${body.name}' registered.` });
 });
 
 council.post('/config', apiRateLimit(), apiKeyAuth, zValidator('json', configSchema), async (c) => {

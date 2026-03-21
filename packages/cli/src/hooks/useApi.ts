@@ -126,6 +126,26 @@ export function useApi() {
     return data;
   }, [fetchCouncil]);
 
+  const fetchSystemDiagram = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/visual/system`);
+      const data = await res.json();
+      return data.mermaid;
+    } catch (e) {
+      return '';
+    }
+  }, []);
+
+  const fetchSwarmDiagram = useCallback(async (sessionId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/visual/swarm/${sessionId}`);
+      const data = await res.json();
+      return data.mermaid;
+    } catch (e) {
+      return '';
+    }
+  }, []);
+
   return {
     sessions,
     council,
@@ -140,5 +160,7 @@ export function useApi() {
     toggleSmartPilot,
     evolveSystem,
     optimizeWeights,
+    fetchSystemDiagram,
+    fetchSwarmDiagram,
   };
 }

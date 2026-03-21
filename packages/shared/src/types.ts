@@ -24,6 +24,13 @@ export type ConsensusMode =
   | 'hybrid-ceo-majority'  // CEO decides ties, majority otherwise
   | 'ranked-choice';       // Supervisors rank options, highest ranked wins
 
+export interface SpecializedCouncilConfig extends CouncilConfig {
+  id: string;
+  name: string;
+  description: string;
+  specialties: TaskType[];
+}
+
 export interface CouncilConfig {
   supervisors: SupervisorConfig[];
   debateRounds?: number;
@@ -34,6 +41,7 @@ export interface CouncilConfig {
   consensusMode?: ConsensusMode;
   leadSupervisor?: string;  // Name of the CEO/head honcho supervisor
   fallbackSupervisors?: string[];  // Ordered fallback chain
+  specializedCouncils?: SpecializedCouncilConfig[];
 }
 
 export interface SessionTemplate {
@@ -187,12 +195,14 @@ export type CLIType =
   | 'mistral-vibe'
   | 'ollama'
   | 'open-interpreter'
+  | 'pi'
   | 'qwen-code'
   | 'rowboatx'
   | 'rovo'
   | 'shell-pilot'
   | 'smithery'
-  | 'trae';
+  | 'trae'
+  | 'warp';
 
 export interface CLITool {
   type: CLIType;

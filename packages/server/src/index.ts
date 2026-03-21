@@ -23,6 +23,8 @@ import templateRoutes from './routes/templates.js';
 import fineTunedModelsRoutes from './routes/fine-tuned-models.js';
 import collaborativeDebatesRoutes from './routes/collaborative-debates.js';
 import systemRoutes from './routes/system.js';
+import visualRoutes from './routes/visual.js';
+import memoryRoutes from './routes/memory.js';
 import logsRoutes from './routes/logs.js';
 import ideRoutes from './routes/ide.js';
 import { loadConfig } from './services/config.js';
@@ -38,6 +40,10 @@ import { logRotation } from './services/log-rotation.js';
 import { debateHistory } from './services/debate-history.js';
 import { quotaManager } from './services/quota-manager.js';
 import { selfEvolution } from './services/self-evolution.js';
+import { checkpointService } from './services/checkpoint-service.js';
+import { councilHierarchy } from './services/council-hierarchy.js';
+import { autonomousMaintenance } from './services/system-maintenance.js';
+import { collectiveMemory } from './services/collective-memory.js';
 
 const startTime = Date.now();
 const config = loadConfig();
@@ -49,6 +55,8 @@ if (config.council.supervisors.length > 0) {
   }
   console.log(`Loaded ${supervisors.length} supervisor(s) from config`);
 }
+
+await councilHierarchy.initialize(council);
 
 council.setDebateRounds(config.council.debateRounds || 2);
 council.setConsensusThreshold(config.council.consensusThreshold || 0.7);
@@ -258,6 +266,8 @@ app.route('/api/templates', templateRoutes);
 app.route('/api/fine-tuned-models', fineTunedModelsRoutes);
 app.route('/api/collaborative-debates', collaborativeDebatesRoutes);
 app.route('/api/system', systemRoutes);
+app.route('/api/visual', visualRoutes);
+app.route('/api/memory', memoryRoutes);
 app.route('/api/logs', logsRoutes);
 app.route('/api/ide', ideRoutes);
 app.route('/ws', wsRoutes);
@@ -280,6 +290,8 @@ healthMonitor.start();
 logRotation.start();
 debateHistory.initialize();
 selfEvolution.start();
+checkpointService.start();
+autonomousMaintenance.start();
 
 if (config.council.smartPilot) {
   smartPilot.setEnabled(true);
@@ -291,6 +303,8 @@ process.on('SIGINT', async () => {
   healthMonitor.stop();
   logRotation.stop();
   selfEvolution.stop();
+  checkpointService.stop();
+  autonomousMaintenance.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });
@@ -301,6 +315,8 @@ process.on('SIGTERM', async () => {
   healthMonitor.stop();
   logRotation.stop();
   selfEvolution.stop();
+  checkpointService.stop();
+  autonomousMaintenance.stop();
   await sessionManager.cleanup();
   process.exit(0);
 });

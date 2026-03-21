@@ -4,6 +4,7 @@ import { council } from './council.js';
 import { wsManager } from './ws-manager.js';
 import { loadConfig } from './config.js';
 import { autoContinueHooks } from './hooks.js';
+import { councilHierarchy } from './council-hierarchy.js';
 
 interface TaskCheckpoint {
   sessionId: string;
@@ -308,7 +309,7 @@ class SmartPilot {
       return;
     }
 
-    let decision = await council.debate(task);
+    let decision = await councilHierarchy.routeTask(task);
 
     const postDebateResult = await autoContinueHooks.execute({
       phase: 'post-debate',
