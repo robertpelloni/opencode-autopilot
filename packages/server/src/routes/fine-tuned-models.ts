@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { fineTunedModelManager } from '../services/fine-tuned-model-manager.js';
 import type { FineTuneProvider, FineTuneStatus, ModelDeploymentStatus } from '../services/fine-tuned-model-manager.js';
-import type { TaskType } from '@opencode-autopilot/shared';
+import type { TaskType } from '@borg-orchestrator/shared';
 
 const app = new Hono();
 

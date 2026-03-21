@@ -2,7 +2,7 @@ import { loadConfig, saveConfig } from './config.js';
 import { supervisorAnalytics } from './supervisor-analytics.js';
 import { sessionManager } from './session-manager.js';
 import { council } from './council.js';
-import type { DevelopmentTask } from '@opencode-autopilot/shared';
+import type { DevelopmentTask } from '@borg-orchestrator/shared';
 import { spawn } from 'child_process';
 
 export class SelfEvolutionService {
@@ -69,14 +69,14 @@ export class SelfEvolutionService {
   }
 
   /**
-   * Spawns an internal meta-session to modify the codebase of opencode-autopilot itself.
+   * Spawns an internal meta-session to modify the codebase of borg-orchestrator itself.
    */
   async evolveSystem(description: string): Promise<string> {
     const taskId = `evolve-${Date.now()}`;
     const task: DevelopmentTask = {
       id: taskId,
-      description: `[SELF-EVOLUTION] ${description}\n\nYou are modifying the source code of opencode-autopilot itself. \n\nIMPORTANT INSTRUCTIONS:\n1. Create a new git branch named 'evolve-${taskId}'.\n2. Make the requested changes.\n3. Run 'bun run build' and 'bun run typecheck' across the monorepo to ensure integrity.\n4. If tests and builds pass, commit the changes and push the branch.`,
-      context: 'Modify opencode-autopilot source code to implement the requested evolution autonomously.',
+      description: `[SELF-EVOLUTION] ${description}\n\nYou are modifying the source code of borg-orchestrator itself. \n\nIMPORTANT INSTRUCTIONS:\n1. Create a new git branch named 'evolve-${taskId}'.\n2. Make the requested changes.\n3. Run 'bun run build' and 'bun run typecheck' across the monorepo to ensure integrity.\n4. If tests and builds pass, commit the changes and push the branch.`,
+      context: 'Modify borg-orchestrator source code to implement the requested evolution autonomously.',
       files: [],
       cliType: 'opencode'
     };

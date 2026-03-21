@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { Session, CouncilConfig, CouncilDecision, LogEntry, TaskPlan } from '@opencode-autopilot/shared';
+import type { Session, CouncilConfig, CouncilDecision, LogEntry, TaskPlan } from '@borg-orchestrator/shared';
 
 interface SmartPilotStatus {
   enabled: boolean;

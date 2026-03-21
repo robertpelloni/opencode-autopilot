@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { debateHistory, type DebateQueryOptions } from '../services/debate-history.js';
-import type { TaskType } from '@opencode-autopilot/shared';
+import type { TaskType } from '@borg-orchestrator/shared';
 
 export const debateHistoryRoutes = new Hono();
 

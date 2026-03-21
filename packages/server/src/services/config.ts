@@ -1,4 +1,4 @@
-import type { CouncilConfig, SupervisorConfig, SessionTemplate, LogRotationConfig, HealthCheckConfig, CrashRecoveryConfig, CLIType } from '@opencode-autopilot/shared';
+import type { CouncilConfig, SupervisorConfig, SessionTemplate, LogRotationConfig, HealthCheckConfig, CrashRecoveryConfig, CLIType } from '@borg-orchestrator/shared';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 

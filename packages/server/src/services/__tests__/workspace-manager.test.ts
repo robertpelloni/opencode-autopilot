@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { WorkspaceManagerService } from '../workspace-manager.js';
-import type { CouncilDecision } from '@opencode-autopilot/shared';
+import type { CouncilDecision } from '@borg-orchestrator/shared';
 
 describe('WorkspaceManagerService', () => {
   let manager: WorkspaceManagerService;

@@ -1,6 +1,6 @@
-# Contributing to OpenCode Autopilot Council
+# Contributing to Borg Orchestrator Council
 
-Thank you for considering contributing to OpenCode Autopilot Council! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to Borg Orchestrator Council! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -23,8 +23,8 @@ Thank you for considering contributing to OpenCode Autopilot Council! This docum
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/opencode-autopilot-council.git`
-3. Add upstream remote: `git remote add upstream https://github.com/robertpelloni/opencode-autopilot-council.git`
+2. Clone your fork: `git clone https://github.com/your-username/borg-orchestrator-council.git`
+3. Add upstream remote: `git remote add upstream https://github.com/robertpelloni/borg-orchestrator-council.git`
 
 ## Development Setup
 

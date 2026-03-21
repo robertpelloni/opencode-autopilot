@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Session, CouncilConfig, ApiResponse, TaskPlan } from '@opencode-autopilot/shared';
+import type { Session, CouncilConfig, ApiResponse, TaskPlan } from '@borg-orchestrator/shared';
 
 const API_BASE = process.env.AUTOPILOT_API || 'http://localhost:3847';
 

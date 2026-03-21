@@ -1,4 +1,4 @@
-import type { CouncilDecision, DevelopmentTask } from '@opencode-autopilot/shared';
+import type { CouncilDecision, DevelopmentTask } from '@borg-orchestrator/shared';
 import { EventEmitter } from 'events';
 
 type VetoAction = 'approve' | 'reject' | 'redebate';

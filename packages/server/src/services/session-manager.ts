@@ -1,4 +1,4 @@
-import type { Session, LogEntry, DevelopmentTask, Guidance, CLIType, SessionHealth, CLITool } from '@opencode-autopilot/shared';
+import type { Session, LogEntry, DevelopmentTask, Guidance, CLIType, SessionHealth, CLITool } from '@borg-orchestrator/shared';
 import * as pty from 'node-pty';
 import os from 'os';
 import path from 'path';

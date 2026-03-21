@@ -19,4 +19,4 @@ See individual files if you are:
 *   **GPT:** `GPT.md`
 *   **Copilot:** `copilot-instructions.md`
 
-**Goal:** Complete implementation of OpenCode Autopilot with 100% feature coverage, robust testing, and comprehensive UI.
+**Goal:** Complete implementation of Borg Orchestrator with 100% feature coverage, robust testing, and comprehensive UI.

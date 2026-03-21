@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenCode Autopilot - Council Dashboard</title>
+    <title>Borg Orchestrator - Council Dashboard</title>
     <style>
         :root {
             --bg-primary: #09090b;
@@ -529,7 +529,7 @@
         <header>
             <div class="logo">
                 <div class="logo-icon">&#129302;</div>
-                <h1>OpenCode Autopilot</h1>
+                <h1>Borg Orchestrator</h1>
             </div>
             <div class="header-actions">
                 <div class="connection-status">
@@ -1841,9 +1841,9 @@
                 document.getElementById('system-version').textContent = data.version || 'Unknown';
 
                 document.getElementById('system-dependencies').innerHTML = `
-                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/server: ${data.version}</div>
-                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@opencode-autopilot/cli: ${data.version}</div>
-                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">@opencode-autopilot/shared: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@borg-orchestrator/server: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">@borg-orchestrator/cli: ${data.version}</div>
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">@borg-orchestrator/shared: ${data.version}</div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <h4 style="color: var(--text-secondary);">Submodules (${submodules.length})</h4>

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { HumanVetoService } from '../human-veto.js';
-import type { CouncilDecision, DevelopmentTask } from '@opencode-autopilot/shared';
+import type { CouncilDecision, DevelopmentTask } from '@borg-orchestrator/shared';
 
 describe('HumanVetoService', () => {
   let veto: HumanVetoService;

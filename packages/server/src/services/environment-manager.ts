@@ -1,4 +1,4 @@
-import type { CLIType } from '@opencode-autopilot/shared';
+import type { CLIType } from '@borg-orchestrator/shared';
 
 interface EnvironmentConfig {
   inherit: boolean;

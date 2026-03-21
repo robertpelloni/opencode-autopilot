@@ -38,7 +38,7 @@ describe('API Integration Tests', () => {
       const res = await fetch(`${API_BASE}/`);
       expect(res.ok).toBe(true);
       const data = await res.json();
-      expect(data.name).toBe('opencode-autopilot');
+      expect(data.name).toBe('borg-orchestrator');
       expect(data.endpoints).toBeDefined();
       expect(data.endpoints.sessions).toBe('/api/sessions');
       expect(data.endpoints.council).toBe('/api/council');

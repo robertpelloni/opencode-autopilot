@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
-import type { SessionHealth, SessionHealthStatus } from '@opencode-autopilot/shared';
+import type { SessionHealth, SessionHealthStatus } from '@borg-orchestrator/shared';
 
 // Testable version of health monitor without external dependencies
 class TestHealthMonitor {

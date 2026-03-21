@@ -45,7 +45,7 @@ export function App() {
   return (
     <Box flexDirection="column" padding={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">opencode-autopilot</Text>
+        <Text bold color="cyan">borg-orchestrator</Text>
         <Text> │ </Text>
         <Text color={view === 'dashboard' ? 'green' : 'gray'}>[1] Dashboard</Text>
         <Text> </Text>

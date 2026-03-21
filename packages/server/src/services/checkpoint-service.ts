@@ -2,7 +2,7 @@ import { sessionManager } from './session-manager.js';
 import { dbService } from './db.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { Session } from '@opencode-autopilot/shared';
+import type { Session } from '@borg-orchestrator/shared';
 
 interface SessionCheckpoint {
   sessionId: string;

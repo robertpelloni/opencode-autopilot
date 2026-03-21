@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { ConsensusMode, TaskType } from '@opencode-autopilot/shared';
+import type { ConsensusMode, TaskType } from '@borg-orchestrator/shared';
 
 export interface DebateTemplate {
   id: string;

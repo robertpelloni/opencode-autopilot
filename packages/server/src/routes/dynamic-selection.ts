@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { dynamicSupervisorSelection } from '../services/dynamic-supervisor-selection.js';
 import { council } from '../services/council.js';
-import type { DevelopmentTask } from '@opencode-autopilot/shared';
+import type { DevelopmentTask } from '@borg-orchestrator/shared';
 
 export const dynamicSelectionRoutes = new Hono();
 

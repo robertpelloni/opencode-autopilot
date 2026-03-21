@@ -1,4 +1,4 @@
-import type { WebSocketMessage, Session, CouncilDecision, LogEntry } from '@opencode-autopilot/shared';
+import type { WebSocketMessage, Session, CouncilDecision, LogEntry } from '@borg-orchestrator/shared';
 
 type WSClient = {
   ws: WebSocket;

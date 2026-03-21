@@ -1,4 +1,4 @@
-import type { ConsensusMode, DevelopmentTask } from '@opencode-autopilot/shared';
+import type { ConsensusMode, DevelopmentTask } from '@borg-orchestrator/shared';
 
 type TaskType = 
   | 'security-audit'

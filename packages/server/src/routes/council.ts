@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig, ConsensusMode, TaskType, SpecializedCouncilConfig } from '@opencode-autopilot/shared';
+import type { CouncilConfig, CouncilDecision, ApiResponse, SupervisorConfig, ConsensusMode, TaskType, SpecializedCouncilConfig } from '@borg-orchestrator/shared';
 import { SupervisorCouncil } from '../services/council.js';
 import { councilHierarchy } from '../services/council-hierarchy.js';
 import { createSupervisor, createSupervisors, createMockSupervisor } from '../supervisors/index.js';

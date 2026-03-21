@@ -1,4 +1,4 @@
-import type { SessionHealth, SessionHealthStatus, HealthCheckConfig, CrashRecoveryConfig } from '@opencode-autopilot/shared';
+import type { SessionHealth, SessionHealthStatus, HealthCheckConfig, CrashRecoveryConfig } from '@borg-orchestrator/shared';
 import { wsManager } from './ws-manager.js';
 
 interface HealthMonitoredSession {

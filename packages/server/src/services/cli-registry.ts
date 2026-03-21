@@ -1,4 +1,4 @@
-import type { CLITool, CLIType } from '@opencode-autopilot/shared';
+import type { CLITool, CLIType } from '@borg-orchestrator/shared';
 import { spawn } from 'child_process';
 
 interface CLIDefinition {

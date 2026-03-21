@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { Message, Vote, TaskType } from '@opencode-autopilot/shared';
+import type { Message, Vote, TaskType } from '@borg-orchestrator/shared';
 
 // ============ Types ============
 

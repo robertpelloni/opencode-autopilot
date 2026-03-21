@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { WebSocketMessage, Session, CouncilDecision, LogEntry } from '@opencode-autopilot/shared';
+import type { WebSocketMessage, Session, CouncilDecision, LogEntry } from '@borg-orchestrator/shared';
 
 const WS_URL = process.env.AUTOPILOT_WS || 'ws://localhost:3847/ws';
 

@@ -1,4 +1,4 @@
-import type { Supervisor, SupervisorConfig, Message } from '@opencode-autopilot/shared';
+import type { Supervisor, SupervisorConfig, Message } from '@borg-orchestrator/shared';
 import { fetchWithRetry } from './retry.js';
 
 interface AnthropicMessage {

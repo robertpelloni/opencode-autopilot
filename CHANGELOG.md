@@ -115,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-12-31
 
 ### Added
-- Initial release of OpenCode Autopilot Council plugin
+- Initial release of Borg Orchestrator Council plugin
 - Multi-model supervisor support (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Qwen, Kimi)
 - Council-based debate system with configurable rounds
 - Consensus voting mechanism with adjustable thresholds
@@ -391,4 +391,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/opencode-autopilot-council/releases).
+For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/borg-orchestrator-council/releases).

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { ApiResponse, SessionHealth } from '@opencode-autopilot/shared';
+import type { ApiResponse, SessionHealth } from '@borg-orchestrator/shared';
 import { sessionManager } from '../services/session-manager.js';
 import { healthMonitor } from '../services/health-monitor.js';
 import { logRotation } from '../services/log-rotation.js';

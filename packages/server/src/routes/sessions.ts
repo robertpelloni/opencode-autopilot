@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { Session, ApiResponse, DevelopmentTask, Guidance, BulkSessionRequest, BulkSessionResponse, SessionTemplate, CLIType } from '@opencode-autopilot/shared';
+import type { Session, ApiResponse, DevelopmentTask, Guidance, BulkSessionRequest, BulkSessionResponse, SessionTemplate, CLIType } from '@borg-orchestrator/shared';
 import { sessionManager } from '../services/session-manager.js';
 import { wsManager } from '../services/ws-manager.js';
 import { loadConfig } from '../services/config.js';

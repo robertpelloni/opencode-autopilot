@@ -1,5 +1,5 @@
 {
-  "name": "@opencode-autopilot/shared",
+  "name": "@borg-orchestrator/shared",
   "version": "1.0.11",
   "type": "module",
   "main": "dist/index.js",

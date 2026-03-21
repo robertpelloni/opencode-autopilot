@@ -1,4 +1,4 @@
-import type { Supervisor, SupervisorConfig } from '@opencode-autopilot/shared';
+import type { Supervisor, SupervisorConfig } from '@borg-orchestrator/shared';
 import { MockSupervisor } from './mock.js';
 import { OpenAISupervisor } from './openai.js';
 import { AnthropicSupervisor } from './anthropic.js';

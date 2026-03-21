@@ -1,12 +1,12 @@
 # Usage Examples
 
-This document provides practical examples of using the OpenCode Autopilot Council plugin.
+This document provides practical examples of using the Borg Orchestrator Council plugin.
 
 ## Basic Setup
 
 1. **Install the plugin**:
    ```bash
-   npm install opencode-autopilot-council
+   npm install borg-orchestrator-council
    ```
 
 2. **Create configuration**:
@@ -351,5 +351,5 @@ Store debate history for analysis:
 ## Support
 
 For issues, questions, or contributions:
-- GitHub Issues: [Repository Issues](https://github.com/robertpelloni/opencode-autopilot-council/issues)
+- GitHub Issues: [Repository Issues](https://github.com/robertpelloni/borg-orchestrator-council/issues)
 - Documentation: [README.md](../README.md)

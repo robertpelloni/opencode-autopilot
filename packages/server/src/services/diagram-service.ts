@@ -1,4 +1,4 @@
-import type { TaskPlan, SubTask } from '@opencode-autopilot/shared';
+import type { TaskPlan, SubTask } from '@borg-orchestrator/shared';
 
 class DiagramService {
   /**

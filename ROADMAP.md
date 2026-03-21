@@ -1,4 +1,4 @@
-# OpenCode Autopilot Roadmap
+# Borg Orchestrator Roadmap
 
 ## Current Status: Version 1.0.14 (Completed)
 

@@ -1,4 +1,4 @@
-import type { Session, DevelopmentTask, CouncilDecision, Guidance } from '@opencode-autopilot/shared';
+import type { Session, DevelopmentTask, CouncilDecision, Guidance } from '@borg-orchestrator/shared';
 
 export type HookPhase = 
   | 'pre-debate'

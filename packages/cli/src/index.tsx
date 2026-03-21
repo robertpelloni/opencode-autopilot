@@ -97,7 +97,7 @@ async function runCommand() {
   
   if (command === 'help' || command === '--help' || command === '-h') {
     console.log(`
-opencode-autopilot CLI
+borg-orchestrator CLI
 
 Usage:
   autopilot              Start interactive TUI

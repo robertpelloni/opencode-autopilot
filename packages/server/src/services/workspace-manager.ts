@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { dbService } from './db.js';
-import type { CouncilConfig, ConsensusMode, DevelopmentTask, CouncilDecision } from '@opencode-autopilot/shared';
+import type { CouncilConfig, ConsensusMode, DevelopmentTask, CouncilDecision } from '@borg-orchestrator/shared';
 
 /**
  * Workspace configuration and state

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Demo script for OpenCode Autopilot Council
+ * Demo script for Borg Orchestrator Council
  * 
  * This script demonstrates how to use the council programmatically
  */
@@ -42,7 +42,7 @@ const demoTask = {
 };
 
 async function runDemo() {
-  console.log('🏛️  OpenCode Autopilot Council Demo\n');
+  console.log('🏛️  Borg Orchestrator Council Demo\n');
   console.log('='.repeat(60));
   
   // Check for API keys

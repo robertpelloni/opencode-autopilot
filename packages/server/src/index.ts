@@ -100,7 +100,7 @@ app.onError((err, c) => {
 });
 
 app.get('/', (c) => c.json({ 
-  name: 'opencode-autopilot', 
+  name: 'borg-orchestrator', 
   version: '0.2.0',
   config: {
     supervisors: council.getSupervisors().map(s => s.name),

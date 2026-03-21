@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-OpenCode Autopilot is a TypeScript monorepo using Bun as the runtime.
+Borg Orchestrator is a TypeScript monorepo using Bun as the runtime.
 
 ```
 packages/

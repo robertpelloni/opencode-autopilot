@@ -1,7 +1,7 @@
 ## 🏗️ Technical Architecture
 
 ### Overview
-OpenCode Autopilot is a TypeScript monorepo application that implements a multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
+Borg Orchestrator is a TypeScript monorepo application that implements a multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
 
 ### Monorepo Structure
 

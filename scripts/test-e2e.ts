@@ -3,7 +3,7 @@
 const API = 'http://localhost:3847';
 
 async function runTests() {
-  console.log('🧪 OpenCode Autopilot E2E Test\n');
+  console.log('🧪 Borg Orchestrator E2E Test\n');
 
   console.log('1. Checking server health...');
   const health = await fetch(API).then(r => r.json()).catch(() => null);

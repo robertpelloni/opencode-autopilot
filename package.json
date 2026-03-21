@@ -1,5 +1,5 @@
 {
-  "name": "opencode-autopilot",
+  "name": "borg-orchestrator",
   "version": "1.0.11",
   "private": true,
   "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
@@ -8,13 +8,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --filter '@opencode-autopilot/server' dev",
-    "dev:cli": "bun run --filter '@opencode-autopilot/cli' dev",
+    "dev": "bun run --filter '@borg-orchestrator/server' dev",
+    "dev:cli": "bun run --filter '@borg-orchestrator/cli' dev",
     "dev:all": "concurrently \"bun run dev\" \"sleep 2 && bun run dev:cli\"",
     "build": "bun run --filter '*' build",
-    "build:shared": "bun run --filter '@opencode-autopilot/shared' build",
-    "build:server": "bun run --filter '@opencode-autopilot/server' build",
-    "build:cli": "bun run --filter '@opencode-autopilot/cli' build",
+    "build:shared": "bun run --filter '@borg-orchestrator/shared' build",
+    "build:server": "bun run --filter '@borg-orchestrator/server' build",
+    "build:cli": "bun run --filter '@borg-orchestrator/cli' build",
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter './packages/*' test",
     "test:e2e": "bun run test:mock",

@@ -1,11 +1,11 @@
-# Project Handoff: OpenCode Autopilot
+# Project Handoff: Borg Orchestrator
 
 **Date:** January 2026
 **Status:** Production Ready
 
 ## 📋 Current State
 
-OpenCode Autopilot is a fully-featured multi-model AI council system for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
+Borg Orchestrator is a fully-featured multi-model AI council system for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
 
 ### Architecture
 ```

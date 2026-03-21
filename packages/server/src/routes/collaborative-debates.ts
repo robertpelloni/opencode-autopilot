@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { collaborativeDebateManager } from '../services/collaborative-debate-manager.js';
 import type { CollaborativeDebateStatus, ParticipantRole } from '../services/collaborative-debate-manager.js';
-import type { TaskType } from '@opencode-autopilot/shared';
+import type { TaskType } from '@borg-orchestrator/shared';
 
 const app = new Hono();
 

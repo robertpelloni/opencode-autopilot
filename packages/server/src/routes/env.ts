@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { ApiResponse, CLIType } from '@opencode-autopilot/shared';
+import type { ApiResponse, CLIType } from '@borg-orchestrator/shared';
 import { environmentManager } from '../services/environment-manager.js';
 
 const env = new Hono();

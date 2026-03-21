@@ -1,6 +1,6 @@
-# Ideas for Improvement: OpenCode Autopilot
+# Ideas for Improvement: Borg Orchestrator
 
-OpenCode Autopilot is a multi-model AI council for autonomous guidance. To move from "Democratic Voting" to "Wisdom of the Swarm," here are several innovative improvements:
+Borg Orchestrator is a multi-model AI council for autonomous guidance. To move from "Democratic Voting" to "Wisdom of the Swarm," here are several innovative improvements:
 
 ## 1. Architectural & Language Perspectives
 *   **The "Gossip" Consensus Protocol:** Instead of a central server handling votes, implement a **Decentralized Consensus Engine (using libp2p)**. The supervisors (LLMs) could "debate" each other over a P2P network, making the autopilot resilient to central server failure and allowing for "Distributed Collective Intelligence."

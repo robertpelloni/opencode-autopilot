@@ -1,4 +1,4 @@
-import type { Session, DevelopmentTask, Guidance, CouncilDecision, TaskPlan } from '@opencode-autopilot/shared';
+import type { Session, DevelopmentTask, Guidance, CouncilDecision, TaskPlan } from '@borg-orchestrator/shared';
 import { sessionManager } from './session-manager.js';
 import { council } from './council.js';
 import { wsManager } from './ws-manager.js';

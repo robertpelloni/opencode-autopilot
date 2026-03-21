@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { PluginManager } from '../plugin-manager.js';
-import type { SupervisorConfig } from '@opencode-autopilot/shared';
+import type { SupervisorConfig } from '@borg-orchestrator/shared';
 
 describe('PluginManager', () => {
   let manager: PluginManager;

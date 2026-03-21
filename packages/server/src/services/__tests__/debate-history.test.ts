@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
 import { DebateHistoryService } from '../debate-history.js';
-import type { DevelopmentTask, CouncilDecision, Vote } from '@opencode-autopilot/shared';
+import type { DevelopmentTask, CouncilDecision, Vote } from '@borg-orchestrator/shared';
 
 describe('DebateHistoryService', () => {
   let service: DebateHistoryService;

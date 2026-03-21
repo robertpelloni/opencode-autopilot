@@ -6,9 +6,9 @@
 
 ## 1. Project Overview
 
-OpenCode Autopilot is a sophisticated AI-driven software development assistant. It differs from standard coding assistants by implementing a **Council of Supervisors**—a multi-model consensus engine that debates architectural and implementation decisions before execution.
+Borg Orchestrator is a sophisticated AI-driven software development assistant. It differs from standard coding assistants by implementing a **Council of Supervisors**—a multi-model consensus engine that debates architectural and implementation decisions before execution.
 
-The system is built as a **Monorepo** managed by Bun/npm workspaces, consisting of a backend server (`@opencode-autopilot/server`), a CLI TUI (`@opencode-autopilot/cli`), and a shared library (`@opencode-autopilot/shared`).
+The system is built as a **Monorepo** managed by Bun/npm workspaces, consisting of a backend server (`@borg-orchestrator/server`), a CLI TUI (`@borg-orchestrator/cli`), and a shared library (`@borg-orchestrator/shared`).
 
 ## 2. Architecture & Data Flow
 
@@ -81,7 +81,7 @@ While feature-complete, the following areas require attention in the next phase:
 
 **Strategic Goals:**
 1.  **Swarm Intelligence**: Implement the "Micro-agent" architecture. Instead of one big debate, spawn sub-councils for specific files.
-2.  **Self-Evolution**: Allow the Council to propose PRs to the `opencode-autopilot` repo itself (Meta-programming).
+2.  **Self-Evolution**: Allow the Council to propose PRs to the `borg-orchestrator` repo itself (Meta-programming).
 
 ## 6. Key Files Guide
 

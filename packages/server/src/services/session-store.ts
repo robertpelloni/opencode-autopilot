@@ -1,4 +1,4 @@
-import type { Session, LogEntry } from '@opencode-autopilot/shared';
+import type { Session, LogEntry } from '@borg-orchestrator/shared';
 import { wsManager } from './ws-manager.js';
 
 class SessionStore {

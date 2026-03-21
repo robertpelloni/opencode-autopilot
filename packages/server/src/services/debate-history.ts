@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { dbService } from './db.js';
-import type { CouncilDecision, DevelopmentTask, Vote, ConsensusMode, TaskType } from '@opencode-autopilot/shared';
+import type { CouncilDecision, DevelopmentTask, Vote, ConsensusMode, TaskType } from '@borg-orchestrator/shared';
 
 /**
  * A complete record of a council debate

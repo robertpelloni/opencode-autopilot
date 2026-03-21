@@ -1,4 +1,4 @@
-# OpenCode-Autopilot → Borg Core Integration Notes
+# Borg-Orchestrator → Borg Core Integration Notes
 
 > **Prepared for**: Borg integration session  
 > **Date**: January 11, 2026  
@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-This document provides comprehensive notes for integrating opencode-autopilot's multi-model AI council functionality directly into Borg core, eliminating the need for a separate executable/service.
+This document provides comprehensive notes for integrating borg-orchestrator's multi-model AI council functionality directly into Borg core, eliminating the need for a separate executable/service.
 
 ### Current Architecture
 ```
-Borg Core (port 3002)          opencode-autopilot (port 3847)
+Borg Core (port 3002)          borg-orchestrator (port 3847)
 ├── Hono server                 ├── Hono server (SEPARATE)
 ├── CouncilManager ──spawns──►  ├── SupervisorCouncil
 ├── AgentManager                ├── 20+ services
@@ -37,7 +37,7 @@ Borg Core (port 3002) - UNIFIED
 
 ### Location
 ```
-FROM: C:\Users\hyper\workspace\borg\submodules\opencode-autopilot\packages\server\src\
+FROM: C:\Users\hyper\workspace\borg\submodules\borg-orchestrator\packages\server\src\
 TO:   C:\Users\hyper\workspace\borg\packages\core\src\
 ```
 
@@ -105,7 +105,7 @@ TO:   C:\Users\hyper\workspace\borg\packages\core\src\
 
 ### 1. ModelGateway Integration
 
-**Current** (opencode-autopilot): Each supervisor makes direct API calls
+**Current** (borg-orchestrator): Each supervisor makes direct API calls
 ```typescript
 // supervisors/openai.ts
 const response = await openai.chat.completions.create({...});
@@ -146,7 +146,7 @@ this.io.emit('council:decision', decision);
 ```
 
 **Event Mapping**:
-| opencode-autopilot | Borg |
+| borg-orchestrator | Borg |
 |-------------------|------|
 | `council_decision` | `council:decision` |
 | `session_update` | `council:session_update` |
@@ -222,7 +222,7 @@ await this.memoryManager.remember({
 
 ### Location
 ```
-FROM: C:\Users\hyper\workspace\borg\submodules\opencode-autopilot\packages\shared\src\types.ts
+FROM: C:\Users\hyper\workspace\borg\submodules\borg-orchestrator\packages\shared\src\types.ts
 TO:   C:\Users\hyper\workspace\borg\packages\core\src\types\council.ts
 ```
 
@@ -399,7 +399,7 @@ packages/core/src/
 ## API Endpoint Mapping
 
 ### Keep Same Paths (Backward Compatible)
-All opencode-autopilot API paths should remain the same for UI compatibility:
+All borg-orchestrator API paths should remain the same for UI compatibility:
 
 ```
 /api/council/status          → SupervisorCouncilManager.getStatus()
@@ -420,7 +420,7 @@ All opencode-autopilot API paths should remain the same for UI compatibility:
 
 ### Unit Tests to Migrate
 ```
-FROM: submodules/opencode-autopilot/packages/server/src/services/__tests__/
+FROM: submodules/borg-orchestrator/packages/server/src/services/__tests__/
 TO:   packages/core/src/__tests__/council/
 
 - council.test.ts (18 tests)
@@ -493,8 +493,8 @@ cd packages/core && bun run dev
 # Run Borg core tests
 cd packages/core && bun test
 
-# View opencode-autopilot source
-cd submodules/opencode-autopilot/packages/server/src
+# View borg-orchestrator source
+cd submodules/borg-orchestrator/packages/server/src
 
 # Typecheck
 bun run typecheck
@@ -507,7 +507,7 @@ bun run typecheck
 **Total Estimated Effort**: 2-3 days for full integration
 
 **Key Success Metrics**:
-1. All 407 tests pass (migrated from opencode-autopilot)
+1. All 407 tests pass (migrated from borg-orchestrator)
 2. Debate flow works end-to-end
 3. Dashboard shows council data from new endpoints
 4. No separate process spawning required

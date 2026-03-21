@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { debateTemplateManager } from '../services/debate-template-manager.js';
 import type { TemplateCategory, TemplateConfig, TemplatePrompts, ScoringConfig } from '../services/debate-template-manager.js';
-import type { TaskType } from '@opencode-autopilot/shared';
+import type { TaskType } from '@borg-orchestrator/shared';
 
 const app = new Hono();
 

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { ApiResponse, CLITool } from '@opencode-autopilot/shared';
+import type { ApiResponse, CLITool } from '@borg-orchestrator/shared';
 import { cliRegistry } from '../services/cli-registry.js';
 
 const cli = new Hono();

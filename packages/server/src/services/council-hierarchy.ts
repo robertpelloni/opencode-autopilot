@@ -1,7 +1,7 @@
 import { SupervisorCouncil } from './council.js';
 import { loadConfig } from './config.js';
 import { createSupervisors } from '../supervisors/index.js';
-import type { SpecializedCouncilConfig, DevelopmentTask, CouncilDecision, TaskType } from '@opencode-autopilot/shared';
+import type { SpecializedCouncilConfig, DevelopmentTask, CouncilDecision, TaskType } from '@borg-orchestrator/shared';
 
 export interface SpecializedCouncil {
   id: string;

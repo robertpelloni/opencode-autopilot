@@ -1,9 +1,9 @@
-import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, ConsensusMode, Vote, TaskType } from '@opencode-autopilot/shared';
+import type { Supervisor, CouncilConfig, CouncilDecision, DevelopmentTask, Message, ConsensusMode, Vote, TaskType } from '@borg-orchestrator/shared';
 import { metrics } from './metrics.js';
 import { dynamicSupervisorSelection } from './dynamic-supervisor-selection.js';
 import { debateHistory } from './debate-history.js';
 import { supervisorAnalytics } from './supervisor-analytics.js';
-import type { TaskPlan, SubTask } from '@opencode-autopilot/shared';
+import type { TaskPlan, SubTask } from '@borg-orchestrator/shared';
 
 interface ConsensusModeHandler {
   (votes: Vote[], config: CouncilConfig, leadVote?: Vote): { approved: boolean; reasoning: string };

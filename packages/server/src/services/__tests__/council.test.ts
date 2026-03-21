@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
 import { SupervisorCouncil } from '../council.js';
-import type { Supervisor, Message, DevelopmentTask } from '@opencode-autopilot/shared';
+import type { Supervisor, Message, DevelopmentTask } from '@borg-orchestrator/shared';
 
 function createMockSupervisor(name: string, responses: string[]): Supervisor {
   let callIndex = 0;

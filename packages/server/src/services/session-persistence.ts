@@ -1,5 +1,5 @@
 import { loadConfig, type PersistenceConfig } from './config.js';
-import type { PersistedSession } from '@opencode-autopilot/shared';
+import type { PersistedSession } from '@borg-orchestrator/shared';
 import * as fs from 'fs';
 import * as path from 'path';
 

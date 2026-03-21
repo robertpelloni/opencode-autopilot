@@ -1,4 +1,4 @@
-import type { LogEntry, LogRotationConfig } from '@opencode-autopilot/shared';
+import type { LogEntry, LogRotationConfig } from '@borg-orchestrator/shared';
 
 interface SessionLogs {
   entries: LogEntry[];
