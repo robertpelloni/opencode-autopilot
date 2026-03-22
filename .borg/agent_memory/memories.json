@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "savedAt": "2026-03-21T02:03:19.112Z",
+  "memories": [
+    {
+      "id": "b13ed481150f8923",
+      "type": "working",
+      "namespace": "project",
+      "content": "desktop-commander__read_multiple_files failed\ndesktop-commander__read_multiple_files failed after 900ms. Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server.\nFacts:\n- Tool: desktop-commander__read_multiple_files\n- Duration: 900ms\n- Failure: Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server.",
+      "metadata": {
+        "source": "tool_execution",
+        "tags": [
+          "tool-execution",
+          "desktop-commander__read_multiple_files",
+          "failure",
+          "desktop",
+          "commander",
+          "read",
+          "multiple",
+          "files"
+        ],
+        "durationMs": 900,
+        "success": false,
+        "structuredObservation": {
+          "type": "warning",
+          "title": "desktop-commander__read_multiple_files failed",
+          "narrative": "desktop-commander__read_multiple_files failed after 900ms. Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server.",
+          "facts": [
+            "Tool: desktop-commander__read_multiple_files",
+            "Duration: 900ms",
+            "Failure: Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server."
+          ],
+          "concepts": [
+            "tool-execution",
+            "desktop-commander__read_multiple_files",
+            "failure",
+            "desktop",
+            "commander",
+            "read",
+            "multiple",
+            "files"
+          ],
+          "filesRead": [],
+          "filesModified": [],
+          "toolName": "desktop-commander__read_multiple_files",
+          "contentHash": "4446793eb4d91f0e0db8a5fa50504f8175a526b5a295bb9fedaddbfb885f8638",
+          "recordedAt": 1774054846720
+        },
+        "observationType": "warning",
+        "observationHash": "4446793eb4d91f0e0db8a5fa50504f8175a526b5a295bb9fedaddbfb885f8638",
+        "toolName": "desktop-commander__read_multiple_files",
+        "filesRead": [],
+        "filesModified": [],
+        "rawInput": "{\n  \"file_paths\": [\n    \"C:\\\\Users\\\\hyper\\\\.gemini\\\\extensions\\\\maestro\\\\skills\\\\delegation\\\\protocols\\\\agent-base-protocol.md\",\n    \"C:\\\\Users\\\\hyper\\\\.gemini\\\\extensions\\\\maestro\\\\skills\\\\delegation\\\\protocols\\\\filesystem-safety-protocol.md\"\n  ]\n}",
+        "rawOutput": "{}"
+      },
+      "createdAt": "2026-03-21T01:00:46.723Z",
+      "accessedAt": "2026-03-21T01:00:46.723Z",
+      "accessCount": 0
+    },
+    {
+      "id": "fc1c382ce64fc130",
+      "type": "session",
+      "namespace": "project",
+      "content": "JIT tool context for desktop-commander__list_sessions:\nFocus query: desktop-commander__list_sessions\nPotentially relevant observations:\n- desktop-commander__read_multiple_files failed — desktop-commander__read_multiple_files failed after 900ms. Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server. (warning · desktop-commander__read_multiple_files)\nUse only the parts that still match the current intent; ignore stale context.",
+      "metadata": {
+        "source": "pre_tool_context",
+        "tags": [
+          "tool-context",
+          "pre-tool",
+          "desktop-commander__list_sessions"
+        ],
+        "toolName": "desktop-commander__list_sessions",
+        "query": "desktop-commander__list_sessions",
+        "matchedPaths": [],
+        "observationCount": 1,
+        "summaryCount": 0,
+        "preview": "JIT context: 1 observation"
+      },
+      "createdAt": "2026-03-21T02:02:26.490Z",
+      "accessedAt": "2026-03-21T02:02:26.490Z",
+      "accessCount": 0,
+      "ttl": 1800000
+    },
+    {
+      "id": "975439d3533d070e",
+      "type": "working",
+      "namespace": "project",
+      "content": "desktop-commander__list_sessions failed\ndesktop-commander__list_sessions failed after 431ms. Tool execution failed: Tool desktop-commander__list_sessions not found in any connected MCP server.\nFacts:\n- Tool: desktop-commander__list_sessions\n- Duration: 431ms\n- Failure: Tool execution failed: Tool desktop-commander__list_sessions not found in any connected MCP server.",
+      "metadata": {
+        "source": "tool_execution",
+        "tags": [
+          "tool-execution",
+          "desktop-commander__list_sessions",
+          "failure",
+          "desktop",
+          "commander",
+          "list",
+          "sessions",
+          "warning"
+        ],
+        "durationMs": 431,
+        "success": false,
+        "structuredObservation": {
+          "type": "warning",
+          "title": "desktop-commander__list_sessions failed",
+          "narrative": "desktop-commander__list_sessions failed after 431ms. Tool execution failed: Tool desktop-commander__list_sessions not found in any connected MCP server.",
+          "facts": [
+            "Tool: desktop-commander__list_sessions",
+            "Duration: 431ms",
+            "Failure: Tool execution failed: Tool desktop-commander__list_sessions not found in any connected MCP server."
+          ],
+          "concepts": [
+            "tool-execution",
+            "desktop-commander__list_sessions",
+            "failure",
+            "desktop",
+            "commander",
+            "list",
+            "sessions",
+            "warning"
+          ],
+          "filesRead": [],
+          "filesModified": [],
+          "toolName": "desktop-commander__list_sessions",
+          "contentHash": "0a0c8c5debe85c4ba315a46520cc144a5a2413c0dc181dcfa758d16708fce490",
+          "recordedAt": 1774058546919
+        },
+        "observationType": "warning",
+        "observationHash": "0a0c8c5debe85c4ba315a46520cc144a5a2413c0dc181dcfa758d16708fce490",
+        "toolName": "desktop-commander__list_sessions",
+        "filesRead": [],
+        "filesModified": [],
+        "rawInput": "{}",
+        "rawOutput": "{}"
+      },
+      "createdAt": "2026-03-21T02:02:26.919Z",
+      "accessedAt": "2026-03-21T02:02:26.919Z",
+      "accessCount": 0
+    },
+    {
+      "id": "0440d210b6c44124",
+      "type": "session",
+      "namespace": "project",
+      "content": "JIT tool context for desktop-commander__read_process_output:\nFocus query: desktop-commander__read_process_output\nPotentially relevant observations:\n- desktop-commander__read_multiple_files failed — desktop-commander__read_multiple_files failed after 900ms. Tool execution failed: Tool desktop-commander__read_multiple_files not found in any connected MCP server. (warning · desktop-commander__read_multiple_files)\n- desktop-commander__list_sessions failed — desktop-commander__list_sessions failed after 431ms. Tool execution failed: Tool desktop-commander__list_sessions not found in any connected MCP server. (warning · desktop-commander__list_sessions)\nUse only the parts that still match the current intent; ignore stale context.",
+      "metadata": {
+        "source": "pre_tool_context",
+        "tags": [
+          "tool-context",
+          "pre-tool",
+          "desktop-commander__read_process_output"
+        ],
+        "toolName": "desktop-commander__read_process_output",
+        "query": "desktop-commander__read_process_output",
+        "matchedPaths": [],
+        "observationCount": 2,
+        "summaryCount": 0,
+        "preview": "JIT context: 2 observations"
+      },
+      "createdAt": "2026-03-21T02:03:14.112Z",
+      "accessedAt": "2026-03-21T02:03:14.112Z",
+      "accessCount": 0,
+      "ttl": 1800000
+    },
+    {
+      "id": "d919ef6d88c29bf3",
+      "type": "working",
+      "namespace": "project",
+      "content": "desktop-commander__read_process_output failed\ndesktop-commander__read_process_output failed after 191ms. Tool execution failed: Tool desktop-commander__read_process_output not found in any connected MCP server.\nFacts:\n- Tool: desktop-commander__read_process_output\n- Duration: 191ms\n- Failure: Tool execution failed: Tool desktop-commander__read_process_output not found in any connected MCP server.",
+      "metadata": {
+        "source": "tool_execution",
+        "tags": [
+          "tool-execution",
+          "desktop-commander__read_process_output",
+          "failure",
+          "desktop",
+          "commander",
+          "read",
+          "process",
+          "output"
+        ],
+        "durationMs": 191,
+        "success": false,
+        "structuredObservation": {
+          "type": "warning",
+          "title": "desktop-commander__read_process_output failed",
+          "narrative": "desktop-commander__read_process_output failed after 191ms. Tool execution failed: Tool desktop-commander__read_process_output not found in any connected MCP server.",
+          "facts": [
+            "Tool: desktop-commander__read_process_output",
+            "Duration: 191ms",
+            "Failure: Tool execution failed: Tool desktop-commander__read_process_output not found in any connected MCP server."
+          ],
+          "concepts": [
+            "tool-execution",
+            "desktop-commander__read_process_output",
+            "failure",
+            "desktop",
+            "commander",
+            "read",
+            "process",
+            "output"
+          ],
+          "filesRead": [],
+          "filesModified": [],
+          "toolName": "desktop-commander__read_process_output",
+          "contentHash": "50840b205ade7a53a5bc11b4eb2ec5535074417056162381d8229d1f80e76efc",
+          "recordedAt": 1774058594303
+        },
+        "observationType": "warning",
+        "observationHash": "50840b205ade7a53a5bc11b4eb2ec5535074417056162381d8229d1f80e76efc",
+        "toolName": "desktop-commander__read_process_output",
+        "filesRead": [],
+        "filesModified": [],
+        "rawInput": "{\n  \"pid\": 60300\n}",
+        "rawOutput": "{}"
+      },
+      "createdAt": "2026-03-21T02:03:14.303Z",
+      "accessedAt": "2026-03-21T02:03:14.303Z",
+      "accessCount": 0
+    }
+  ]
+}
