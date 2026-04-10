@@ -117,3 +117,10 @@ See `VISION.md` for planned features:
 - `ROADMAP.md` - Development phases and features
 - `CHANGELOG.md` - Version history
 - `VISION.md` - Future direction
+
+## Go Port Initiation (2026-03-21)
+- Initialized `go-port` directory and Go module.
+- Ported the foundational type definitions (`shared/types.ts` and `shared/swarm-types.ts`) to `go-port/pkg/shared/types.go`.
+- Ensured Go type definitions compile successfully.
+- Version incremented to 1.0.15. Documentation (`ROADMAP.md`, `CHANGELOG.md`, `IDEAS.md`) updated.
+- **Future Implementation Steps:** Implement the core `Supervisor` interfaces and provider implementations in `go-port/pkg/server/supervisors`, followed by standing up the Hono-equivalent backend routing framework in Go (likely using `gin`, `fiber`, or `chi`). Submodule integration should be carefully managed as autonomous packages that the central Go binary utilizes.
