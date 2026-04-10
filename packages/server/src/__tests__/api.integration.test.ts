@@ -21,7 +21,7 @@ describe('API Integration Tests', () => {
     if (!ready) {
       throw new Error('Server not available. Start with: cd packages/server && bun run dev');
     }
-  });
+  }, 15000);
 
   describe('Health & Root', () => {
     test('GET /health returns healthy status', async () => {
