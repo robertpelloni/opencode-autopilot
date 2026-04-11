@@ -132,3 +132,13 @@ See `VISION.md` for planned features:
 - Created a stub metrics package at `go-port/pkg/server/services/metrics` to support the logging capabilities embedded in the retry requests.
 - Version incremented to 1.0.16.
 - **Future Implementation Steps:** Begin porting the core debate logic via the `Council` implementation, and the HTTP server router itself.
+
+## Go Port - Supervisor Council Module (2026-03-21)
+- Completed the port of `packages/server/src/services/council.ts` to `go-port/pkg/server/services/council/`.
+- Created robust modular Go implementations of the core `SupervisorCouncil` logic:
+  - `council.go`: Struct definitions, initialization, basic getters/setters.
+  - `helpers.go`: Formatting, regex vote parsing, reasoning generation.
+  - `consensus_handlers.go`: Extracted all 8 robust voting protocols (Simple, Supermajority, CeoVeto, etc.).
+  - `debate.go`: The core `Debate` loop, supporting multiple rounds, `ChatWithFallback`, and dynamic supervisor selection.
+- Setup core stub implementations for cross-service dependencies in Go (`metrics`, `analytics`, `dynamic_selection`, `history`).
+- Version incremented to 1.0.17.
