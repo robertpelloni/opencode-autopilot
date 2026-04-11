@@ -142,3 +142,11 @@ See `VISION.md` for planned features:
   - `debate.go`: The core `Debate` loop, supporting multiple rounds, `ChatWithFallback`, and dynamic supervisor selection.
 - Setup core stub implementations for cross-service dependencies in Go (`metrics`, `analytics`, `dynamic_selection`, `history`).
 - Version incremented to 1.0.17.
+
+## Go Port - Metrics Service (2026-03-21)
+- Upgraded the stubbed `metrics.go` package into a fully-fledged metrics tracking module.
+- Reimplemented `MetricsService` functionality tracking latency, HTTP requests, errors, and Supervisor calls directly from `packages/server/src/services/metrics.ts`.
+- Added standard Go `sync.RWMutex` to ensure thread-safety across concurrent goroutines in the orchestrator pipeline.
+- Implemented Prometheus metrics exposition format equivalent to the previous TypeScript version.
+- Incremented version to 1.0.18.
+- **Future Implementation Steps:** Implement the remaining services like `SmartPilot`, `QuotaManager`, and `EnvironmentManager`, then tie it all together with a Go-based HTTP server framework (e.g., Echo, Gin, or HttpServeMux) matching the existing `Hono` API.
