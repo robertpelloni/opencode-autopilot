@@ -150,3 +150,10 @@ See `VISION.md` for planned features:
 - Implemented Prometheus metrics exposition format equivalent to the previous TypeScript version.
 - Incremented version to 1.0.18.
 - **Future Implementation Steps:** Implement the remaining services like `SmartPilot`, `QuotaManager`, and `EnvironmentManager`, then tie it all together with a Go-based HTTP server framework (e.g., Echo, Gin, or HttpServeMux) matching the existing `Hono` API.
+
+## Go Port - Quota Manager Service (2026-03-21)
+- Upgraded the stubbed `quota_manager.go` package into a fully-fledged quota tracking module.
+- Reimplemented `QuotaManagerService` tracking concurrency limits, daily budgets, and RPM/RPH/TPM/TPD parameters ported from `packages/server/src/services/quota-manager.ts`.
+- Included robust concurrent map access controls (`sync.RWMutex`) and a background ticker for garbage-collecting old request history metrics.
+- Incremented version to 1.0.19.
+- **Future Implementation Steps:** Following this logic, it is essential to implement `SessionManager` and `SmartPilot` logic in Go, mapping `sessions.ts` and `smart-pilot.ts` files, ensuring that CLI integrations map correctly to Go sub-processes.

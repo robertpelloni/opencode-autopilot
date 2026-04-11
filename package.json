@@ -1,6 +1,6 @@
 {
   "name": "borg-orchestrator",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "private": true,
   "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
   "type": "module",
