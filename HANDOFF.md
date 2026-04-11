@@ -124,3 +124,11 @@ See `VISION.md` for planned features:
 - Ensured Go type definitions compile successfully.
 - Version incremented to 1.0.15. Documentation (`ROADMAP.md`, `CHANGELOG.md`, `IDEAS.md`) updated.
 - **Future Implementation Steps:** Implement the core `Supervisor` interfaces and provider implementations in `go-port/pkg/server/supervisors`, followed by standing up the Hono-equivalent backend routing framework in Go (likely using `gin`, `fiber`, or `chi`). Submodule integration should be carefully managed as autonomous packages that the central Go binary utilizes.
+
+## Go Port - Supervisor Modules (2026-03-21)
+- Completed the port of `packages/server/src/supervisors/` logic to `go-port/pkg/server/supervisors/`.
+- Created implementations for OpenAI-compatible supervisors (`OpenAISupervisor` in `openai.go`), Anthropic (`AnthropicSupervisor` in `anthropic.go`), and Mock logic (`MockSupervisor` in `mock.go`).
+- Ported the exponential backoff retry mechanism into `retry.go`.
+- Created a stub metrics package at `go-port/pkg/server/services/metrics` to support the logging capabilities embedded in the retry requests.
+- Version incremented to 1.0.16.
+- **Future Implementation Steps:** Begin porting the core debate logic via the `Council` implementation, and the HTTP server router itself.
