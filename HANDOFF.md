@@ -157,3 +157,12 @@ See `VISION.md` for planned features:
 - Included robust concurrent map access controls (`sync.RWMutex`) and a background ticker for garbage-collecting old request history metrics.
 - Incremented version to 1.0.19.
 - **Future Implementation Steps:** Following this logic, it is essential to implement `SessionManager` and `SmartPilot` logic in Go, mapping `sessions.ts` and `smart-pilot.ts` files, ensuring that CLI integrations map correctly to Go sub-processes.
+
+## Go Port - Smart Pilot Service (2026-03-21)
+- Extracted and ported `packages/server/src/services/smart-pilot.ts` to `go-port/pkg/server/services/smartpilot`.
+- Separated logic into `smart_pilot.go` (state & config), `poll.go` (time Tickers, API fetching routines), and `execution.go` (task triggers, debate execution, and guidance evaluation).
+- Set up crucial stub definitions in Go for `session.Service`, `hooks.AutoContinueHooks`, `ws.Service`, and `hierarchy.Service`.
+- Replaced JS `setInterval` constructs with thread-safe `time.Ticker` inside dedicated goroutines.
+- Unit tested logic converting CouncilDecisions into Guided directives safely determining when to `AUTO-APPROVE`.
+- Bumped version to 1.0.20.
+- **Future Implementation Steps:** Implement the `SessionManager` module to allow spawning terminal sidecars and communicating with `node-pty` implementations native to Go (e.g. `creack/pty`). Then we can start binding these standalone services into the final HTTP server router.
