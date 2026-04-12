@@ -166,3 +166,10 @@ See `VISION.md` for planned features:
 - Unit tested logic converting CouncilDecisions into Guided directives safely determining when to `AUTO-APPROVE`.
 - Bumped version to 1.0.20.
 - **Future Implementation Steps:** Implement the `SessionManager` module to allow spawning terminal sidecars and communicating with `node-pty` implementations native to Go (e.g. `creack/pty`). Then we can start binding these standalone services into the final HTTP server router.
+
+## Go Port - Session Manager (2026-03-21)
+- Reimplemented the `SessionManagerService` core logic (`StartSession`, `GetActiveSessions`, etc.) in `go-port/pkg/server/services/session/session_manager.go`.
+- Configured Go's native `os/exec` to spawn subprocesses in the background and capture `cmd.Process.Pid` in place of standard `node-pty` implementations, eliminating our issues with node-gyp and native bindings.
+- Created basic stubs connecting to `ws_manager`, `cli_registry`, `health_monitor`, and `log_rotation` components to allow compilation.
+- Bumped version to 1.0.21.
+- **Future Implementation Steps:** Implement the detailed logging handlers, log rotation, and fully build the WebSocket server and `CLI Registry` natively in Go.

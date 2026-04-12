@@ -9,3 +9,5 @@ type WSManager struct{}
 func (s *WSManager) NotifyLog(sessionId string, log shared.LogEntry) {}
 
 func (s *WSManager) NotifyCouncilDecision(sessionId string, decision shared.CouncilDecision) {}
+
+func (s *WSManager) NotifySessionUpdate(session shared.Session) {}
