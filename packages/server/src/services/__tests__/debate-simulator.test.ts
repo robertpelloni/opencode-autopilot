@@ -158,7 +158,7 @@ describe('DebateSimulatorService', () => {
 
     it('should bias toward specified outcome', () => {
       const approveResults = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 100; i++) {
         const result = debateSimulator.simulateDebate({
           topic: 'Test',
           context: 'Context',
@@ -171,7 +171,7 @@ describe('DebateSimulatorService', () => {
       }
       
       const approvedCount = approveResults.filter(Boolean).length;
-      expect(approvedCount).toBeGreaterThan(3);
+      expect(approvedCount).toBeGreaterThan(35);
     });
   });
 
