@@ -173,3 +173,10 @@ See `VISION.md` for planned features:
 - Created basic stubs connecting to `ws_manager`, `cli_registry`, `health_monitor`, and `log_rotation` components to allow compilation.
 - Bumped version to 1.0.21.
 - **Future Implementation Steps:** Implement the detailed logging handlers, log rotation, and fully build the WebSocket server and `CLI Registry` natively in Go.
+
+## Go Port - Log Rotation Service (2026-03-21)
+- Reimplemented `LogRotationService` core logic (`AddLog`, `GetLogsWithPagination`, `PruneSessionLogs`) in `go-port/pkg/server/services/log/log_rotation.go`.
+- Configured thread-safe map structures to hold per-session log instances ensuring data consistency when accessed simultaneously by different incoming requests or websockets.
+- Added a background Goroutine via `time.Ticker` matching the TypeScript `setInterval` that loops through all instances pruning by chronological age and arbitrary threshold size.
+- Bumped version to 1.0.22.
+- **Future Implementation Steps:** Implement the remaining foundational services: `DebateHistory` and `EnvironmentManager`, followed by the `CLIRegistry` parsing logic.
