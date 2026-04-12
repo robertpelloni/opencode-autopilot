@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.23] - 2026-03-21
+
+### Added
+- **Go Port - DB ## [1.0.22] History**: Initialized Go SQLite instance using `modernc.org/sqlite`. Ported `DebateHistoryService` (`go-port/pkg/server/services/history`) including full SQL schema implementation, queries, pruning limits, and JSON marshaling.
+
 ## [1.0.22] - 2026-03-21
 
 ### Added

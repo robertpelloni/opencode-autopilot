@@ -180,3 +180,10 @@ See `VISION.md` for planned features:
 - Added a background Goroutine via `time.Ticker` matching the TypeScript `setInterval` that loops through all instances pruning by chronological age and arbitrary threshold size.
 - Bumped version to 1.0.22.
 - **Future Implementation Steps:** Implement the remaining foundational services: `DebateHistory` and `EnvironmentManager`, followed by the `CLIRegistry` parsing logic.
+
+## Go Port - Database & Debate History (2026-03-21)
+- Reimplemented `DatabaseService` (`packages/server/src/services/db.ts`) into `go-port/pkg/server/services/db`.
+- Chosen `modernc.org/sqlite` (pure Go port) to bypass CGO requirements across platforms, configuring SQLite correctly inside standard `database/sql`.
+- Ported the full `DebateHistoryService` schema, implementing complex metadata querying, row storage, deletion, counting, pruning old histories by timestamp, and fetching Supervisor specific histories using `Query` and `QueryRow`.
+- Version incremented to 1.0.23.
+- **Future Implementation Steps:** Finalize the orchestrator's backend ports: `CLIRegistry` and `EnvironmentManager`.
