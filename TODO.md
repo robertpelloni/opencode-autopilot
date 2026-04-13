@@ -11,5 +11,5 @@ The core data types (`pkg/shared/`), API integrations (`pkg/server/supervisors/`
 *   [x] **HTTP Router (`pkg/server/api/`)**: Begin assembling the Hono-equivalent Go router (using `net/http` or `gin`) and hooking up the newly ported Go services to real endpoints.
 
 ## Future / Ongoing Features
-*   [ ] **Hierarchical Councils**: Begin scoping the architecture for "Supreme" vs "Specialized" councils.
+*   [x] **Hierarchical Councils**: Begin scoping the architecture for "Supreme" vs "Specialized" councils.
 *   [ ] **Native IDE Integration**: Begin researching the creation of a VS Code Extension.
