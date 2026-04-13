@@ -437,3 +437,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/borg-orchestrator-council/releases).
+
+## [1.0.24] - 2026-04-13
+### Added
+- Comprehensive PROJECT_MEMORY.md documenting architecture and Go port status
+- Generated TODO.md mapping out remaining Go port tasks
+### Fixed
+- Resolved node-pty compilation issues in integration tests by implementing mock sidecars for TS testing
