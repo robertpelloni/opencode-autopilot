@@ -12,4 +12,9 @@ The core data types (`pkg/shared/`), API integrations (`pkg/server/supervisors/`
 
 ## Future / Ongoing Features
 *   [x] **Hierarchical Councils**: Begin scoping the architecture for "Supreme" vs "Specialized" councils.
-*   [ ] **Native IDE Integration**: Begin researching the creation of a VS Code Extension.
+*   [x] **Native IDE Integration**: Begin researching the creation of a VS Code Extension.
+
+## Next Phase: Core Features & Refinements
+*   [ ] **Go Port Completion**: Ensure all endpoints listed in `packages/server/src/index.ts` have corresponding Go handlers and run integration tests against the Go HTTP server.
+*   [ ] **Native Frontends**: Plan out desktop (Electron/Tauri) and mobile architectures referencing the newly built Go backend.
+*   [ ] **Persistent Analytics UI**: Wire up SQLite stored history metrics to visual charts in the dashboard.

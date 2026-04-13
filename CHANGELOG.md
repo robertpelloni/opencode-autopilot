@@ -444,3 +444,8 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 - Generated TODO.md mapping out remaining Go port tasks
 ### Fixed
 - Resolved node-pty compilation issues in integration tests by implementing mock sidecars for TS testing
+
+
+## [1.0.25] - 2026-04-13
+### Added
+- Researched Native IDE Integration and expanded TODO.md with the next phase of features (Native Frontends, Analytics UI, Go Port Completion).
