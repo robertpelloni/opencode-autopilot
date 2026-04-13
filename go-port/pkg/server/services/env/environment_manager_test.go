@@ -1,113 +1,106 @@
 package env
 
 import (
-	"borg-orchestrator/pkg/shared"
 	"os"
+	"strings"
 	"testing"
+
+
 )
 
-func TestEnvironmentManager_Globals(t *testing.T) {
-	manager := NewEnvironmentManager()
+func TestEnvironmentManager_GlobalConfig(t *testing.T) {
+	manager := NewEnvironmentManagerService()
 
-	manager.SetGlobalOverride("TEST_GLOBAL", "global_value")
-
-	env := manager.CreateSessionEnvironment("sess1", shared.Opencode, nil)
-	if env["TEST_GLOBAL"] != "global_value" {
-		t.Errorf("Expected TEST_GLOBAL to be global_value, got %s", env["TEST_GLOBAL"])
+	config := EnvironmentConfig{
+		Inherit: false,
+		Variables: map[string]string{
+			"TEST_GLOBAL": "true",
+		},
+		Secrets:     []string{"MY_SECRET"},
+		Passthrough: []string{"PATH"},
 	}
 
-	manager.RemoveGlobalOverride("TEST_GLOBAL")
-	env2 := manager.CreateSessionEnvironment("sess2", shared.Opencode, nil)
-	if _, ok := env2["TEST_GLOBAL"]; ok {
-		t.Errorf("Expected TEST_GLOBAL to be removed")
-	}
-}
+	manager.ConfigureGlobal(config)
 
-func TestEnvironmentManager_VariableExpansion(t *testing.T) {
-	manager := NewEnvironmentManager()
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
 
-	os.Setenv("BASE_URL", "http://test")
-	defer os.Unsetenv("BASE_URL")
-
-	vars := map[string]string{
-		"API_URL": "${BASE_URL}/api",
-		"DB_URL": "${MISSING_VAR}/db",
+	if manager.global.Inherit {
+		t.Errorf("Expected Inherit to be false")
 	}
 
-	env := manager.CreateSessionEnvironment("sess3", shared.Opencode, vars)
-
-	if env["API_URL"] != "http://test/api" {
-		t.Errorf("Expected API_URL to be expanded to http://test/api, got %s", env["API_URL"])
-	}
-	if env["DB_URL"] != "/db" {
-		t.Errorf("Expected DB_URL to be /db, got %s", env["DB_URL"])
-	}
-}
-
-func TestEnvironmentManager_Sanitization(t *testing.T) {
-	manager := NewEnvironmentManager()
-
-	vars := map[string]string{
-		"PUBLIC_VAR": "visible",
-		"OPENAI_API_KEY": "sk-12345",
-		"MY_SECRET": "hidden",
+	if manager.global.Variables["TEST_GLOBAL"] != "true" {
+		t.Errorf("Expected TEST_GLOBAL to be true")
 	}
 
-	manager.CreateSessionEnvironment("sess4", shared.Opencode, vars)
-	manager.AddGlobalSecret("MY_SECRET")
-
-	sanitized := manager.GetSanitizedEnvironment("sess4")
-
-	if sanitized["PUBLIC_VAR"] != "visible" {
-		t.Errorf("Expected PUBLIC_VAR to be visible")
+	foundSecret := false
+	for _, s := range manager.global.Secrets {
+		if s == "MY_SECRET" {
+			foundSecret = true
+			break
+		}
 	}
-	if sanitized["OPENAI_API_KEY"] != "***REDACTED***" {
-		t.Errorf("Expected OPENAI_API_KEY to be redacted via regex")
-	}
-	if sanitized["MY_SECRET"] != "***REDACTED***" {
-		t.Errorf("Expected MY_SECRET to be redacted via global secret explicitly")
+	if !foundSecret {
+		t.Errorf("Expected MY_SECRET in global secrets")
 	}
 }
 
-func TestEnvironmentManager_Validation(t *testing.T) {
-	manager := NewEnvironmentManager()
+func TestEnvironmentManager_PrepareEnvironment(t *testing.T) {
+	manager := NewEnvironmentManagerService()
+	os.Setenv("TEST_OS_ENV", "os_value")
 
-	vars := map[string]string{}
+	manager.ConfigureGlobal(EnvironmentConfig{
+		Inherit: false,
+		Variables: map[string]string{
+			"GLOBAL_VAR": "global_value",
+		},
+		Passthrough: []string{"TEST_OS_ENV"},
+	})
 
-	valid, missing := manager.ValidateEnvironmentForCLI(shared.ClaudeCode, vars)
-	if valid {
-		t.Errorf("Expected invalid environment for claude-code due to missing ANTHROPIC_API_KEY")
+	sessionID := "test-session"
+	env, err := manager.PrepareEnvironment(sessionID, "aider", &EnvironmentConfig{
+		Inherit: false,
+		Variables: map[string]string{
+			"SESSION_VAR": "session_value",
+		},
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to prepare env: %v", err)
 	}
-	if len(missing) != 1 || missing[0] != "ANTHROPIC_API_KEY" {
-		t.Errorf("Expected missing ANTHROPIC_API_KEY")
-	}
 
-	vars["ANTHROPIC_API_KEY"] = "sk-ant-123"
-	valid, _ = manager.ValidateEnvironmentForCLI(shared.ClaudeCode, vars)
-	if !valid {
-		t.Errorf("Expected valid environment for claude-code when ANTHROPIC_API_KEY is present")
+	if env.Resolved["TEST_OS_ENV"] != "os_value" {
+		t.Errorf("Expected passthrough variable TEST_OS_ENV to be 'os_value'")
+	}
+	if env.Resolved["GLOBAL_VAR"] != "global_value" {
+		t.Errorf("Expected global variable GLOBAL_VAR to be 'global_value'")
+	}
+	if env.Resolved["SESSION_VAR"] != "session_value" {
+		t.Errorf("Expected session variable SESSION_VAR to be 'session_value'")
 	}
 }
 
-func TestEnvironmentManager_Passthrough(t *testing.T) {
-	manager := NewEnvironmentManager()
-	os.Setenv("OPENAI_API_KEY", "sys-env-key")
-	defer os.Unsetenv("OPENAI_API_KEY")
+func TestEnvironmentManager_Redaction(t *testing.T) {
+	manager := NewEnvironmentManagerService()
 
-	// Aider needs OPENAI_API_KEY and ANTHROPIC_API_KEY
-	// The manager should automatically passthrough Aider specific keys if they are in os.Environ()
-	env := manager.CreateSessionEnvironment("sess5", shared.Aider, nil)
+	manager.ConfigureGlobal(EnvironmentConfig{
+		Secrets: []string{"API_KEY", "DB_PASS*"},
+		Variables: map[string]string{
+			"API_KEY": "super_secret_api_key_123",
+			"DB_PASSWORD": "db_secret_password_456",
+		},
+	})
 
-	if env["OPENAI_API_KEY"] != "sys-env-key" {
-		t.Errorf("Expected OPENAI_API_KEY to be pulled from OS env for Aider, got %s", env["OPENAI_API_KEY"])
+	logStr := "Connecting to API with key super_secret_api_key_123 and db password db_secret_password_456 ok"
+	redacted := manager.RedactLog(logStr, "")
+
+	if strings.Contains(redacted, "super_secret_api_key_123") {
+		t.Errorf("Failed to redact exact match secret")
 	}
-
-	// Ensure it filters out non-passthrough
-	os.Setenv("RANDOM_UNMATCHED_VAR", "foo")
-	defer os.Unsetenv("RANDOM_UNMATCHED_VAR")
-
-	env2 := manager.CreateSessionEnvironment("sess6", shared.Opencode, nil)
-	if _, ok := env2["RANDOM_UNMATCHED_VAR"]; ok {
-		t.Errorf("Expected RANDOM_UNMATCHED_VAR to be filtered out")
+	if strings.Contains(redacted, "db_secret_password_456") {
+		t.Errorf("Failed to redact wildcard match secret")
+	}
+	if !strings.Contains(redacted, "[REDACTED]") {
+		t.Errorf("Expected [REDACTED] in output")
 	}
 }

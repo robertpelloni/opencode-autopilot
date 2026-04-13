@@ -1,13 +1,41 @@
 package ws
 
-import "borg-orchestrator/pkg/shared"
+import (
+	"encoding/json"
+	"sync"
+	// Stub implementation for websocket manager
+)
 
-var Service = &WSManager{}
+type WSManagerService struct {
+	connections map[string]interface{} // Change interface{} to actual WS connection type later
+	mu          sync.RWMutex
+}
 
-type WSManager struct{}
+func NewWSManagerService() *WSManagerService {
+	return &WSManagerService{
+		connections: make(map[string]interface{}),
+	}
+}
 
-func (s *WSManager) NotifyLog(sessionId string, log shared.LogEntry) {}
+func (s *WSManagerService) Broadcast(messageType string, payload interface{}) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-func (s *WSManager) NotifyCouncilDecision(sessionId string, decision shared.CouncilDecision) {}
+	msg := map[string]interface{}{
+		"type":    messageType,
+		"payload": payload,
+	}
 
-func (s *WSManager) NotifySessionUpdate(session shared.Session) {}
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	_ = bytes // Send to connections
+}
+
+func (s *WSManagerService) SendToSession(sessionID string, messageType string, payload interface{}) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	// Filter and send
+}

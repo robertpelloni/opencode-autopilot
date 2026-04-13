@@ -1,383 +1,243 @@
 package env
 
 import (
-	"borg-orchestrator/pkg/shared"
 	"os"
-	"regexp"
 	"strings"
 	"sync"
+
+
+	"borg-orchestrator/pkg/shared"
 )
 
 type EnvironmentConfig struct {
-	Inherit     bool
-	Variables   map[string]string
-	Secrets     []string
-	Passthrough []string
+	Inherit     bool              `json:"inherit"`
+	Variables   map[string]string `json:"variables"`
+	Secrets     []string          `json:"secrets"`
+	Passthrough []string          `json:"passthrough"`
 }
 
 type SessionEnvironment struct {
-	SessionId string
-	CliType   shared.CLIType
-	Config    EnvironmentConfig
-	Resolved  map[string]string
+	SessionID string            `json:"sessionId"`
+	CLIType   shared.CLIType    `json:"cliType"`
+	Config    EnvironmentConfig `json:"config"`
+	Resolved  map[string]string `json:"resolved"`
 }
 
-var defaultPassthroughVars = []string{
-	"PATH",
-	"HOME",
-	"USER",
-	"SHELL",
-	"TERM",
-	"LANG",
-	"LC_ALL",
-	"TMPDIR",
-	"TMP",
-	"TEMP",
-	"NODE_ENV",
-	"BUN_ENV",
+var DefaultPassthroughVars = []string{
+	"PATH", "HOME", "USER", "SHELL", "TERM",
+	"LANG", "LC_ALL", "TMPDIR", "TMP", "TEMP",
+	"NODE_ENV", "BUN_ENV",
 }
 
-var cliSpecificVars = map[shared.CLIType][]string{
-	shared.Opencode:           {"OPENCODE_*", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"},
-	shared.Claude:             {"ANTHROPIC_API_KEY", "CLAUDE_*"},
-	shared.Aider:              {"AIDER_*", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"},
-	shared.Cursor:             {"CURSOR_*", "OPENAI_API_KEY"},
-	shared.Continue:           {"CONTINUE_*", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"},
-	shared.Cody:               {"SRC_*", "CODY_*"},
-	shared.Copilot:            {"GITHUB_*", "GH_*"},
-	shared.Custom:             {},
-	shared.Adrenaline:         {"ADRENALINE_*", "OPENAI_API_KEY"},
-	shared.AmazonQ:            {"AWS_*", "Q_*"},
-	shared.AmazonQDeveloper:   {"AWS_*", "Q_*"},
-	shared.AmpCode:            {"AMP_*"},
-	shared.Auggie:             {"AUGGIE_*"},
-	shared.AzureOpenAI:        {"AZURE_*", "OPENAI_*"},
-	shared.Bito:               {"BITO_*"},
-	shared.ByteRover:          {"BYTEROVER_*"},
-	shared.ClaudeCode:         {"ANTHROPIC_API_KEY", "CLAUDE_*"},
-	shared.CodeCodex:          {"CODEX_*"},
-	shared.CodeBuff:           {"CODEBUFF_*"},
-	shared.CodeMachine:        {"CODEMACHINE_*"},
-	shared.Codex:              {"CODEX_*", "OPENAI_API_KEY"},
-	shared.Crush:              {"CRUSH_*"},
-	shared.Dolt:               {"DOLT_*"},
-	shared.Factory:            {"FACTORY_*"},
-	shared.Gemini:             {"GEMINI_API_KEY", "GOOGLE_API_KEY"},
-	shared.Goose:              {"GOOSE_*"},
-	shared.Grok:               {"GROK_API_KEY", "XAI_API_KEY"},
-	shared.Jules:              {"JULES_*"},
-	shared.KiloCode:           {"KILO_*"},
-	shared.Kimi:               {"KIMI_API_KEY", "MOONSHOT_API_KEY"},
-	shared.LLM:                {"LLM_*", "OPENAI_API_KEY"},
-	shared.LiteLLM:            {"LITELLM_*", "OPENAI_API_KEY"},
-	shared.Llamafile:          {"LLAMAFILE_*"},
-	shared.Manus:              {"MANUS_*"},
-	shared.MistralVibe:        {"MISTRAL_API_KEY"},
-	shared.Ollama:             {"OLLAMA_*"},
-	shared.OpenInterpreter:    {"INTERPRETER_*", "OPENAI_API_KEY"},
-	shared.QwenCode:           {"QWEN_API_KEY", "DASHSCOPE_API_KEY"},
-	shared.RowboatX:           {"ROWBOATX_*"},
-	shared.Rovo:               {"ROVO_*"},
-	shared.ShellPilot:         {"SHELL_PILOT_*"},
-	shared.Smithery:           {"SMITHERY_*"},
-	shared.Trae:               {"TRAE_*"},
-	shared.Pi:                 {"PI_*"},
-	shared.Warp:               {"WARP_*"},
+var CommonSecrets = []string{
+	"OPENAI_API_KEY",
+	"ANTHROPIC_API_KEY",
+	"GEMINI_API_KEY",
+	"DEEPSEEK_API_KEY",
+	"XAI_API_KEY",
+	"GITHUB_TOKEN",
+	"GITLAB_TOKEN",
+	"NPM_TOKEN",
+	"AWS_ACCESS_KEY_ID",
+	"AWS_SECRET_ACCESS_KEY",
+	"STRIPE_SECRET_KEY",
 }
 
-type EnvironmentManager struct {
-	mu              sync.RWMutex
-	sessions        map[string]SessionEnvironment
-	globalOverrides map[string]string
-	globalSecrets   map[string]struct{}
+type EnvironmentManagerService struct {
+	sessions map[string]*SessionEnvironment
+	global   EnvironmentConfig
+	mu       sync.RWMutex
 }
 
-var Service = NewEnvironmentManager()
-
-func NewEnvironmentManager() *EnvironmentManager {
-	return &EnvironmentManager{
-		sessions:        make(map[string]SessionEnvironment),
-		globalOverrides: make(map[string]string),
-		globalSecrets:   make(map[string]struct{}),
+func NewEnvironmentManagerService() *EnvironmentManagerService {
+	return &EnvironmentManagerService{
+		sessions: make(map[string]*SessionEnvironment),
+		global: EnvironmentConfig{
+			Inherit:     true,
+			Variables:   make(map[string]string),
+			Secrets:     append([]string{}, CommonSecrets...),
+			Passthrough: append([]string{}, DefaultPassthroughVars...),
+		},
 	}
 }
 
-func (m *EnvironmentManager) SetGlobalOverride(key string, value string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.globalOverrides[key] = value
+func (s *EnvironmentManagerService) ConfigureGlobal(config EnvironmentConfig) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.global.Inherit = config.Inherit
+
+	if config.Variables != nil {
+		s.global.Variables = config.Variables
+	}
+
+	if config.Secrets != nil {
+		s.global.Secrets = append([]string{}, config.Secrets...)
+	}
+
+	if config.Passthrough != nil {
+		s.global.Passthrough = append([]string{}, config.Passthrough...)
+	}
 }
 
-func (m *EnvironmentManager) RemoveGlobalOverride(key string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.globalOverrides, key)
-}
+func (s *EnvironmentManagerService) PrepareEnvironment(sessionID string, cliType shared.CLIType, customConfig *EnvironmentConfig) (*SessionEnvironment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-func (m *EnvironmentManager) AddGlobalSecret(key string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.globalSecrets[key] = struct{}{}
-}
-
-func (m *EnvironmentManager) CreateSessionEnvironment(
-	sessionId string,
-	cliType shared.CLIType,
-	configVars map[string]string,
-) map[string]string {
-
-	envConfig := EnvironmentConfig{
-		Inherit:     true,
+	config := EnvironmentConfig{
+		Inherit:     s.global.Inherit,
 		Variables:   make(map[string]string),
-		Secrets:     []string{},
-		Passthrough: []string{},
+		Secrets:     append([]string{}, s.global.Secrets...),
+		Passthrough: append([]string{}, s.global.Passthrough...),
 	}
 
-	if configVars != nil {
-		for k, v := range configVars {
-			envConfig.Variables[k] = v
+	for k, v := range s.global.Variables {
+		config.Variables[k] = v
+	}
+
+	if customConfig != nil {
+		config.Inherit = customConfig.Inherit
+		for k, v := range customConfig.Variables {
+			config.Variables[k] = v
+		}
+		if customConfig.Secrets != nil {
+			config.Secrets = append(config.Secrets, customConfig.Secrets...)
+		}
+		if customConfig.Passthrough != nil {
+			config.Passthrough = append(config.Passthrough, customConfig.Passthrough...)
 		}
 	}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	resolved := make(map[string]string)
 
-	resolved := m.resolveEnvironment(cliType, envConfig)
+	if config.Inherit {
+		for _, env := range os.Environ() {
+			parts := strings.SplitN(env, "=", 2)
+			if len(parts) == 2 {
+				resolved[parts[0]] = parts[1]
+			}
+		}
+	} else {
+		for _, key := range config.Passthrough {
+			if val, ok := os.LookupEnv(key); ok {
+				resolved[key] = val
+			}
+		}
+	}
 
-	m.sessions[sessionId] = SessionEnvironment{
-		SessionId: sessionId,
-		CliType:   cliType,
-		Config:    envConfig,
+	for k, v := range config.Variables {
+		resolved[k] = v
+	}
+
+	env := &SessionEnvironment{
+		SessionID: sessionID,
+		CLIType:   cliType,
+		Config:    config,
 		Resolved:  resolved,
 	}
 
-	return resolved
+	s.sessions[sessionID] = env
+	return env, nil
 }
 
-func (m *EnvironmentManager) resolveEnvironment(cliType shared.CLIType, config EnvironmentConfig) map[string]string {
-	result := make(map[string]string)
+func (s *EnvironmentManagerService) GetEnvironment(sessionID string) (*SessionEnvironment, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	if config.Inherit {
-		cliSpecific := cliSpecificVars[cliType]
-		passthroughPatterns := append([]string{}, defaultPassthroughVars...)
-		passthroughPatterns = append(passthroughPatterns, config.Passthrough...)
-		passthroughPatterns = append(passthroughPatterns, cliSpecific...)
+	env, ok := s.sessions[sessionID]
+	return env, ok
+}
 
-		for _, envStr := range os.Environ() {
-			parts := strings.SplitN(envStr, "=", 2)
-			if len(parts) == 2 {
-				key := parts[0]
-				value := parts[1]
-				if value != "" && m.matchesPattern(key, passthroughPatterns) {
-					result[key] = value
+func (s *EnvironmentManagerService) UpdateSessionVariable(sessionID string, key, value string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	env, ok := s.sessions[sessionID]
+	if !ok {
+		return false
+	}
+
+	env.Config.Variables[key] = value
+	env.Resolved[key] = value
+	return true
+}
+
+func (s *EnvironmentManagerService) RemoveSession(sessionID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.sessions, sessionID)
+}
+
+func (s *EnvironmentManagerService) IsSecret(key string, sessionID string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	checkSecret := func(secrets []string, k string) bool {
+		for _, secret := range secrets {
+			if secret == k || (strings.HasSuffix(secret, "*") && strings.HasPrefix(k, strings.TrimSuffix(secret, "*"))) {
+				return true
+			}
+		}
+		return false
+	}
+
+	if checkSecret(s.global.Secrets, key) {
+		return true
+	}
+
+	if sessionID != "" {
+		if env, ok := s.sessions[sessionID]; ok {
+			if checkSecret(env.Config.Secrets, key) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (s *EnvironmentManagerService) RedactLog(log string, sessionID string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	secretsToRedact := []string{}
+
+	addSecrets := func(resolved map[string]string, secrets []string) {
+		for k, v := range resolved {
+			if v != "" && len(v) > 3 {
+				for _, secret := range secrets {
+					if secret == k || (strings.HasSuffix(secret, "*") && strings.HasPrefix(k, strings.TrimSuffix(secret, "*"))) {
+						secretsToRedact = append(secretsToRedact, v)
+					}
 				}
 			}
 		}
 	}
 
-	for k, v := range m.globalOverrides {
-		result[k] = v
-	}
-
-	for k, v := range config.Variables {
-		result[k] = m.expandVariables(v, result)
-	}
-
-	return result
-}
-
-func (m *EnvironmentManager) matchesPattern(key string, patterns []string) bool {
-	for _, pattern := range patterns {
-		if strings.HasSuffix(pattern, "*") {
-			prefix := pattern[:len(pattern)-1]
-			if strings.HasPrefix(key, prefix) {
-				return true
-			}
-		} else if pattern == key {
-			return true
+	// add globals
+	globalResolved := make(map[string]string)
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			globalResolved[parts[0]] = parts[1]
 		}
 	}
-	return false
-}
-
-var varRegex = regexp.MustCompile(`\$\{(\w+)\}`)
-
-func (m *EnvironmentManager) expandVariables(value string, env map[string]string) string {
-	return varRegex.ReplaceAllStringFunc(value, func(match string) string {
-		varName := match[2 : len(match)-1]
-		if val, exists := env[varName]; exists {
-			return val
-		}
-		if val := os.Getenv(varName); val != "" {
-			return val
-		}
-		return ""
-	})
-}
-
-func (m *EnvironmentManager) GetSessionEnvironment(sessionId string) map[string]string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if sess, exists := m.sessions[sessionId]; exists {
-		// Return copy
-		cp := make(map[string]string)
-		for k, v := range sess.Resolved {
-			cp[k] = v
-		}
-		return cp
+	for k, v := range s.global.Variables {
+		globalResolved[k] = v
 	}
-	return nil
-}
+	addSecrets(globalResolved, s.global.Secrets)
 
-func (m *EnvironmentManager) UpdateSessionVariable(sessionId string, key string, value string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	sess, exists := m.sessions[sessionId]
-	if !exists {
-		return
-	}
-
-	sess.Config.Variables[key] = value
-	sess.Resolved[key] = m.expandVariables(value, sess.Resolved)
-	m.sessions[sessionId] = sess
-}
-
-func (m *EnvironmentManager) RemoveSessionVariable(sessionId string, key string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	sess, exists := m.sessions[sessionId]
-	if !exists {
-		return
-	}
-
-	delete(sess.Config.Variables, key)
-	delete(sess.Resolved, key)
-	m.sessions[sessionId] = sess
-}
-
-func (m *EnvironmentManager) DeleteSessionEnvironment(sessionId string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.sessions, sessionId)
-}
-
-func (m *EnvironmentManager) GetSanitizedEnvironment(sessionId string) map[string]string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	sess, exists := m.sessions[sessionId]
-	if !exists {
-		return make(map[string]string)
-	}
-
-	result := make(map[string]string)
-	secretKeys := make(map[string]struct{})
-
-	for _, s := range sess.Config.Secrets {
-		secretKeys[s] = struct{}{}
-	}
-	for k := range m.globalSecrets {
-		secretKeys[k] = struct{}{}
-	}
-
-	for k, v := range sess.Resolved {
-		_, isSecret := secretKeys[k]
-		if isSecret || m.looksLikeSecret(k) {
-			result[k] = "***REDACTED***"
-		} else {
-			result[k] = v
+	if sessionID != "" {
+		if env, ok := s.sessions[sessionID]; ok {
+			addSecrets(env.Resolved, env.Config.Secrets)
 		}
 	}
 
-	return result
-}
-
-var secretPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`(?i)api[_-]?key`),
-	regexp.MustCompile(`(?i)secret`),
-	regexp.MustCompile(`(?i)password`),
-	regexp.MustCompile(`(?i)token`),
-	regexp.MustCompile(`(?i)credential`),
-	regexp.MustCompile(`(?i)auth`),
-	regexp.MustCompile(`(?i)private[_-]?key`),
-}
-
-func (m *EnvironmentManager) looksLikeSecret(key string) bool {
-	for _, pattern := range secretPatterns {
-		if pattern.MatchString(key) {
-			return true
-		}
-	}
-	return false
-}
-
-func (m *EnvironmentManager) GetRequiredVarsForCLI(cliType shared.CLIType) []string {
-	required := map[shared.CLIType][]string{
-		shared.Opencode:           {},
-		shared.Claude:             {"ANTHROPIC_API_KEY"},
-		shared.Aider:              {"OPENAI_API_KEY"},
-		shared.Cursor:             {},
-		shared.Continue:           {},
-		shared.Cody:               {"SRC_ACCESS_TOKEN"},
-		shared.Copilot:            {"GITHUB_TOKEN"},
-		shared.Custom:             {},
-		shared.Adrenaline:         {},
-		shared.AmazonQ:            {},
-		shared.AmazonQDeveloper:   {},
-		shared.AmpCode:            {},
-		shared.Auggie:             {},
-		shared.AzureOpenAI:        {"AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT"},
-		shared.Bito:               {},
-		shared.ByteRover:          {},
-		shared.ClaudeCode:         {"ANTHROPIC_API_KEY"},
-		shared.CodeCodex:          {},
-		shared.CodeBuff:           {},
-		shared.CodeMachine:        {},
-		shared.Codex:              {},
-		shared.Crush:              {},
-		shared.Dolt:               {},
-		shared.Factory:            {},
-		shared.Gemini:             {"GEMINI_API_KEY"},
-		shared.Goose:              {},
-		shared.Grok:               {"GROK_API_KEY"},
-		shared.Jules:              {},
-		shared.KiloCode:           {},
-		shared.Kimi:               {"KIMI_API_KEY"},
-		shared.LLM:                {},
-		shared.LiteLLM:            {},
-		shared.Llamafile:          {},
-		shared.Manus:              {},
-		shared.MistralVibe:        {"MISTRAL_API_KEY"},
-		shared.Ollama:             {},
-		shared.OpenInterpreter:    {},
-		shared.QwenCode:           {"QWEN_API_KEY"},
-		shared.RowboatX:           {},
-		shared.Rovo:               {},
-		shared.ShellPilot:         {},
-		shared.Smithery:           {},
-		shared.Trae:               {},
-		shared.Pi:                 {},
-		shared.Warp:               {},
+	redacted := log
+	for _, secret := range secretsToRedact {
+		redacted = strings.ReplaceAll(redacted, secret, "[REDACTED]")
 	}
 
-	if vars, ok := required[cliType]; ok {
-		return vars
-	}
-	return []string{}
-}
-
-func (m *EnvironmentManager) ValidateEnvironmentForCLI(cliType shared.CLIType, env map[string]string) (bool, []string) {
-	required := m.GetRequiredVarsForCLI(cliType)
-	var missing []string
-
-	for _, key := range required {
-		if val, exists := env[key]; !exists || val == "" {
-			missing = append(missing, key)
-		}
-	}
-
-	return len(missing) == 0, missing
+	return redacted
 }
