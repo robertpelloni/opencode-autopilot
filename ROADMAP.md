@@ -1,3 +1,9 @@
+# Go Port Initialization
+
+- The project is officially being ported to Go in the `go-port/` directory.
+- The first phase involved setting up the module and porting `shared/types.ts` to `pkg/shared/types.go`.
+
+
 # Borg Orchestrator Roadmap
 
 ## Current Status: Version 1.0.14 (Completed)

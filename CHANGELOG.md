@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.23] - 2026-03-21
+
+### Added
+- **Go Port - DB ## [1.0.22] History**: Initialized Go SQLite instance using `modernc.org/sqlite`. Ported `DebateHistoryService` (`go-port/pkg/server/services/history`) including full SQL schema implementation, queries, pruning limits, and JSON marshaling.
+
+## [1.0.22] - 2026-03-21
+
+### Added
+- **Go Port - Log Rotation**: Ported `LogRotationService` to Go (`go-port/pkg/server/services/log`). Handled memory pagination, background auto-pruning via Ticker, and thread-safety limits.
+
+## [1.0.21] - 2026-03-21
+
+### Added
+- **Go Port - Session Manager**: Ported `SessionManagerService` core logic to Go (`go-port/pkg/server/services/session`). Includes native `os/exec` support for starting sidecar processes in the background instead of `node-pty`.
+
+## [1.0.20] - 2026-03-21
+
+### Added
+- **Go Port - Smart Pilot**: Ported `SmartPilotService` to Go (`go-port/pkg/server/services/smartpilot`). Implemented active polling via Go tickers, thread-safe checkpointing, decision-to-guidance routing logic, and Swarm fallbacks.
+
+## [1.0.19] - 2026-03-21
+
+### Added
+- **Go Port - Quota Manager**: Ported the `QuotaManagerService` to Go (`go-port/pkg/server/services/quota`). Includes rate limiting, budget tracking, throttling logic, and full unit test coverage.
+
+## [1.0.18] - 2026-03-21
+
+### Added
+- **Go Port - Metrics Service**: Ported the `MetricsService` to Go (`go-port/pkg/server/services/metrics/metrics.go`). Added thread safety for shared metric maps and full Prometheus output implementation. Included unit tests.
+
+## [1.0.17] - 2026-03-21
+
+### Added
+- **Go Port - Council**: Ported the `SupervisorCouncil` logic including `Debate`, `PlanTask`, and 8 consensus mode handlers (`go-port/pkg/server/services/council`). Included stub services for `dynamic_selection`, `history`, and `analytics` dependencies.
+
+## [1.0.16] - 2026-03-21
+
+### Added
+- **Go Port - Supervisors**: Ported `OpenAI`, `Anthropic`, and `Mock` supervisors to Go (`go-port/pkg/server/supervisors`). Included HTTP retry and backoff logic with `metrics` service stubs.
+
+## [1.0.15] - 2026-03-21
+
+### Added
+- **Go Port Initiation**: Started porting the project to Go (`go-port/`). Translated shared types to `pkg/shared/types.go`.
+
 ## [1.0.14] - 2026-03-20
 
 ### Added
@@ -392,3 +437,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 For detailed changes in each release, see [GitHub Releases](https://github.com/robertpelloni/borg-orchestrator-council/releases).
+
+## [1.0.24] - 2026-04-13
+### Added
+- Comprehensive PROJECT_MEMORY.md documenting architecture and Go port status
+- Generated TODO.md mapping out remaining Go port tasks
+### Fixed
+- Resolved node-pty compilation issues in integration tests by implementing mock sidecars for TS testing
+
+
+## [1.0.25] - 2026-04-13
+### Added
+- Researched Native IDE Integration and expanded TODO.md with the next phase of features (Native Frontends, Analytics UI, Go Port Completion).

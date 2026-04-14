@@ -1,0 +1,7 @@
+feat: initiate Go port of Borg Orchestrator (v1.0.15)
+
+- Created `go-port` directory and initialized Go module.
+- Ported `packages/shared/src/types.ts` and `swarm-types.ts` to `go-port/pkg/shared/types.go`.
+- Added basic `types_test.go` to ensure compilation.
+- Updated project documentation (`ROADMAP.md`, `CHANGELOG.md`, `IDEAS.md`) and incremented version to 1.0.15 in `VERSION.md` and `package.json`.
+- Explored submodules in `.gitmodules` to understand integration needs for future porting steps.
