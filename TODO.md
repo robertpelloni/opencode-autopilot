@@ -16,5 +16,5 @@ The core data types (`pkg/shared/`), API integrations (`pkg/server/supervisors/`
 
 ## Next Phase: Core Features & Refinements
 *   [x] **Go Port Completion**: Ensure all endpoints listed in `packages/server/src/index.ts` have corresponding Go handlers and run integration tests against the Go HTTP server.
-*   [ ] **Native Frontends**: Plan out desktop (Electron/Tauri) and mobile architectures referencing the newly built Go backend.
-*   [ ] **Persistent Analytics UI**: Wire up SQLite stored history metrics to visual charts in the dashboard.
+*   [x] **Native Frontends**: Plan out desktop (Electron/Tauri) and mobile architectures referencing the newly built Go backend.
+*   [x] **Persistent Analytics UI**: Wire up SQLite stored history metrics to visual charts in the dashboard.
