@@ -32,6 +32,7 @@ func NewAPIServer(
 		mux:            http.NewServeMux(),
 	}
 	s.setupRoutes()
+	s.addExtendedRoutes()
 	return s
 }
 
