@@ -40,6 +40,7 @@ func (s *APIServer) setupRoutes() {
 	s.mux.HandleFunc("/health", s.handleHealth)
 	s.mux.HandleFunc("/api/sessions", s.handleSessions)
 	s.mux.HandleFunc("/api/cli/configs", s.handleCLIConfigs)
+	s.mux.HandleFunc("/ws", s.wsManager.HandleConnection)
 }
 
 func (s *APIServer) handleHealth(w http.ResponseWriter, r *http.Request) {
