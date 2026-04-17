@@ -455,3 +455,10 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 ### Added
 - Concluded Phase 1 of the Go Port rewrite. All required backend services and API router stubbing are completed. TODO list successfully depleted.
 - Finalized all documentation for handoff to the next implementation model.
+
+
+## [1.0.27] - 2026-04-17
+### Added
+- Upgraded Go Port backend with true Terminal Sidecar execution using `os/exec` to eliminate native Node bindings (`node-pty`).
+- Implemented Gorilla WebSocket integration for reliable log broadcasting to the frontend dashboard.
+- Updated Database layer with modernc.org/sqlite schemas for Quota and Debate history persistence.

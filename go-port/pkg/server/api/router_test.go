@@ -15,8 +15,8 @@ import (
 func TestAPIServer_Health(t *testing.T) {
 	envMgr := env.NewEnvironmentManagerService()
 	cliReg := cli.NewCLIRegistryService()
-	sessionMgr := session.NewSessionManagerService(envMgr, cliReg)
 	wsMgr := ws.NewWSManagerService()
+	sessionMgr := session.NewSessionManagerService(envMgr, cliReg, wsMgr)
 
 	server := NewAPIServer(sessionMgr, envMgr, cliReg, wsMgr)
 

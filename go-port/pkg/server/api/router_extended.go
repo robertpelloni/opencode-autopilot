@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"borg-orchestrator/pkg/shared"
+	"borg-orchestrator/pkg/server/services/hierarchy"
 )
 
 // Add the missing endpoints from index.ts to the Go router
@@ -34,6 +36,32 @@ func (s *APIServer) handleCouncilDebate(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	var payload struct {
+		ID          string   `json:"id"`
+		Description string   `json:"description"`
+		Context     string   `json:"context"`
+		Files       []string `json:"files"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	task := shared.DevelopmentTask{
+		ID:          payload.ID,
+		Description: payload.Description,
+		Context:     payload.Context,
+		Files:       payload.Files,
+	}
+
+	// This is a partial wiring using the existing hierarchy package
+	h := hierarchy.NewCouncilHierarchyService()
+	council := h.RouteTask(task)
+	_ = council
+
+	// In a real implementation we would call council.ExecuteDebate
 	response := map[string]interface{}{
 		"success": true,
 		"data": map[string]interface{}{

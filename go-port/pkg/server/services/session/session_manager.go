@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -8,9 +9,9 @@ import (
 	"os/exec"
 	"sync"
 
-
 	"borg-orchestrator/pkg/server/services/cli"
 	"borg-orchestrator/pkg/server/services/env"
+	"borg-orchestrator/pkg/server/services/ws"
 	"borg-orchestrator/pkg/shared"
 )
 
@@ -26,14 +27,16 @@ type SessionManagerService struct {
 	sessions    map[string]*Session
 	envManager  *env.EnvironmentManagerService
 	cliRegistry *cli.CLIRegistryService
+	wsManager   *ws.WSManagerService
 	mu          sync.RWMutex
 }
 
-func NewSessionManagerService(envMgr *env.EnvironmentManagerService, cliReg *cli.CLIRegistryService) *SessionManagerService {
+func NewSessionManagerService(envMgr *env.EnvironmentManagerService, cliReg *cli.CLIRegistryService, wsMgr *ws.WSManagerService) *SessionManagerService {
 	return &SessionManagerService{
 		sessions:    make(map[string]*Session),
 		envManager:  envMgr,
 		cliRegistry: cliReg,
+		wsManager:   wsMgr,
 	}
 }
 
@@ -69,6 +72,16 @@ func (s *SessionManagerService) CreateSession(id string, cliType shared.CLIType)
 		return nil, fmt.Errorf("Failed to create stdin pipe: %v", err)
 	}
 
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create stdout pipe: %v", err)
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create stderr pipe: %v", err)
+	}
+
 	session := &Session{
 		ID:        id,
 		Type:      cliType,
@@ -76,6 +89,28 @@ func (s *SessionManagerService) CreateSession(id string, cliType shared.CLIType)
 		Cmd:       cmd,
 		StdinPipe: stdin,
 	}
+
+	// Multiplex stdout to websocket
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			text := scanner.Text()
+			if s.wsManager != nil {
+				s.wsManager.NotifyLog(id, text)
+			}
+		}
+	}()
+
+	// Multiplex stderr to websocket
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			text := scanner.Text()
+			if s.wsManager != nil {
+				s.wsManager.NotifyLog(id, "ERROR: "+text)
+			}
+		}
+	}()
 
 	s.sessions[id] = session
 	return session, nil
@@ -120,7 +155,6 @@ func (s *SessionManagerService) SendGuidance(id string, message string) error {
 		return errors.New("Session has no stdin pipe")
 	}
 
-	// Write message and newline
 	_, err = io.WriteString(session.StdinPipe, message+"\n")
 	if err != nil {
 		log.Printf("Failed to write to session %s: %v", id, err)
@@ -155,7 +189,10 @@ func (s *SessionManagerService) StartSession(id string) error {
 	session.Status = "running"
 	s.mu.Unlock()
 
-	// Wait in background
+	if s.wsManager != nil {
+		s.wsManager.Broadcast("session_status", map[string]string{"id": id, "status": "running"})
+	}
+
 	go func(sess *Session) {
 		err := sess.Cmd.Wait()
 		s.mu.Lock()
@@ -166,6 +203,11 @@ func (s *SessionManagerService) StartSession(id string) error {
 			log.Printf("Session %s completed successfully", sess.ID)
 			sess.Status = "completed"
 		}
+
+		if s.wsManager != nil {
+			s.wsManager.Broadcast("session_status", map[string]string{"id": sess.ID, "status": sess.Status})
+		}
+
 		s.mu.Unlock()
 	}(session)
 
@@ -182,11 +224,10 @@ func (s *SessionManagerService) StopSession(id string) error {
 	}
 
 	if session.Status != "running" {
-		return nil // Already stopped
+		return nil
 	}
 
 	if session.Cmd != nil && session.Cmd.Process != nil {
-		// Send SIGTERM (or Kill on windows depending on implementation)
 		err := session.Cmd.Process.Kill()
 		if err != nil {
 			return err
@@ -194,5 +235,9 @@ func (s *SessionManagerService) StopSession(id string) error {
 	}
 
 	session.Status = "stopped"
+	if s.wsManager != nil {
+		s.wsManager.Broadcast("session_status", map[string]string{"id": id, "status": "stopped"})
+	}
+
 	return nil
 }

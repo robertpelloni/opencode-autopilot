@@ -3,13 +3,15 @@ package session
 import (
 	"borg-orchestrator/pkg/server/services/cli"
 	"borg-orchestrator/pkg/server/services/env"
+	"borg-orchestrator/pkg/server/services/ws"
 	"testing"
 )
 
 func TestSessionManagerService(t *testing.T) {
 	envMgr := env.NewEnvironmentManagerService()
 	cliReg := cli.NewCLIRegistryService()
-	manager := NewSessionManagerService(envMgr, cliReg)
+	wsMgr := ws.NewWSManagerService()
+	manager := NewSessionManagerService(envMgr, cliReg, wsMgr)
 
 	session, err := manager.CreateSession("test-123", "aider")
 	if err != nil {
