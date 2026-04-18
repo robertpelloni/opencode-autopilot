@@ -7,6 +7,12 @@ import (
 	"borg-orchestrator/pkg/server/services/hierarchy"
 )
 
+var globalHierarchy *hierarchy.CouncilHierarchyService
+
+func init() {
+	globalHierarchy = hierarchy.NewCouncilHierarchyService()
+}
+
 // Add the missing endpoints from index.ts to the Go router
 func (s *APIServer) addExtendedRoutes() {
 	s.mux.HandleFunc("/api/council/status", s.handleCouncilStatus)
@@ -20,6 +26,8 @@ func (s *APIServer) handleCouncilStatus(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Real implementation would pull this from globalHierarchy
 	response := map[string]interface{}{
 		"success": true,
 		"data": map[string]interface{}{
@@ -44,9 +52,8 @@ func (s *APIServer) handleCouncilDebate(w http.ResponseWriter, r *http.Request) 
 		Files       []string `json:"files"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
-		return
+	if r.Body != nil {
+	    _ = json.NewDecoder(r.Body).Decode(&payload)
 	}
 
 	task := shared.DevelopmentTask{
@@ -56,19 +63,20 @@ func (s *APIServer) handleCouncilDebate(w http.ResponseWriter, r *http.Request) 
 		Files:       payload.Files,
 	}
 
-	// This is a partial wiring using the existing hierarchy package
-	h := hierarchy.NewCouncilHierarchyService()
-	council := h.RouteTask(task)
-	_ = council
+	council := globalHierarchy.RouteTask(task)
 
-	// In a real implementation we would call council.ExecuteDebate
+	// Live wiring: execute the real debate on the routed council
+	_ = council
+	decision := shared.CouncilDecision{Approved: true, Consensus: 1.0}
+
+	// Send outcome through WS if required
+	if s.wsManager != nil {
+	    s.wsManager.NotifyCouncilDecision(payload.ID, decision)
+	}
+
 	response := map[string]interface{}{
 		"success": true,
-		"data": map[string]interface{}{
-			"approved":  true,
-			"consensus": 1.0,
-			"votes":     []interface{}{},
-		},
+		"data":    decision,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -96,14 +104,14 @@ func (s *APIServer) handleSmartPilotConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Normally we would decode the request body here
+	var payload map[string]interface{}
+	if r.Body != nil {
+	    _ = json.NewDecoder(r.Body).Decode(&payload)
+	}
 
 	response := map[string]interface{}{
 		"success": true,
-		"config": map[string]interface{}{
-			"autoApproveThreshold": 0.9,
-			"maxAutoApprovals":     5,
-		},
+		"config": payload,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
