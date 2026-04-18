@@ -15,4 +15,4 @@
 *   [x] **Log Multiplexing**: Pipe stdout/stderr buffers from the PTY `SessionManager` into the `WSManager` to broadcast real-time terminal output to connected UI clients.
 
 ## Future Frontends
-*   [ ] **Tauri IPC**: Scaffold the Tauri Rust backend and implement Inter-Process Communication (IPC) binding the Tauri WebView to the local Go binary's API port.
+*   [x] **Tauri IPC**: Scaffold the Tauri Rust backend and implement Inter-Process Communication (IPC) binding the Tauri WebView to the local Go binary's API port.

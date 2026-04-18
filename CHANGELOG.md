@@ -462,3 +462,9 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 - Upgraded Go Port backend with true Terminal Sidecar execution using `os/exec` to eliminate native Node bindings (`node-pty`).
 - Implemented Gorilla WebSocket integration for reliable log broadcasting to the frontend dashboard.
 - Updated Database layer with modernc.org/sqlite schemas for Quota and Debate history persistence.
+
+
+## [1.0.28] - 2026-04-18
+### Added
+- Initialized Tauri Rust scaffold in `desktop-app/` to serve the vanilla JS dashboard natively while interfacing with the Go backend.
+- Completed all tasks on the Phase 2 roadmap.
