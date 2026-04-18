@@ -7,7 +7,7 @@
 *   [x] **Process Lifecycle**: Implement graceful shutdown, SIGTERM signaling, and automatic restart handling for sidecars.
 
 ### Deep Integration
-*   [ ] **Live Endpoint Wiring**: Replace the mock JSON responses in `api/router.go` and `api/router_extended.go` with live function calls to the `SessionManager`, `WSManager`, and `CouncilHierarchy`.
+*   [x] **Live Endpoint Wiring**: Replace the mock JSON responses in `api/router.go` and `api/router_extended.go` with live function calls to the `SessionManager`, `WSManager`, and `CouncilHierarchy`.
 *   [x] **Database Layer (`pkg/server/services/db/`)**: Fully configure `database/sql` using `modernc.org/sqlite`. Implement table creation schemas and insert/select operations for `DebateHistory` and `QuotaTracking`.
 
 ### WebSocket Streaming

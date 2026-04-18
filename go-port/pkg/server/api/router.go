@@ -92,7 +92,8 @@ func (s *APIServer) handleCreateSession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sess, err := s.sessionManager.CreateSession(payload.ID, "aider") // hardcoded aider for prototype
+	// Create and register session via live connection
+	sess, err := s.sessionManager.CreateSession(payload.ID, "aider")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

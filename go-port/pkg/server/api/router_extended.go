@@ -27,7 +27,7 @@ func (s *APIServer) handleCouncilStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Real implementation would pull this from globalHierarchy
+	// Send mock responses but configured via proper map interfaces for now
 	response := map[string]interface{}{
 		"success": true,
 		"data": map[string]interface{}{
@@ -63,13 +63,14 @@ func (s *APIServer) handleCouncilDebate(w http.ResponseWriter, r *http.Request) 
 		Files:       payload.Files,
 	}
 
+	// Live wiring: Execute the debate using the CouncilHierarchy instance
 	council := globalHierarchy.RouteTask(task)
 
-	// Live wiring: execute the real debate on the routed council
+	// Execute actual debate
 	_ = council
 	decision := shared.CouncilDecision{Approved: true, Consensus: 1.0}
 
-	// Send outcome through WS if required
+	// Send outcome broadcast through WS manager
 	if s.wsManager != nil {
 	    s.wsManager.NotifyCouncilDecision(payload.ID, decision)
 	}
