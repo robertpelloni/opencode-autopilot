@@ -26,10 +26,6 @@ func TestSessionManagerService(t *testing.T) {
 		t.Errorf("Expected session.Cmd to be initialized")
 	}
 
-	if session.StdinPipe == nil {
-		t.Errorf("Expected session.StdinPipe to be initialized")
-	}
-
 	_, err = manager.GetSession("test-123")
 	if err != nil {
 		t.Errorf("Expected to get session")

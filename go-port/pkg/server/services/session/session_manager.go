@@ -8,6 +8,9 @@ import (
 	"log"
 	"os/exec"
 	"sync"
+	"os"
+
+	"github.com/creack/pty"
 
 	"borg-orchestrator/pkg/server/services/cli"
 	"borg-orchestrator/pkg/server/services/env"
@@ -20,7 +23,7 @@ type Session struct {
 	Type      shared.CLIType    `json:"type"`
 	Status    string            `json:"status"`
 	Cmd       *exec.Cmd         `json:"-"`
-	StdinPipe io.WriteCloser    `json:"-"`
+	PtyFile   *os.File          `json:"-"`
 }
 
 type SessionManagerService struct {
@@ -60,57 +63,22 @@ func (s *SessionManagerService) CreateSession(id string, cliType shared.CLIType)
 
 	cmd := exec.Command(config.Command, config.Arguments...)
 
-	// Build the environment slice
 	var envPairs []string
 	for k, v := range envContext.Resolved {
 		envPairs = append(envPairs, fmt.Sprintf("%s=%s", k, v))
 	}
 	cmd.Env = envPairs
 
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create stdin pipe: %v", err)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create stdout pipe: %v", err)
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create stderr pipe: %v", err)
-	}
+	// Instead of pipes, we'll start the process with a pseudo-terminal
+	// But we won't start it until StartSession is called.
+	// PTY creation happens during StartSession to ensure proper lifecycle.
 
 	session := &Session{
-		ID:        id,
-		Type:      cliType,
-		Status:    "creating",
-		Cmd:       cmd,
-		StdinPipe: stdin,
+		ID:     id,
+		Type:   cliType,
+		Status: "creating",
+		Cmd:    cmd,
 	}
-
-	// Multiplex stdout to websocket
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			text := scanner.Text()
-			if s.wsManager != nil {
-				s.wsManager.NotifyLog(id, text)
-			}
-		}
-	}()
-
-	// Multiplex stderr to websocket
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			text := scanner.Text()
-			if s.wsManager != nil {
-				s.wsManager.NotifyLog(id, "ERROR: "+text)
-			}
-		}
-	}()
 
 	s.sessions[id] = session
 	return session, nil
@@ -151,11 +119,11 @@ func (s *SessionManagerService) SendGuidance(id string, message string) error {
 		return errors.New("Session is not running")
 	}
 
-	if session.StdinPipe == nil {
-		return errors.New("Session has no stdin pipe")
+	if session.PtyFile == nil {
+		return errors.New("Session has no PTY attached")
 	}
 
-	_, err = io.WriteString(session.StdinPipe, message+"\n")
+	_, err = io.WriteString(session.PtyFile, message+"\n")
 	if err != nil {
 		log.Printf("Failed to write to session %s: %v", id, err)
 		return err
@@ -177,21 +145,33 @@ func (s *SessionManagerService) StartSession(id string) error {
 		return errors.New("Session already running")
 	}
 
-	err := session.Cmd.Start()
+	ptyFile, err := pty.Start(session.Cmd)
 	if err != nil {
 		s.mu.Lock()
 		session.Status = "crashed"
 		s.mu.Unlock()
-		return fmt.Errorf("Failed to start command: %v", err)
+		return fmt.Errorf("Failed to start command with PTY: %v", err)
 	}
 
 	s.mu.Lock()
 	session.Status = "running"
+	session.PtyFile = ptyFile
 	s.mu.Unlock()
 
 	if s.wsManager != nil {
 		s.wsManager.Broadcast("session_status", map[string]string{"id": id, "status": "running"})
 	}
+
+	// Multiplex PTY output to websocket
+	go func() {
+		scanner := bufio.NewScanner(ptyFile)
+		for scanner.Scan() {
+			text := scanner.Text()
+			if s.wsManager != nil {
+				s.wsManager.NotifyLog(id, text)
+			}
+		}
+	}()
 
 	go func(sess *Session) {
 		err := sess.Cmd.Wait()
@@ -202,6 +182,10 @@ func (s *SessionManagerService) StartSession(id string) error {
 		} else {
 			log.Printf("Session %s completed successfully", sess.ID)
 			sess.Status = "completed"
+		}
+
+		if sess.PtyFile != nil {
+			sess.PtyFile.Close()
 		}
 
 		if s.wsManager != nil {
@@ -232,6 +216,10 @@ func (s *SessionManagerService) StopSession(id string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if session.PtyFile != nil {
+		session.PtyFile.Close()
 	}
 
 	session.Status = "stopped"

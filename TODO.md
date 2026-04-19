@@ -3,7 +3,7 @@
 ## Phase 3: Final Consolidation & Native Execution
 
 ### PTY Compatibility
-*   [ ] **Full Pseudo-Terminal Support (`creack/pty`)**: The current `os/exec` implementation pipes raw stdin/stdout, but many LLM CLI tools (Aider, Claude Code) expect an interactive TTY. We need to implement proper PTY allocation in Go (e.g. using `github.com/creack/pty`) for the sidecar sessions to capture terminal control sequences properly.
+*   [x] **Full Pseudo-Terminal Support (`creack/pty`)**: The current `os/exec` implementation pipes raw stdin/stdout, but many LLM CLI tools (Aider, Claude Code) expect an interactive TTY. We need to implement proper PTY allocation in Go (e.g. using `github.com/creack/pty`) for the sidecar sessions to capture terminal control sequences properly.
 
 ### Database Operations
 *   [x] **Retrieve Methods (`pkg/server/services/db/`)**: We've implemented `INSERT` queries for history and quota. We need the corresponding `SELECT` queries (e.g. `GetDebateHistory`, `GetQuota`) so the API can serve this data to the frontend dashboard.
