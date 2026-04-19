@@ -1,18 +1,17 @@
 # Borg Orchestrator - Current Tasks
 
-## Go Port Implementation Phase 2
+## Phase 3: Final Consolidation & Native Execution
 
-### Process Management
-*   [x] **Terminal Sidecar Spawning (`pkg/server/services/session/`)**: Implement Go's `os/exec` to spawn terminal subprocesses (Aider, Claude Code, etc.) with pseudo-terminals (PTYs), fully replacing Node's `node-pty`.
-*   [x] **Process Lifecycle**: Implement graceful shutdown, SIGTERM signaling, and automatic restart handling for sidecars.
+### PTY Compatibility
+*   [ ] **Full Pseudo-Terminal Support (`creack/pty`)**: The current `os/exec` implementation pipes raw stdin/stdout, but many LLM CLI tools (Aider, Claude Code) expect an interactive TTY. We need to implement proper PTY allocation in Go (e.g. using `github.com/creack/pty`) for the sidecar sessions to capture terminal control sequences properly.
 
-### Deep Integration
-*   [x] **Live Endpoint Wiring**: Replace the mock JSON responses in `api/router.go` and `api/router_extended.go` with live function calls to the `SessionManager`, `WSManager`, and `CouncilHierarchy`.
-*   [x] **Database Layer (`pkg/server/services/db/`)**: Fully configure `database/sql` using `modernc.org/sqlite`. Implement table creation schemas and insert/select operations for `DebateHistory` and `QuotaTracking`.
+### Database Operations
+*   [x] **Retrieve Methods (`pkg/server/services/db/`)**: We've implemented `INSERT` queries for history and quota. We need the corresponding `SELECT` queries (e.g. `GetDebateHistory`, `GetQuota`) so the API can serve this data to the frontend dashboard.
 
-### WebSocket Streaming
-*   [x] **Gorilla WebSocket**: Implement a robust WebSocket Hub in `ws_manager.go` using the `github.com/gorilla/websocket` library.
-*   [x] **Log Multiplexing**: Pipe stdout/stderr buffers from the PTY `SessionManager` into the `WSManager` to broadcast real-time terminal output to connected UI clients.
+### API Parity Completeness
+*   [ ] **Plugin Manager Endpoints**: Port the `GET /api/plugins` and `POST /api/plugins/:id/toggle` routes to Go.
+*   [ ] **Workspace Endpoints**: Port the `GET /api/workspaces` endpoints for project switching to Go.
 
-## Future Frontends
-*   [x] **Tauri IPC**: Scaffold the Tauri Rust backend and implement Inter-Process Communication (IPC) binding the Tauri WebView to the local Go binary's API port.
+### Documentation & Build
+*   [ ] **Go Build Pipeline**: Update `.gitlab-ci.yml` and `package.json` build scripts to compile the `go-port` binary across architectures.
+*   [ ] **Handoff & README**: Document the architecture shift to Go + Tauri in the `README.md` and `ARCHITECTURE.md`.
