@@ -468,3 +468,10 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 ### Added
 - Initialized Tauri Rust scaffold in `desktop-app/` to serve the vanilla JS dashboard natively while interfacing with the Go backend.
 - Completed all tasks on the Phase 2 roadmap.
+
+
+## [1.0.29] - 2026-04-20
+### Added
+- Upgraded `.gitlab-ci.yml` and `package.json` to natively build and test the new Go backend instead of the legacy TypeScript server.
+- Rewrote `README.md` to reflect the permanent architectural shift to Go and Tauri, solidifying the v1.0.28 milestone.
+- Marked the final Phase 3 milestones in `TODO.md` as completed.

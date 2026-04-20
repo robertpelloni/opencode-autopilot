@@ -1,6 +1,6 @@
 {
   "name": "borg-orchestrator",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "private": true,
   "description": "Multi-model AI council for development guidance - Hono API + Ink CLI",
   "type": "module",
@@ -13,7 +13,7 @@
     "dev:all": "concurrently \"bun run dev\" \"sleep 2 && bun run dev:cli\"",
     "build": "bun run --filter '*' build",
     "build:shared": "bun run --filter '@borg-orchestrator/shared' build",
-    "build:server": "bun run --filter '@borg-orchestrator/server' build",
+    "build:server": "cd go-port && go build -o bin/borg-server ./cmd/server",
     "build:cli": "bun run --filter '@borg-orchestrator/cli' build",
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter './packages/*' test",
