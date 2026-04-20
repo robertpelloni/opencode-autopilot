@@ -9,8 +9,8 @@
 *   [x] **Retrieve Methods (`pkg/server/services/db/`)**: We've implemented `INSERT` queries for history and quota. We need the corresponding `SELECT` queries (e.g. `GetDebateHistory`, `GetQuota`) so the API can serve this data to the frontend dashboard.
 
 ### API Parity Completeness
-*   [ ] **Plugin Manager Endpoints**: Port the `GET /api/plugins` and `POST /api/plugins/:id/toggle` routes to Go.
-*   [ ] **Workspace Endpoints**: Port the `GET /api/workspaces` endpoints for project switching to Go.
+*   [x] **Plugin Manager Endpoints**: Port the `GET /api/plugins` and `POST /api/plugins/:id/toggle` routes to Go.
+*   [x] **Workspace Endpoints**: Port the `GET /api/workspaces` endpoints for project switching to Go.
 
 ### Documentation & Build
 *   [ ] **Go Build Pipeline**: Update `.gitlab-ci.yml` and `package.json` build scripts to compile the `go-port` binary across architectures.
