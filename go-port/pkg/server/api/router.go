@@ -35,6 +35,7 @@ func NewAPIServer(
 	s.addExtendedRoutes()
 	s.addPluginRoutes()
 	s.addWorkspaceRoutes()
+	s.addDBRoutes()
 	return s
 }
 

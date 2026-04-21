@@ -13,5 +13,10 @@
 *   [x] **Workspace Endpoints**: Port the `GET /api/workspaces` endpoints for project switching to Go.
 
 ### Documentation & Build
-*   [ ] **Go Build Pipeline**: Update `.gitlab-ci.yml` and `package.json` build scripts to compile the `go-port` binary across architectures.
-*   [ ] **Handoff & README**: Document the architecture shift to Go + Tauri in the `README.md` and `ARCHITECTURE.md`.
+*   [x] **Go Build Pipeline**: Update `.gitlab-ci.yml` and `package.json` build scripts to compile the `go-port` binary across architectures.
+*   [x] **Handoff & README**: Document the architecture shift to Go + Tauri in the `README.md` and `ARCHITECTURE.md`.
+
+## Phase 4: Frontend Refactoring
+### Dashboard Upgrades
+*   [ ] **Analytics UI Integration**: Wire up the visual charts in `public/analytics.html` to consume the real SQLite metrics outputted by `GET /api/quotas`.
+*   [ ] **API Client Updates**: Refactor the vanilla JS dashboard to properly request and parse the new Go structures.
