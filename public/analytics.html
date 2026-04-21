@@ -30,37 +30,73 @@
     </div>
 
     <script>
-        // Mock data initialization - To be wired to SQLite history DB via Go backend API
-        const ctxConsensus = document.getElementById('consensusChart').getContext('2d');
-        new Chart(ctxConsensus, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Average Consensus Score',
-                    data: [0.85, 0.88, 0.82, 0.91, 0.95, 0.93],
-                    borderColor: '#00ffcc',
-                    tension: 0.1,
-                    fill: true,
-                    backgroundColor: 'rgba(0, 255, 204, 0.1)'
-                }]
-            },
-            options: { scales: { y: { min: 0, max: 1 } }, responsive: true }
-        });
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3847' : '';
 
-        const ctxUsage = document.getElementById('usageChart').getContext('2d');
-        new Chart(ctxUsage, {
-            type: 'bar',
-            data: {
-                labels: ['OpenAI', 'Anthropic', 'Gemini'],
-                datasets: [{
-                    label: 'Tokens (Millions)',
-                    data: [12, 19, 3],
-                    backgroundColor: ['#10a37f', '#d97757', '#4285f4']
-                }]
-            },
-            options: { responsive: true }
-        });
+        async function fetchAnalyticsData() {
+            try {
+                const [historyRes, quotaRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/history`),
+                    fetch(`${API_BASE}/api/quotas`)
+                ]);
+
+                const historyData = await historyRes.json();
+                const quotaData = await quotaRes.json();
+
+                renderConsensusChart(historyData.data || []);
+                renderUsageChart(quotaData.data || []);
+            } catch (error) {
+                console.error("Failed to load analytics data:", error);
+            }
+        }
+
+        function renderConsensusChart(history) {
+            // Reverse to show oldest to newest left to right
+            const sorted = [...history].reverse();
+            const labels = sorted.map(item => new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            const data = sorted.map(item => item.consensus);
+
+            const ctx = document.getElementById('consensusChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Consensus Score',
+                        data: data,
+                        borderColor: '#00ffcc',
+                        tension: 0.1,
+                        fill: true,
+                        backgroundColor: 'rgba(0, 255, 204, 0.1)'
+                    }]
+                },
+                options: { scales: { y: { min: 0, max: 1 } }, responsive: true }
+            });
+        }
+
+        function renderUsageChart(quotas) {
+            const labels = quotas.map(q => q.provider);
+            const data = quotas.map(q => q.tokensUsed);
+
+            // Random vibrant colors for providers
+            const bgColors = labels.map(() => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`);
+
+            const ctx = document.getElementById('usageChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tokens Used',
+                        data: data,
+                        backgroundColor: bgColors
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', fetchAnalyticsData);
     </script>
 </body>
 </html>

@@ -18,5 +18,5 @@
 
 ## Phase 4: Frontend Refactoring
 ### Dashboard Upgrades
-*   [ ] **Analytics UI Integration**: Wire up the visual charts in `public/analytics.html` to consume the real SQLite metrics outputted by `GET /api/quotas`.
+*   [x] **Analytics UI Integration**: Wire up the visual charts in `public/analytics.html` to consume the real SQLite metrics outputted by `GET /api/quotas`.
 *   [ ] **API Client Updates**: Refactor the vanilla JS dashboard to properly request and parse the new Go structures.
