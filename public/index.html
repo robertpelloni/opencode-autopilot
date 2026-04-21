@@ -523,6 +523,22 @@
             to { opacity: 1; transform: translateX(0); }
         }
     </style>
+
+    <script>
+        // Go Port backend API base
+        window.API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3847' : '';
+
+        // Wrap fetch to automatically prepend API_BASE
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            let [resource, config] = arguments;
+            if (typeof resource === 'string' && resource.startsWith('/')) {
+                resource = window.API_BASE + resource;
+            }
+            return originalFetch(resource, config);
+        };
+    </script>
+
 </head>
 <body>
     <div class="app">
