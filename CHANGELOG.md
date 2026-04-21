@@ -475,3 +475,8 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 - Upgraded `.gitlab-ci.yml` and `package.json` to natively build and test the new Go backend instead of the legacy TypeScript server.
 - Rewrote `README.md` to reflect the permanent architectural shift to Go and Tauri, solidifying the v1.0.28 milestone.
 - Marked the final Phase 3 milestones in `TODO.md` as completed.
+
+
+## [1.0.30] - 2026-04-21
+### Added
+- Concluded Phase 4 frontend refactoring by modifying the SPA dashboard and Analytics UI to actively utilize the Go backend and SQLite telemetry metrics natively.
