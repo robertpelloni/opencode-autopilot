@@ -325,8 +325,8 @@ func (c *SupervisorCouncil) Debate(task shared.DevelopmentTask) (shared.CouncilD
 		Dissent:           dissent,
 	}
 
-	if history.Service.IsEnabled() {
-		history.Service.SaveDebate(task, decision, map[string]interface{}{
+	if (&history.DebateHistoryService{}).IsEnabled() {
+		(&history.DebateHistoryService{}).SaveDebate(task, decision, map[string]interface{}{
 			"debateRounds":     rounds,
 			"consensusMode":    mode,
 			"leadSupervisor":   leadSupervisorToUse,

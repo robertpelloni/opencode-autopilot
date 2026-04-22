@@ -1,81 +1,29 @@
 stages:
   - build
   - test
+  - deploy
 
-variables:
-  BUN_INSTALL: $CI_PROJECT_DIR/.bun
-
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - node_modules/
-    - .bun/
-    - packages/*/node_modules/
-
-.setup-bun: &setup-bun
-  before_script:
-    - curl -fsSL https://bun.sh/install | bash
-    - export PATH="$BUN_INSTALL/bin:$PATH"
-    - bun --version
-
-build:shared:
+build_go_backend:
   stage: build
-  image: ubuntu:22.04
-  <<: *setup-bun
+  image: golang:1.22
   script:
-    - bun install
-    - bun run build:shared
+    - cd go-port
+    - go build -o borg-backend ./cmd/server
   artifacts:
     paths:
-      - packages/shared/dist/
-    expire_in: 1 hour
+      - go-port/borg-backend
 
-build:server:
-  stage: build
-  image: ubuntu:22.04
-  <<: *setup-bun
-  needs:
-    - build:shared
-  script:
-    - bun install
-    - bun run build:server
-  artifacts:
-    paths:
-      - packages/server/dist/
-    expire_in: 1 hour
-
-build:cli:
-  stage: build
-  image: ubuntu:22.04
-  <<: *setup-bun
-  needs:
-    - build:shared
-  script:
-    - bun install
-    - bun run build:cli
-  artifacts:
-    paths:
-      - packages/cli/dist/
-    expire_in: 1 hour
-
-typecheck:
+test_go_backend:
   stage: test
-  image: ubuntu:22.04
-  <<: *setup-bun
-  needs:
-    - build:shared
+  image: golang:1.22
   script:
-    - bun install
-    - bun run typecheck
+    - cd go-port
+    - go test ./...
 
-test:
+test_ts_services:
   stage: test
-  image: ubuntu:22.04
-  <<: *setup-bun
-  needs:
-    - build:shared
-    - build:server
+  image: oven/bun:latest
   script:
     - bun install
-    - bun run test
-  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+    - bun run --filter '*' typecheck
+    - bun run --filter './packages/*' test

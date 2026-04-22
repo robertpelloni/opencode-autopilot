@@ -1,0 +1,38 @@
+{
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../../public",
+    "distDir": "../../public"
+  },
+  "package": {
+    "productName": "Borg Orchestrator",
+    "version": "1.0.27"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "com.borg.orchestrator",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ]
+    },
+    "security": {
+      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:3847 ws://localhost:3847"
+    },
+    "windows": [
+      {
+        "title": "Borg Orchestrator",
+        "width": 1024,
+        "height": 768
+      }
+    ]
+  }
+}

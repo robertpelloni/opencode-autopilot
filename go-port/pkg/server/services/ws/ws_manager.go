@@ -2,25 +2,40 @@ package ws
 
 import (
 	"encoding/json"
-	"sync"
-	// Stub implementation for websocket manager
+	"log"
+	"net/http"
 )
 
+// WSManagerService implements the structured websocket hub architecture
 type WSManagerService struct {
-	connections map[string]interface{} // Change interface{} to actual WS connection type later
-	mu          sync.RWMutex
+	hub *Hub
 }
 
 func NewWSManagerService() *WSManagerService {
+	hub := NewHub()
+	go hub.Run()
 	return &WSManagerService{
-		connections: make(map[string]interface{}),
+		hub: hub,
 	}
 }
 
-func (s *WSManagerService) Broadcast(messageType string, payload interface{}) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+func (s *WSManagerService) HandleConnection(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("Failed to upgrade websocket: %v", err)
+		return
+	}
 
+	client := &Client{hub: s.hub, conn: conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
+}
+
+func (s *WSManagerService) Broadcast(messageType string, payload interface{}) {
 	msg := map[string]interface{}{
 		"type":    messageType,
 		"payload": payload,
@@ -31,11 +46,27 @@ func (s *WSManagerService) Broadcast(messageType string, payload interface{}) {
 		return
 	}
 
-	_ = bytes // Send to connections
+	s.hub.broadcast <- bytes
 }
 
 func (s *WSManagerService) SendToSession(sessionID string, messageType string, payload interface{}) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	// Filter and send
+	msg := map[string]interface{}{
+		"type":    messageType,
+		"payload": payload,
+	}
+
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	s.hub.BroadcastToSession(sessionID, bytes)
+}
+
+func (s *WSManagerService) NotifyLog(sessionID string, message string) {
+	s.SendToSession(sessionID, "log", message)
+}
+
+func (s *WSManagerService) NotifyCouncilDecision(sessionID string, decision interface{}) {
+	s.SendToSession(sessionID, "council_decision", decision)
 }

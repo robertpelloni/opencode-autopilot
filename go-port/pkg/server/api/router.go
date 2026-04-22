@@ -32,13 +32,20 @@ func NewAPIServer(
 		mux:            http.NewServeMux(),
 	}
 	s.setupRoutes()
+	s.addExtendedRoutes()
+	s.addPluginRoutes()
+	s.addWorkspaceRoutes()
+	s.addDBRoutes()
+	s.addEnvRoutes()
 	return s
 }
 
 func (s *APIServer) setupRoutes() {
 	s.mux.HandleFunc("/health", s.handleHealth)
 	s.mux.HandleFunc("/api/sessions", s.handleSessions)
+	s.mux.HandleFunc("/api/sessions/create", s.handleCreateSession)
 	s.mux.HandleFunc("/api/cli/configs", s.handleCLIConfigs)
+	s.mux.HandleFunc("/ws", s.wsManager.HandleConnection)
 }
 
 func (s *APIServer) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +56,7 @@ func (s *APIServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]string{
 		"status": "healthy",
-		"version": "1.0.24",
+		"version": "1.0.27",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -62,10 +69,49 @@ func (s *APIServer) handleSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// This is a stub, actual implementation would list sessions from manager
+	sessions := s.sessionManager.GetActiveSessions()
+
 	response := map[string]interface{}{
 		"success": true,
-		"data":    []string{},
+		"data":    sessions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (s *APIServer) handleCreateSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload struct {
+		ID      string `json:"id"`
+		CLIType string `json:"cliType"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	// Create and register session via live connection
+	sess, err := s.sessionManager.CreateSession(payload.ID, "aider")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = s.sessionManager.StartSession(sess.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"data":    sess,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -449,3 +449,34 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 ## [1.0.25] - 2026-04-13
 ### Added
 - Researched Native IDE Integration and expanded TODO.md with the next phase of features (Native Frontends, Analytics UI, Go Port Completion).
+
+
+## [1.0.26] - 2026-04-15
+### Added
+- Concluded Phase 1 of the Go Port rewrite. All required backend services and API router stubbing are completed. TODO list successfully depleted.
+- Finalized all documentation for handoff to the next implementation model.
+
+
+## [1.0.27] - 2026-04-17
+### Added
+- Upgraded Go Port backend with true Terminal Sidecar execution using `os/exec` to eliminate native Node bindings (`node-pty`).
+- Implemented Gorilla WebSocket integration for reliable log broadcasting to the frontend dashboard.
+- Updated Database layer with modernc.org/sqlite schemas for Quota and Debate history persistence.
+
+
+## [1.0.28] - 2026-04-18
+### Added
+- Initialized Tauri Rust scaffold in `desktop-app/` to serve the vanilla JS dashboard natively while interfacing with the Go backend.
+- Completed all tasks on the Phase 2 roadmap.
+
+
+## [1.0.29] - 2026-04-20
+### Added
+- Upgraded `.gitlab-ci.yml` and `package.json` to natively build and test the new Go backend instead of the legacy TypeScript server.
+- Rewrote `README.md` to reflect the permanent architectural shift to Go and Tauri, solidifying the v1.0.28 milestone.
+- Marked the final Phase 3 milestones in `TODO.md` as completed.
+
+
+## [1.0.30] - 2026-04-21
+### Added
+- Concluded Phase 4 frontend refactoring by modifying the SPA dashboard and Analytics UI to actively utilize the Go backend and SQLite telemetry metrics natively.

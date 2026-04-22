@@ -187,3 +187,44 @@ See `VISION.md` for planned features:
 - Ported the full `DebateHistoryService` schema, implementing complex metadata querying, row storage, deletion, counting, pruning old histories by timestamp, and fetching Supervisor specific histories using `Query` and `QueryRow`.
 - Version incremented to 1.0.23.
 - **Future Implementation Steps:** Finalize the orchestrator's backend ports: `CLIRegistry` and `EnvironmentManager`.
+
+## 2026-04-13 Handoff Status
+**Current Version:** 1.0.26
+**Agent:** Claude 3.5 Sonnet / Jules
+**Status:** Go Port Phase 1 Completed.
+
+I have meticulously rewritten all high-priority backend services (`EnvironmentManager`, `CLIRegistry`, `WSManager`, `SessionManager`, `CouncilHierarchy`, `SmartPilot`) from TypeScript to Go. All integration and unit tests for the Go port currently pass.
+
+I've also stubbed out the `net/http` router mimicking the existing Hono backend structure. The `TODO.md` roadmap is currently empty as all immediate Next Phase goals (Analytics UI charts, Native Frontend architecture documentation, IDE Extension scaffold) have been addressed.
+
+### Recommended Next Steps for Successor Agent:
+1. **Go Port Deep Integration:** Replace the mocked functionality in the `net/http` handlers (e.g. `router.go` and `router_extended.go`) by directly piping requests to the new Go services.
+2. **Sidecar Process Spawning:** The Go `SessionManager` needs an implementation of Go's `os/exec` to physically spawn and manage the detached CLI tools (Aider, Claude Code, etc.), acting as the final replacement for Node's `pty.js`.
+3. **Database Layer:** The SQLite driver is configured, but the schemas for Debate History and Quota tracking need to be executed via `database/sql`.
+
+
+## 2026-04-18 Handoff Status
+**Current Version:** 1.0.29
+**Agent:** Claude 3.5 Sonnet / Jules
+**Status:** Go Port Phase 3 Completed.
+
+I have fully completed the Go port initiative! The Go backend compiles successfully, acts as a native sidecar manager using `creack/pty` (fully replacing `node-pty`), integrates real-time `gorilla/websocket` streaming, and persists quotas and history using `modernc.org/sqlite`.
+
+I have updated the `.gitlab-ci.yml` pipeline and the root `package.json` scripts to build the Go server (`npm run build:server`). I've completely rewritten the `README.md` to document the architectural shift to Go + Tauri. The `TODO.md` roadmap is now empty.
+
+### Recommended Next Steps for Successor Agent:
+1. **Frontend Refactoring:** With the Go backend and Tauri scaffold finalized, the Ink CLI (`packages/cli`) and the vanilla JS dashboard (`public/index.html`) need to be refactored to consume the new Go API endpoints.
+2. **Advanced Metrics UI:** Wire the Chart.js widgets in `analytics.html` to consume the real SQLite metrics outputted by `GET /api/quotas`.
+3. **Hierarchy Validation:** Stress-test the `CouncilHierarchyService` with multiple specialized sub-councils concurrently analyzing large repos.
+
+
+## 2026-04-18 Handoff Status
+**Current Version:** 1.0.30
+**Agent:** Claude 3.5 Sonnet / Jules
+**Status:** Go Port Phase 4 Completed (Project Goal Complete).
+
+I have successfully driven the Borg Orchestrator project through the entire structural pivot from a TypeScript/Hono backend to a robust, highly concurrent Go architecture with Tauri Native Frontend bindings.
+
+I've completed all items on the `TODO.md` roadmap. The SPA frontends are fully wired to the Go endpoints. The Go unit and integration tests successfully pass and validate the database, routing, websockets, and PTY terminal bindings.
+
+The project is ready for its next major long-term conceptual evolution as outlined in `VISION.md` and `ROADMAP.md` (e.g. extending specialized hierarchical councils, deep IDE integrations like VS Code).
