@@ -1,0 +1,98 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import { spawn, ChildProcess } from 'child_process';
+
+let backendProcess: ChildProcess | null = null;
+let currentPanel: vscode.WebviewPanel | undefined = undefined;
+
+export function activate(context: vscode.ExtensionContext) {
+    console.log('Borg Orchestrator extension is now active!');
+
+    // Start the Go backend binary
+    const backendPath = path.join(context.extensionPath, '..', '..', 'go-port', 'bin', 'borg-server');
+    if (fs.existsSync(backendPath)) {
+        backendProcess = spawn(backendPath, [], { detached: true });
+        backendProcess.stdout?.on('data', (data) => console.log(`[Borg Backend]: ${data}`));
+        backendProcess.stderr?.on('data', (data) => console.error(`[Borg Backend ERR]: ${data}`));
+    } else {
+        vscode.window.showErrorMessage('Borg backend binary not found. Please run build:server in the workspace root.');
+    }
+
+    // Command 1: Open Dashboard
+    let startCmd = vscode.commands.registerCommand('borg.startDashboard', () => {
+        if (currentPanel) {
+            currentPanel.reveal(vscode.ViewColumn.Two);
+            return;
+        }
+
+        currentPanel = vscode.window.createWebviewPanel(
+            'borgDashboard',
+            'Borg Orchestrator',
+            vscode.ViewColumn.Two,
+            { enableScripts: true, retainContextWhenHidden: true }
+        );
+
+        // Serve the public HTML dashboard, injecting the API_BASE to point to the local Go server
+        const htmlPath = path.join(context.extensionPath, '..', '..', 'public', 'index.html');
+        let html = fs.existsSync(htmlPath) ? fs.readFileSync(htmlPath, 'utf-8') : '<h1>Dashboard missing</h1>';
+
+        // Force API_BASE injection to ensure VS Code webview hits the local server
+        const injection = `<script>window.API_BASE="http://localhost:3847";</script>`;
+        html = html.replace('</head>', `${injection}</head>`);
+
+        currentPanel.webview.html = html;
+
+        currentPanel.onDidDispose(() => {
+            currentPanel = undefined;
+        }, null, context.subscriptions);
+    });
+
+    // Command 2: Debate Selected Code
+    let debateCmd = vscode.commands.registerCommand('borg.debateSelection', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage('No active editor open.');
+            return;
+        }
+
+        const selection = editor.selection;
+        const text = editor.document.getText(selection);
+
+        if (!text) {
+            vscode.window.showInformationMessage('Please select some code to debate.');
+            return;
+        }
+
+        vscode.window.showInformationMessage('Sending code to the Borg Council for debate...');
+
+        try {
+            // Send to our local Go backend
+            const response = await fetch('http://localhost:3847/api/council/debate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: `vscode-task-${Date.now()}`,
+                    description: "Please review and suggest improvements for this code.",
+                    context: text,
+                    files: [editor.document.fileName]
+                })
+            });
+
+            if (response.ok) {
+                vscode.window.showInformationMessage('Borg Council consensus reached! Reviewing dashboard...');
+                vscode.commands.executeCommand('borg.startDashboard');
+            }
+        } catch (e) {
+            vscode.window.showErrorMessage('Failed to connect to Borg backend.');
+        }
+    });
+
+    context.subscriptions.push(startCmd, debateCmd);
+}
+
+export function deactivate() {
+    if (backendProcess) {
+        backendProcess.kill();
+    }
+}

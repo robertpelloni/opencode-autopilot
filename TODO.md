@@ -1,22 +1,14 @@
 # Borg Orchestrator - Current Tasks
 
-## Phase 3: Final Consolidation & Native Execution
+## Phase 5: Deep IDE Integration (VS Code)
 
-### PTY Compatibility
-*   [x] **Full Pseudo-Terminal Support (`creack/pty`)**: The current `os/exec` implementation pipes raw stdin/stdout, but many LLM CLI tools (Aider, Claude Code) expect an interactive TTY. We need to implement proper PTY allocation in Go (e.g. using `github.com/creack/pty`) for the sidecar sessions to capture terminal control sequences properly.
+### Webview Architecture
+*   [x] **VS Code Panel**: Implement the VS Code Extension `WebviewPanel` to host the existing `public/index.html` React/Vanilla dashboard as an integrated editor pane.
+*   [x] **Local Server Lifecycle**: Ensure the VS Code extension automatically spawns the compiled Go backend binary on a dynamic port and sets `API_BASE` for the Webview automatically.
 
-### Database Operations
-*   [x] **Retrieve Methods (`pkg/server/services/db/`)**: We've implemented `INSERT` queries for history and quota. We need the corresponding `SELECT` queries (e.g. `GetDebateHistory`, `GetQuota`) so the API can serve this data to the frontend dashboard.
+### Editor Context
+*   [x] **"Debate This" Command**: Register a VS Code command (`borg.debateSelection`) that captures the currently highlighted code in the editor, packages it into a `DevelopmentTask`, and posts it to the Go backend's `/api/council/debate` endpoint.
+*   [ ] **Diff Rendering**: When the Council reaches a consensus and outputs proposed code changes, use the VS Code `vscode.diff` command to present a native inline diff to the user before applying.
 
-### API Parity Completeness
-*   [x] **Plugin Manager Endpoints**: Port the `GET /api/plugins` and `POST /api/plugins/:id/toggle` routes to Go.
-*   [x] **Workspace Endpoints**: Port the `GET /api/workspaces` endpoints for project switching to Go.
-
-### Documentation & Build
-*   [x] **Go Build Pipeline**: Update `.gitlab-ci.yml` and `package.json` build scripts to compile the `go-port` binary across architectures.
-*   [x] **Handoff & README**: Document the architecture shift to Go + Tauri in the `README.md` and `ARCHITECTURE.md`.
-
-## Phase 4: Frontend Refactoring
-### Dashboard Upgrades
-*   [x] **Analytics UI Integration**: Wire up the visual charts in `public/analytics.html` to consume the real SQLite metrics outputted by `GET /api/quotas`.
-*   [x] **API Client Updates**: Refactor the vanilla JS dashboard to properly request and parse the new Go structures.
+## Phase 6: Production Readiness
+*   [ ] **Code Cleanup**: Remove all deprecated TypeScript backend source files (`packages/server/src/services/*.ts`) now that the Go port has officially reached 100% parity and taken over as the primary execution engine.
