@@ -480,3 +480,7 @@ For detailed changes in each release, see [GitHub Releases](https://github.com/r
 ## [1.0.30] - 2026-04-21
 ### Added
 - Concluded Phase 4 frontend refactoring by modifying the SPA dashboard and Analytics UI to actively utilize the Go backend and SQLite telemetry metrics natively.
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main

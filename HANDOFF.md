@@ -177,7 +177,11 @@ See `VISION.md` for planned features:
 ## Go Port - Log Rotation Service (2026-03-21)
 - Reimplemented `LogRotationService` core logic (`AddLog`, `GetLogsWithPagination`, `PruneSessionLogs`) in `go-port/pkg/server/services/log/log_rotation.go`.
 - Configured thread-safe map structures to hold per-session log instances ensuring data consistency when accessed simultaneously by different incoming requests or websockets.
+<<<<<<< HEAD
 - Added a background Goroutine via `time.Ticker` matching the TypeScript `setInterval` that loops through all instances pruning by chronological age and arbitrary threshold size.
+=======
+- Added a background Goroutine via `time.Ticker` matching the TypeScript `setInterval` that loops through all instances pruning by chronological age and arbitrary threshold size.
+>>>>>>> origin/main
 - Bumped version to 1.0.22.
 - **Future Implementation Steps:** Implement the remaining foundational services: `DebateHistory` and `EnvironmentManager`, followed by the `CLIRegistry` parsing logic.
 
@@ -191,11 +195,19 @@ See `VISION.md` for planned features:
 ## 2026-04-13 Handoff Status
 **Current Version:** 1.0.26
 **Agent:** Claude 3.5 Sonnet / Jules
+<<<<<<< HEAD
 **Status:** Go Port Phase 1 Completed.
 
 I have meticulously rewritten all high-priority backend services (`EnvironmentManager`, `CLIRegistry`, `WSManager`, `SessionManager`, `CouncilHierarchy`, `SmartPilot`) from TypeScript to Go. All integration and unit tests for the Go port currently pass.
 
 I've also stubbed out the `net/http` router mimicking the existing Hono backend structure. The `TODO.md` roadmap is currently empty as all immediate Next Phase goals (Analytics UI charts, Native Frontend architecture documentation, IDE Extension scaffold) have been addressed.
+=======
+**Status:** Go Port Phase 1 Completed.
+
+I have meticulously rewritten all high-priority backend services (`EnvironmentManager`, `CLIRegistry`, `WSManager`, `SessionManager`, `CouncilHierarchy`, `SmartPilot`) from TypeScript to Go. All integration and unit tests for the Go port currently pass.
+
+I've also stubbed out the `net/http` router mimicking the existing Hono backend structure. The `TODO.md` roadmap is currently empty as all immediate Next Phase goals (Analytics UI charts, Native Frontend architecture documentation, IDE Extension scaffold) have been addressed.
+>>>>>>> origin/main
 
 ### Recommended Next Steps for Successor Agent:
 1. **Go Port Deep Integration:** Replace the mocked functionality in the `net/http` handlers (e.g. `router.go` and `router_extended.go`) by directly piping requests to the new Go services.
@@ -206,9 +218,15 @@ I've also stubbed out the `net/http` router mimicking the existing Hono backend 
 ## 2026-04-18 Handoff Status
 **Current Version:** 1.0.29
 **Agent:** Claude 3.5 Sonnet / Jules
+<<<<<<< HEAD
 **Status:** Go Port Phase 3 Completed.
 
 I have fully completed the Go port initiative! The Go backend compiles successfully, acts as a native sidecar manager using `creack/pty` (fully replacing `node-pty`), integrates real-time `gorilla/websocket` streaming, and persists quotas and history using `modernc.org/sqlite`.
+=======
+**Status:** Go Port Phase 3 Completed.
+
+I have fully completed the Go port initiative! The Go backend compiles successfully, acts as a native sidecar manager using `creack/pty` (fully replacing `node-pty`), integrates real-time `gorilla/websocket` streaming, and persists quotas and history using `modernc.org/sqlite`.
+>>>>>>> origin/main
 
 I have updated the `.gitlab-ci.yml` pipeline and the root `package.json` scripts to build the Go server (`npm run build:server`). I've completely rewritten the `README.md` to document the architectural shift to Go + Tauri. The `TODO.md` roadmap is now empty.
 
@@ -221,9 +239,15 @@ I have updated the `.gitlab-ci.yml` pipeline and the root `package.json` scripts
 ## 2026-04-18 Handoff Status
 **Current Version:** 1.0.30
 **Agent:** Claude 3.5 Sonnet / Jules
+<<<<<<< HEAD
 **Status:** Go Port Phase 4 Completed (Project Goal Complete).
 
 I have successfully driven the Borg Orchestrator project through the entire structural pivot from a TypeScript/Hono backend to a robust, highly concurrent Go architecture with Tauri Native Frontend bindings.
+=======
+**Status:** Go Port Phase 4 Completed (Project Goal Complete).
+
+I have successfully driven the Borg Orchestrator project through the entire structural pivot from a TypeScript/Hono backend to a robust, highly concurrent Go architecture with Tauri Native Frontend bindings.
+>>>>>>> origin/main
 
 I've completed all items on the `TODO.md` roadmap. The SPA frontends are fully wired to the Go endpoints. The Go unit and integration tests successfully pass and validate the database, routing, websockets, and PTY terminal bindings.
 

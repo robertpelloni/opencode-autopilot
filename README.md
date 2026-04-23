@@ -6,7 +6,11 @@ An autonomous development guidance system powered by a multi-model "Council" of 
 ![Version](https://img.shields.io/badge/Version-1.0.28-blue.svg)
 
 ## Architecture Shift (v1.0.28)
+<<<<<<< HEAD
 The Borg Orchestrator backend has been methodically ported from TypeScript/Hono to a highly concurrent native **Go** backend (`go-port/`).
+=======
+The Borg Orchestrator backend has been methodically ported from TypeScript/Hono to a highly concurrent native **Go** backend (`go-port/`).
+>>>>>>> origin/main
 
 ### Why Go?
 - **True Concurrency:** Eliminates JS event loop blocking during heavy API routing.

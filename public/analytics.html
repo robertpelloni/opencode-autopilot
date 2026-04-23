@@ -76,10 +76,17 @@
         function renderUsageChart(quotas) {
             const labels = quotas.map(q => q.provider);
             const data = quotas.map(q => q.tokensUsed);
+<<<<<<< HEAD
 
             // Random vibrant colors for providers
             const bgColors = labels.map(() => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`);
 
+=======
+
+            // Random vibrant colors for providers
+            const bgColors = labels.map(() => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`);
+
+>>>>>>> origin/main
             const ctx = document.getElementById('usageChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
